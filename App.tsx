@@ -24,7 +24,7 @@ const App: React.FC = () => {
       try {
         setIsLoading(true);
         const response = await fetch(LIVE_CSV_URL);
-        if (!response.ok) throw new Error('Could not connect to the academic portal. Please check your connection.');
+        if (!response.ok) throw new Error('Could not connect to the academic portal.');
         
         const csvText = await response.text();
         const rows = csvText.split(/\r?\n/).filter(row => row.trim() !== "").slice(1); 
@@ -42,7 +42,7 @@ const App: React.FC = () => {
               id: moduleCode.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
               code: moduleCode,
               name: moduleName,
-              description: `All resources for ${moduleName}. Curated for CS students.`,
+              description: `All resources for ${moduleName}. Curated for students.`,
               resources: []
             };
           }
@@ -66,7 +66,7 @@ const App: React.FC = () => {
         setModules(modulesArray);
         setError(null);
       } catch (err) {
-        console.error("GAKA Data Error:", err);
+        console.error("Data Error:", err);
         setError(err instanceof Error ? err.message : 'Connection failed');
         setModules(MODULES_DATA);
       } finally {
@@ -186,7 +186,9 @@ const App: React.FC = () => {
         <div className="relative">
           <div className="w-20 h-20 border-[6px] border-slate-50 border-t-emerald-600 rounded-full animate-spin"></div>
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-10 h-10 bg-emerald-600 rounded-lg flex items-center justify-center text-white font-black text-lg">G</div>
+            <div className="w-10 h-10 bg-emerald-600 rounded-lg flex items-center justify-center text-white">
+              <BookOpenIcon className="w-6 h-6" />
+            </div>
           </div>
         </div>
       </div>
@@ -204,9 +206,9 @@ const App: React.FC = () => {
           <div className="mb-8 p-4 bg-red-50 border border-red-100 rounded-2xl text-red-700 text-xs font-bold flex items-center justify-between animate-fade-in">
             <span className="flex items-center">
               <span className="w-2 h-2 rounded-full bg-red-500 mr-3 animate-ping"></span>
-              Live Update Failed: Showing cached module data.
+              Update Status: Showing cached module data.
             </span>
-            <button onClick={() => window.location.reload()} className="bg-white px-4 py-1.5 rounded-lg shadow-sm hover:shadow-md transition-all active:scale-95">Retry Update</button>
+            <button onClick={() => window.location.reload()} className="bg-white px-4 py-1.5 rounded-lg shadow-sm hover:shadow-md transition-all active:scale-95">Retry</button>
           </div>
         )}
 
@@ -234,43 +236,28 @@ const App: React.FC = () => {
               </button>
             </div>
             
-            {/* Why GAKA? Section */}
             <div className="mt-24 grid grid-cols-1 md:grid-cols-3 gap-8 w-full max-w-6xl">
               <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-xl transition-all hover:-translate-y-2 group">
                 <div className="w-14 h-14 bg-emerald-50 rounded-2xl flex items-center justify-center text-emerald-600 mb-6 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
                   <span className="text-2xl font-black">1</span>
                 </div>
                 <h3 className="text-xl font-black text-slate-900 mb-3 tracking-tight">Zero Registration</h3>
-                <p className="text-slate-500 text-sm font-medium leading-relaxed">We value your time. No mandatory accounts, signups, or authentication required. Simply browse and access your learning materials instantly.</p>
+                <p className="text-slate-500 text-sm font-medium leading-relaxed">We value your time. No mandatory accounts, signups, or authentication required. Simply browse and access materials instantly.</p>
               </div>
               <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-xl transition-all hover:-translate-y-2 group">
                 <div className="w-14 h-14 bg-emerald-50 rounded-2xl flex items-center justify-center text-emerald-600 mb-6 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
                   <span className="text-2xl font-black">2</span>
                 </div>
                 <h3 className="text-xl font-black text-slate-900 mb-3 tracking-tight">24/7 Availability</h3>
-                <p className="text-slate-500 text-sm font-medium leading-relaxed">Your education doesn't sleep. Every module is accessible around the clock, allowing you to study at your own pace whenever inspiration strikes.</p>
+                <p className="text-slate-500 text-sm font-medium leading-relaxed">Your education doesn't sleep. Every module is accessible around the clock, allowing you to study at your own pace whenever you need.</p>
               </div>
               <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-xl transition-all hover:-translate-y-2 group">
                 <div className="w-14 h-14 bg-emerald-50 rounded-2xl flex items-center justify-center text-emerald-600 mb-6 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
                   <span className="text-2xl font-black">3</span>
                 </div>
-                <h3 className="text-xl font-black text-slate-900 mb-3 tracking-tight">Community Verified</h3>
-                <p className="text-slate-500 text-sm font-medium leading-relaxed">Trust in quality. All lecture notes and past papers are verified and curated by the Computer Science academic community. Legit only.</p>
+                <h3 className="text-xl font-black text-slate-900 mb-3 tracking-tight">Student Verified</h3>
+                <p className="text-slate-500 text-sm font-medium leading-relaxed">Trust in quality. All lecture notes and past papers are verified and curated by the academic community for accuracy.</p>
               </div>
-            </div>
-
-            <div className="mt-28 grid grid-cols-2 md:grid-cols-4 gap-12 w-full max-w-5xl border-t border-slate-100 pt-16">
-              {[
-                { label: 'Active Modules', value: modules.length.toString() },
-                { label: 'Portal Status', value: error ? 'Cached' : 'Live' },
-                { label: 'Current Session', value: '2024/25' },
-                { label: 'Access Level', value: 'Public' }
-              ].map((stat, i) => (
-                <div key={i} className="flex flex-col items-center">
-                  <span className="text-4xl font-black text-slate-900 tracking-tighter">{stat.value}</span>
-                  <span className="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-2">{stat.label}</span>
-                </div>
-              ))}
             </div>
           </div>
         )}
@@ -294,41 +281,28 @@ const App: React.FC = () => {
                 <section>
                   <h3 className="text-xl font-black text-slate-900 uppercase tracking-widest mb-4">Our Mission</h3>
                   <p>
-                    GAKA Portal was conceived with a single, clear objective: to democratize academic resources for Computer Science students. We believe that access to lecture materials, past examination papers, and reference guides should be frictionless, transparent, and free from the barriers of registration.
+                    GAKA Portal was conceived with a single, clear objective: to democratize academic resources for students. We believe that access to lecture materials, past examination papers, and reference guides should be frictionless, transparent, and free from barriers.
                   </p>
                 </section>
 
                 <section>
                   <h3 className="text-xl font-black text-slate-900 uppercase tracking-widest mb-4">Philosophy</h3>
                   <p>
-                    In an age of digital complexity, we chose simplicity. By removing mandatory accounts, we ensure that students can focus entirely on learning. Your attention belongs to your studies, not account management.
+                    In an age of digital complexity, we chose simplicity. By removing mandatory accounts, we ensure that students can focus entirely on learning. Your attention belongs to your studies.
                   </p>
                 </section>
 
-                <section className="bg-emerald-50 p-8 rounded-[2rem] border border-emerald-100">
-                  <h3 className="text-xl font-black text-emerald-900 uppercase tracking-widest mb-4">Engineering & Development</h3>
-                  <p className="text-emerald-800">
-                    GAKA is powered by <span className="font-bold">Softlink Africa</span>. Our team of developers is dedicated to crafting high-performance digital tools that serve the academic community.
-                  </p>
-                  <div className="mt-6 pt-6 border-t border-emerald-200/50 flex flex-col sm:flex-row sm:items-center gap-6">
-                    <div>
-                      <p className="text-[10px] font-black uppercase tracking-widest text-emerald-600 mb-1">Developer</p>
-                      <p className="text-slate-900 font-bold">Cleven Samwel</p>
-                    </div>
-                  </div>
-                </section>
-
-                <section>
+                <section className="bg-slate-50 p-8 rounded-[2rem] border border-slate-100">
                   <h3 className="text-xl font-black text-slate-900 uppercase tracking-widest mb-4">Contact Information</h3>
                   <p>
-                    For resource contributions, technical feedback, or partnership inquiries, please reach out to our development team.
+                    For resource contributions or technical feedback, please reach out to the Computer Science Association.
                   </p>
                   <div className="mt-8 flex flex-col sm:flex-row gap-4">
                     <a 
                       href="mailto:clevensamwel@gmail.com"
                       className="flex items-center justify-center px-10 py-4 bg-slate-900 text-white rounded-2xl font-bold hover:bg-slate-800 transition-all shadow-xl active:scale-95"
                     >
-                      Email Developer
+                      Email Support
                     </a>
                   </div>
                 </section>
@@ -375,8 +349,7 @@ const App: React.FC = () => {
                   <div className="w-20 h-20 bg-slate-50 rounded-3xl flex items-center justify-center mx-auto mb-6 transform rotate-12">
                     <SearchIcon className="text-slate-200 w-10 h-10" />
                   </div>
-                  <h3 className="text-2xl font-black text-slate-800 tracking-tight">Search Disconnected</h3>
-                  <p className="text-slate-400 font-medium mt-2">No modules matched your current query.</p>
+                  <h3 className="text-2xl font-black text-slate-800 tracking-tight">No results</h3>
                   <button onClick={() => setSearchQuery('')} className="mt-6 text-emerald-600 font-black text-xs uppercase tracking-widest hover:underline">Clear Search</button>
                 </div>
               )}
@@ -415,7 +388,7 @@ const App: React.FC = () => {
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-8 mb-14">
                 <div className="space-y-1">
                   <h3 className="text-3xl font-black text-slate-900 tracking-tight">Available Assets</h3>
-                  <p className="text-slate-400 font-medium text-sm">Download or preview shared documents</p>
+                  <p className="text-slate-400 font-medium text-sm">Download shared documents</p>
                 </div>
                 <div className="flex bg-slate-50 p-2 rounded-2xl border border-slate-100">
                   {['All', 'Notes', 'Past Paper'].map((type) => (
@@ -428,7 +401,7 @@ const App: React.FC = () => {
                         : 'text-slate-400 hover:text-slate-800'
                       }`}
                     >
-                      {type === 'Past Paper' ? 'GAKA' : type}
+                      {type === 'Past Paper' ? 'Papers' : type}
                     </button>
                   ))}
                 </div>
@@ -451,7 +424,7 @@ const App: React.FC = () => {
                         </h4>
                         <div className="flex items-center text-[10px] text-slate-400 font-black uppercase tracking-widest mt-2">
                           <span className={`${file.type === 'Notes' ? 'text-emerald-500' : 'text-teal-500'}`}>
-                            {file.type === 'Notes' ? 'Lecture Material' : 'Official GAKA'}
+                            {file.type === 'Notes' ? 'Lecture Material' : 'Examination'}
                           </span>
                         </div>
                       </div>
@@ -460,7 +433,7 @@ const App: React.FC = () => {
                     <div className="flex items-center space-x-4">
                       <button 
                         onClick={() => handleShare(file.name)}
-                        className="p-5 text-slate-400 hover:text-emerald-600 hover:bg-white rounded-2xl transition-all shadow-sm hover:shadow active:scale-90 border border-transparent hover:border-emerald-50"
+                        className="p-5 text-slate-400 hover:text-emerald-600 hover:bg-white rounded-2xl transition-all shadow-sm hover:shadow border border-transparent hover:border-emerald-50"
                         title="Share link"
                       >
                         <ShareIcon className="w-6 h-6" />
@@ -488,7 +461,9 @@ const App: React.FC = () => {
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-10">
             <div className="space-y-4">
               <div className="flex items-center space-x-3">
-                <div className="w-9 h-9 bg-emerald-600 rounded-xl flex items-center justify-center text-white font-black text-lg">G</div>
+                <div className="w-9 h-9 bg-emerald-600 rounded-xl flex items-center justify-center text-white">
+                  <BookOpenIcon className="w-5 h-5" />
+                </div>
                 <span className="text-xl font-black tracking-tighter text-slate-900 uppercase">Gaka Portal</span>
               </div>
               <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.2em]">
@@ -497,12 +472,7 @@ const App: React.FC = () => {
             </div>
 
             <div className="space-y-3">
-              <h4 className="text-xs font-black uppercase tracking-widest text-slate-900">Developed By</h4>
-              <p className="text-slate-600 font-bold text-sm tracking-tight">Softlink Africa</p>
-            </div>
-
-            <div className="space-y-3">
-              <h4 className="text-xs font-black uppercase tracking-widest text-slate-900">Contact Us</h4>
+              <h4 className="text-xs font-black uppercase tracking-widest text-slate-900">Contact Support</h4>
               <div className="space-y-2">
                 <a href="mailto:clevensamwel@gmail.com" className="flex items-center text-xs font-semibold text-slate-500 hover:text-emerald-600 transition-colors">
                   <span className="mr-2 opacity-70">✉️</span> clevensamwel@gmail.com

@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { BookOpenIcon } from './Icons';
 
 interface NavbarProps {
   onLogoClick?: () => void;
@@ -11,13 +12,13 @@ export const Navbar: React.FC<NavbarProps> = ({ onLogoClick }) => {
       <div className="max-w-7xl mx-auto flex justify-between items-center">
         <button 
           onClick={onLogoClick}
-          className="flex items-center space-x-2 hover:opacity-80 transition-opacity active:scale-95 text-left"
+          className="flex items-center space-x-3 hover:opacity-80 transition-opacity active:scale-95 text-left"
         >
-          <div className="w-10 h-10 bg-gradient-to-tr from-emerald-600 to-teal-500 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-emerald-100">
-            G
+          <div className="w-10 h-10 bg-emerald-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-emerald-100">
+            <BookOpenIcon className="w-6 h-6" />
           </div>
           <div>
-            <h1 className="text-xl font-extrabold tracking-tight text-slate-900 leading-none text-emerald-900">GAKA</h1>
+            <h1 className="text-xl font-extrabold tracking-tight text-slate-900 leading-none">GAKA</h1>
           </div>
         </button>
         
