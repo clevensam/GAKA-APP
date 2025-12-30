@@ -32,16 +32,26 @@ const App: React.FC = () => {
         }));
 
         rows.forEach((row, index) => {
+          // Robust parsing for CSV fields
           const parts = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(val => val?.trim().replace(/^"|"$/g, ''));
           
           /**
-           * Mapping based on requested fields:
+           * Mapping refined for reliability:
            * index 0: Module Code
            * index 2: Type (Notes / Past Paper)
            * index 3: Title
-           * index 5: Download Link
+           * index 4/5: Links (Drive View/Download)
            */
-          const [moduleCode, , type, title, , downloadUrl] = parts;
+          const moduleCode = parts[0];
+          const type = parts[2];
+          const title = parts[3];
+          
+          // Resilient Link Detection: Check index 5 first, fallback to index 4 if empty
+          const linkCandidate1 = parts[5];
+          const linkCandidate2 = parts[4];
+          const downloadUrl = (linkCandidate1 && linkCandidate1.startsWith('http')) 
+            ? linkCandidate1 
+            : (linkCandidate2 && linkCandidate2.startsWith('http') ? linkCandidate2 : '#');
           
           if (!moduleCode) return;
 
@@ -56,7 +66,7 @@ const App: React.FC = () => {
               id: `dynamic-${index}`,
               title: title || 'Academic Resource',
               type: (type?.toLowerCase().includes('note')) ? 'Notes' : 'Past Paper',
-              downloadUrl: downloadUrl || '#',
+              downloadUrl: downloadUrl,
               size: '---' 
             };
             targetModule.resources.push(resource);
@@ -70,7 +80,7 @@ const App: React.FC = () => {
       } catch (err) {
         console.error("Fetch Error:", err);
         setError("Synchronizing failed. No live data available.");
-        setModules([]); // Ensure no dummy data is shown
+        setModules([]); 
       } finally {
         setIsLoading(false);
       }
@@ -423,6 +433,7 @@ const App: React.FC = () => {
                       >
                         <ShareIcon className="w-6 h-6" />
                       </button>
+                      {/* Fixed Link: Ensure href is properly bound to downloadUrl */}
                       <a 
                         href={file.downloadUrl} 
                         target="_blank" 
