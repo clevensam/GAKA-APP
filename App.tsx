@@ -24,34 +24,32 @@ const App: React.FC = () => {
         if (!response.ok) throw new Error('Sync failed');
         
         const csvText = await response.text();
-        const rows = csvText.split(/\r?\n/).filter(row => row.trim() !== "").slice(1); 
+        const allRows = csvText.split(/\r?\n/).filter(row => row.trim() !== "");
+        if (allRows.length < 2) throw new Error('No data found in sheet');
+
+        // Extract headers to find column indices dynamically
+        const headers = allRows[0].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(h => h.trim().replace(/^"|"$/g, '').toLowerCase());
         
+        const colIdx = {
+          code: headers.findIndex(h => h.includes('code') || h.includes('module')),
+          type: headers.findIndex(h => h.includes('type')),
+          title: headers.findIndex(h => h.includes('title')),
+          download: headers.findIndex(h => h.includes('download url') || h.includes('download link') || h.includes('url'))
+        };
+
+        const rows = allRows.slice(1); 
         const skeletonModules: Module[] = MODULES_DATA.map(m => ({
           ...m,
           resources: [] 
         }));
 
         rows.forEach((row, index) => {
-          // Robust parsing for CSV fields
           const parts = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(val => val?.trim().replace(/^"|"$/g, ''));
           
-          /**
-           * Mapping refined for reliability:
-           * index 0: Module Code
-           * index 2: Type (Notes / Past Paper)
-           * index 3: Title
-           * index 4/5: Links (Drive View/Download)
-           */
-          const moduleCode = parts[0];
-          const type = parts[2];
-          const title = parts[3];
-          
-          // Resilient Link Detection: Check index 5 first, fallback to index 4 if empty
-          const linkCandidate1 = parts[5];
-          const linkCandidate2 = parts[4];
-          const downloadUrl = (linkCandidate1 && linkCandidate1.startsWith('http')) 
-            ? linkCandidate1 
-            : (linkCandidate2 && linkCandidate2.startsWith('http') ? linkCandidate2 : '#');
+          const moduleCode = parts[colIdx.code] || "";
+          const typeStr = parts[colIdx.type] || "";
+          const title = parts[colIdx.title] || "";
+          const downloadUrl = parts[colIdx.download] || "#";
           
           if (!moduleCode) return;
 
@@ -65,15 +63,14 @@ const App: React.FC = () => {
             const resource: AcademicFile = {
               id: `dynamic-${index}`,
               title: title || 'Academic Resource',
-              type: (type?.toLowerCase().includes('note')) ? 'Notes' : 'Past Paper',
-              downloadUrl: downloadUrl,
+              type: (typeStr.toLowerCase().includes('note')) ? 'Notes' : 'Past Paper',
+              downloadUrl: downloadUrl.startsWith('http') ? downloadUrl : '#',
               size: '---' 
             };
             targetModule.resources.push(resource);
           }
         });
 
-        // Only display modules that have at least one resource in the sheet
         const activeModules = skeletonModules.filter(m => m.resources.length > 0);
         setModules(activeModules);
         setError(null);
@@ -421,7 +418,7 @@ const App: React.FC = () => {
                           {file.title}
                         </h4>
                         <span className={`text-[11px] font-bold uppercase tracking-widest mt-2 block ${file.type === 'Notes' ? 'text-emerald-500' : 'text-teal-500'}`}>
-                          {file.type === 'Notes' ? 'Lecture Notes' : 'Exam Archive'}
+                          {file.type === 'Notes' ? 'Lecture Notes' : 'Gaka'}
                         </span>
                       </div>
                     </div>
@@ -433,7 +430,6 @@ const App: React.FC = () => {
                       >
                         <ShareIcon className="w-6 h-6" />
                       </button>
-                      {/* Fixed Link: Ensure href is properly bound to downloadUrl */}
                       <a 
                         href={file.downloadUrl} 
                         target="_blank" 
