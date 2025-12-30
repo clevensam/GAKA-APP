@@ -26,45 +26,49 @@ const App: React.FC = () => {
         const csvText = await response.text();
         const rows = csvText.split(/\r?\n/).filter(row => row.trim() !== "").slice(1); 
         
-        const groupedModules: Record<string, Module> = {};
+        // Use backup modules as the skeleton
+        const skeletonModules: Module[] = MODULES_DATA.map(m => ({
+          ...m,
+          resources: [] // Clear hardcoded resources from backup
+        }));
 
         rows.forEach((row, index) => {
           const parts = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(val => val?.trim().replace(/^"|"$/g, ''));
-          const [moduleCode, moduleName, type, title, viewUrl, downloadUrl] = parts;
+          // Mapping: [0: Code, 1: Name, 2: Type, 3: Title, 4: View, 5: Download]
+          const [moduleCode, , type, title, viewUrl, downloadUrl] = parts;
           
-          if (!moduleCode || !moduleName) return;
+          if (!moduleCode) return;
 
-          if (!groupedModules[moduleCode]) {
-            groupedModules[moduleCode] = {
-              id: moduleCode.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
-              code: moduleCode,
-              name: moduleName,
-              description: `All resources for ${moduleName}. Curated for CS students.`,
-              resources: []
+          // Find the module in backup skeleton using code
+          const targetModule = skeletonModules.find(
+            m => m.code.replace(/\s+/g, '').toLowerCase() === moduleCode.replace(/\s+/g, '').toLowerCase()
+          );
+
+          if (targetModule) {
+            const resource: AcademicFile = {
+              id: `res-${index}`,
+              name: title || 'Resource File',
+              type: (type?.toLowerCase().includes('note')) ? 'Notes' : 'Past Paper',
+              driveUrl: downloadUrl || viewUrl || '#',
+              size: '---' 
             };
+            targetModule.resources.push(resource);
           }
-
-          const resource: AcademicFile = {
-            id: `${moduleCode}-${index}`,
-            name: title || 'Resource File',
-            type: (type?.toLowerCase().includes('note')) ? 'Notes' : 'Past Paper',
-            driveUrl: downloadUrl || viewUrl || '#',
-            size: '---' 
-          };
-
-          groupedModules[moduleCode].resources.push(resource);
         });
 
-        const modulesArray = Object.values(groupedModules);
-        if (modulesArray.length === 0) {
-           throw new Error("No active modules found.");
+        // "else delete" - only keep modules that have at least one resource fetched from the sheet
+        const finalModules = skeletonModules.filter(m => m.resources.length > 0);
+        
+        if (finalModules.length === 0) {
+           throw new Error("No modules found on the live registry.");
         }
         
-        setModules(modulesArray);
+        setModules(finalModules);
         setError(null);
       } catch (err) {
         console.error("GAKA Portal Fetch Error:", err);
         setError(err instanceof Error ? err.message : 'Connection failed');
+        // Fallback to backup with its original dummy resources if fetch fails
         setModules(MODULES_DATA);
       } finally {
         setIsLoading(false);
@@ -87,7 +91,7 @@ const App: React.FC = () => {
         if (module) {
           setSelectedModule(module);
           setCurrentView('detail');
-          setFilterType('All'); // Reset filter when entering a new module
+          setFilterType('All'); 
         } else if (modules.length > 0) {
           setCurrentView('modules');
         }
@@ -283,7 +287,7 @@ const App: React.FC = () => {
                   <div className="bg-emerald-600 p-10 rounded-[2rem] text-white shadow-xl shadow-emerald-100">
                     <h4 className="text-[11px] font-bold uppercase tracking-widest text-emerald-200 mb-4">Lead Developer</h4>
                     <p className="font-bold text-2xl mb-4">Cleven Samwel</p>
-                    <a href="mailto:clevensamwel@gmail.com" className="inline-block mt-4 text-[11px] font-bold uppercase tracking-widest bg-white/20 px-6 py-3 rounded-full hover:bg-white/30 transition-all">Get in Touch</a>
+                    <a href="https://wa.me/255685208576" target="_blank" rel="noopener noreferrer" className="inline-block mt-4 text-[11px] font-bold uppercase tracking-widest bg-white/20 px-6 py-3 rounded-full hover:bg-white/30 transition-all">Get in Touch</a>
                   </div>
                 </div>
               </div>
