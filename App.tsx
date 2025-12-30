@@ -14,8 +14,7 @@ const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<'home' | 'modules' | 'detail' | 'about'>('home');
   const [selectedModule, setSelectedModule] = useState<Module | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  // We keep 'All' as the default filter state since the UI tabs are removed
-  const [filterType] = useState<ResourceType | 'All'>('All');
+  const [filterType, setFilterType] = useState<ResourceType | 'All'>('All');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -88,6 +87,7 @@ const App: React.FC = () => {
         if (module) {
           setSelectedModule(module);
           setCurrentView('detail');
+          setFilterType('All'); // Reset filter when entering a new module
         } else if (modules.length > 0) {
           setCurrentView('modules');
         }
@@ -111,13 +111,9 @@ const App: React.FC = () => {
     return modules.filter(m => {
       const matchesSearch = m.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
                            m.code.toLowerCase().includes(searchQuery.toLowerCase());
-      
-      const matchesType = filterType === 'All' || 
-                         m.resources.some(r => r.type === filterType);
-      
-      return matchesSearch && matchesType;
+      return matchesSearch;
     });
-  }, [modules, searchQuery, filterType]);
+  }, [modules, searchQuery]);
 
   const filteredResources = useMemo(() => {
     if (!selectedModule) return [];
@@ -125,15 +121,6 @@ const App: React.FC = () => {
       filterType === 'All' || r.type === filterType
     );
   }, [selectedModule, filterType]);
-
-  const copyToClipboard = async (text: string) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      alert('Share link copied!');
-    } catch (err) {
-      window.prompt("Copy link:", text);
-    }
-  };
 
   const handleShare = (resourceName: string) => {
     const url = window.location.href;
@@ -156,6 +143,28 @@ const App: React.FC = () => {
         </>
       )}
     </nav>
+  );
+
+  const FilterTabs = () => (
+    <div className="flex bg-slate-100/50 p-1.5 rounded-2xl w-fit mb-8 animate-fade-in">
+      {[
+        { label: 'ALL', value: 'All' },
+        { label: 'Notes', value: 'Notes' },
+        { label: 'Gaka', value: 'Past Paper' }
+      ].map((tab) => (
+        <button
+          key={tab.value}
+          onClick={() => setFilterType(tab.value as any)}
+          className={`px-8 py-3 rounded-xl text-[11px] font-bold uppercase tracking-widest transition-all duration-300 active:scale-95 ${
+            filterType === tab.value 
+              ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-100' 
+              : 'text-slate-400 hover:text-slate-600'
+          }`}
+        >
+          {tab.label}
+        </button>
+      ))}
+    </div>
   );
 
   if (isLoading) {
@@ -361,6 +370,7 @@ const App: React.FC = () => {
             <div className="bg-white rounded-[3rem] p-10 sm:p-20 shadow-sm border border-slate-100">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-8 mb-12">
                 <h3 className="text-3xl font-bold text-slate-800">Resources</h3>
+                <FilterTabs />
               </div>
 
               <div className="space-y-6">
@@ -408,7 +418,7 @@ const App: React.FC = () => {
                   </div>
                 ))}
                 {filteredResources.length === 0 && (
-                  <p className="text-center py-10 text-slate-400 font-medium">No resources found in this module.</p>
+                  <p className="text-center py-10 text-slate-400 font-medium">No {filterType !== 'All' ? filterType.toLowerCase() : ''} resources found in this module.</p>
                 )}
               </div>
             </div>
