@@ -14,7 +14,8 @@ const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<'home' | 'modules' | 'detail' | 'about'>('home');
   const [selectedModule, setSelectedModule] = useState<Module | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [filterType, setFilterType] = useState<ResourceType | 'All'>('All');
+  // We keep 'All' as the default filter state since the UI tabs are removed
+  const [filterType] = useState<ResourceType | 'All'>('All');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -79,7 +80,6 @@ const App: React.FC = () => {
       const hash = window.location.hash;
       if (hash === '#/modules') {
         setCurrentView('modules');
-        setFilterType('All'); // Reset filter when coming back to directory
       } else if (hash === '#/about') {
         setCurrentView('about');
       } else if (hash.startsWith('#/module/')) {
@@ -88,7 +88,6 @@ const App: React.FC = () => {
         if (module) {
           setSelectedModule(module);
           setCurrentView('detail');
-          setFilterType('All'); // Reset filter when opening detail
         } else if (modules.length > 0) {
           setCurrentView('modules');
         }
@@ -291,7 +290,7 @@ const App: React.FC = () => {
 
         {currentView === 'modules' && (
           <div className="animate-fade-in">
-            <div className="flex flex-col lg:flex-row lg:items-end justify-between mb-8 gap-10">
+            <div className="flex flex-col lg:flex-row lg:items-end justify-between mb-16 gap-10">
               <div className="space-y-4">
                 <h2 className="text-5xl font-extrabold text-slate-900 tracking-tight">Directory</h2>
                 <div className="flex items-center space-x-4">
@@ -317,26 +316,6 @@ const App: React.FC = () => {
               </div>
             </div>
 
-            <div className="flex bg-slate-50/50 p-2 rounded-[2rem] border border-slate-100 mb-12 w-fit mx-auto sm:mx-0 overflow-x-auto scrollbar-hide max-w-full">
-              {[
-                { label: 'ALL', value: 'All' },
-                { label: 'Notes', value: 'Notes' },
-                { label: 'Gaka', value: 'Past Paper' }
-              ].map((tab) => (
-                <button
-                  key={tab.value}
-                  onClick={() => setFilterType(tab.value as any)}
-                  className={`px-10 py-4 rounded-[1.6rem] text-[11px] font-bold tracking-widest uppercase transition-all duration-500 whitespace-nowrap ${
-                    filterType === tab.value 
-                    ? 'bg-white text-emerald-600 shadow-lg scale-[1.05] border border-slate-100' 
-                    : 'text-slate-400 hover:text-slate-800'
-                  }`}
-                >
-                  {tab.label}
-                </button>
-              ))}
-            </div>
-
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
               {filteredModules.map((module, i) => (
                 <div key={module.id} className="animate-fade-in" style={{ animationDelay: `${i * 50}ms` }}>
@@ -348,8 +327,8 @@ const App: React.FC = () => {
               ))}
               {filteredModules.length === 0 && (
                 <div className="col-span-full py-24 text-center">
-                  <p className="text-slate-400 font-medium text-lg">No modules found matching your current selection.</p>
-                  <button onClick={() => { setSearchQuery(''); setFilterType('All'); }} className="mt-6 text-emerald-600 font-bold hover:underline">Clear all filters</button>
+                  <p className="text-slate-400 font-medium text-lg">No modules found matching your current search.</p>
+                  <button onClick={() => { setSearchQuery(''); }} className="mt-6 text-emerald-600 font-bold hover:underline">Reset Search</button>
                 </div>
               )}
             </div>
@@ -388,25 +367,6 @@ const App: React.FC = () => {
             <div className="bg-white rounded-[3rem] p-10 sm:p-20 shadow-sm border border-slate-100">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-8 mb-12">
                 <h3 className="text-3xl font-bold text-slate-800">Resources</h3>
-                <div className="flex bg-slate-50 p-1.5 rounded-[1.8rem] border border-slate-100 overflow-x-auto scrollbar-hide">
-                  {[
-                    { label: 'All', value: 'All' },
-                    { label: 'Notes', value: 'Notes' },
-                    { label: 'Gaka', value: 'Past Paper' }
-                  ].map((tab) => (
-                    <button
-                      key={tab.value}
-                      onClick={() => setFilterType(tab.value as any)}
-                      className={`px-8 py-3 rounded-[1.4rem] text-[10px] font-bold tracking-widest uppercase transition-all duration-300 ${
-                        filterType === tab.value 
-                        ? 'bg-white text-emerald-600 shadow-sm border border-slate-100' 
-                        : 'text-slate-400 hover:text-slate-800'
-                      }`}
-                    >
-                      {tab.label}
-                    </button>
-                  ))}
-                </div>
               </div>
 
               <div className="space-y-6">
@@ -454,7 +414,7 @@ const App: React.FC = () => {
                   </div>
                 ))}
                 {filteredResources.length === 0 && (
-                  <p className="text-center py-10 text-slate-400 font-medium">No resources found in this category.</p>
+                  <p className="text-center py-10 text-slate-400 font-medium">No resources found in this module.</p>
                 )}
               </div>
             </div>
