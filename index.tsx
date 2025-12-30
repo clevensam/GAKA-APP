@@ -1,17 +1,7 @@
-
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
-
-// We inline the Tailwind directives so we don't need a separate index.css file
-// This is handled by Vite/PostCSS automatically
-const style = document.createElement('style');
-style.textContent = `
-  @tailwind base;
-  @tailwind components;
-  @tailwind utilities;
-`;
-document.head.appendChild(style);
+import './index.css';
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
