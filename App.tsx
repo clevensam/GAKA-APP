@@ -26,28 +26,27 @@ const App: React.FC = () => {
         const csvText = await response.text();
         const rows = csvText.split(/\r?\n/).filter(row => row.trim() !== "").slice(1); 
         
-        // Use backup modules as the skeleton
+        // Initialize from local metadata (MODULES_DATA)
         const skeletonModules: Module[] = MODULES_DATA.map(m => ({
           ...m,
-          resources: [] // Clear internal dummy resources to use live data
+          resources: [] // Clear existing to populate with live data
         }));
 
         rows.forEach((row, index) => {
-          // Robust CSV parsing for quoted fields
+          // Parse CSV row respecting quoted fields
           const parts = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(val => val?.trim().replace(/^"|"$/g, ''));
           
           /**
-           * Expected Google Sheet Mapping:
-           * index 0: Module Code (e.g. CS 8301)
-           * index 2: Resource Type (e.g. Notes or Gaka/Past Paper)
-           * index 3: Resource Title (e.g. Introduction to Counting)
-           * index 5: Download Link
+           * Google Sheet Column Mapping:
+           * index 0: Module Code (matching field)
+           * index 2: Resource Type (Notes / Past Paper)
+           * index 3: Resource Title (Displayed on Card/List)
+           * index 5: Download Link (For Download Button)
            */
           const [moduleCode, , type, title, , downloadUrl] = parts;
           
           if (!moduleCode) return;
 
-          // Normalize the code to ensure a match (lowercase, remove spaces)
           const normalizedSheetCode = moduleCode.replace(/\s+/g, '').toLowerCase();
           
           const targetModule = skeletonModules.find(
@@ -66,19 +65,15 @@ const App: React.FC = () => {
           }
         });
 
-        // "else delete": Only keep modules from backup that have resources found in the live sheet
+        // "Else delete": Only keep modules that have dynamic resources fetched from the sheet
         const finalModules = skeletonModules.filter(m => m.resources.length > 0);
-        
-        if (finalModules.length === 0 && rows.length > 0) {
-           console.warn("No matching module codes found between backup and sheet.");
-        }
         
         setModules(finalModules);
         setError(null);
       } catch (err) {
-        console.error("GAKA Data Error:", err);
-        setError("Synchronization failed. Showing offline module database.");
-        // Fallback: use internal data on fetch failure
+        console.error("GAKA Data Sync Error:", err);
+        setError("Synchronization failed. Showing offline database.");
+        // Fallback to internal data
         setModules(MODULES_DATA);
       } finally {
         setIsLoading(false);
@@ -190,7 +185,7 @@ const App: React.FC = () => {
             <div className="w-12 h-12 bg-emerald-600 rounded-2xl flex items-center justify-center text-white font-black text-xl shadow-lg shadow-emerald-100 animate-pulse">G</div>
           </div>
         </div>
-        <p className="mt-8 text-slate-400 font-bold text-[12px] uppercase tracking-widest animate-pulse">Fetching Dynamic Resources...</p>
+        <p className="mt-8 text-slate-400 font-bold text-[12px] uppercase tracking-widest animate-pulse">Syncing Dynamic Resources...</p>
       </div>
     );
   }
@@ -207,7 +202,7 @@ const App: React.FC = () => {
         {currentView !== 'home' && <Breadcrumbs />}
 
         {error && (
-          <div className="mb-12 p-6 bg-amber-50/50 border border-amber-100 rounded-3xl text-amber-800 text-sm font-medium flex flex-col sm:flex-row items-center justify-between animate-fade-in gap-4">
+          <div className="mb-12 p-6 bg-amber-50/50 border border-amber-100 rounded-3xl text-amber-800 text-sm font-medium flex flex-col sm:flex-row items-center justify-between animate-fade-in gap-4 shadow-sm">
             <div className="flex items-center">
               <span className="relative flex h-3 w-3 mr-4">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
@@ -215,7 +210,7 @@ const App: React.FC = () => {
               </span>
               <p>{error}</p>
             </div>
-            <button onClick={() => window.location.reload()} className="bg-white px-6 py-2.5 rounded-full shadow-sm hover:shadow-md transition-all active:scale-95 text-amber-600 border border-amber-100 font-semibold">Retry Live Sync</button>
+            <button onClick={() => window.location.reload()} className="bg-white px-6 py-2.5 rounded-full shadow-sm hover:shadow-md transition-all active:scale-95 text-amber-600 border border-amber-100 font-semibold">Retry Sync</button>
           </div>
         )}
 
@@ -231,7 +226,7 @@ const App: React.FC = () => {
             </h2>
             
             <p className="text-lg sm:text-2xl text-slate-500 max-w-3xl mb-14 font-normal leading-relaxed">
-              Verified lecture materials, modules, and past examination papers for Computer Science students.
+              Verified lecture materials, modules, and past examination papers for MUST Computer Science students.
             </p>
             
             <div className="flex flex-col sm:flex-row gap-6 w-full sm:w-auto">
@@ -253,8 +248,8 @@ const App: React.FC = () => {
             <div className="mt-32 grid grid-cols-1 md:grid-cols-3 gap-10 w-full max-w-6xl">
               {[
                 { title: 'Open Access', text: 'Built for students, by students. Completely free of charge and always accessible.', icon: '01' },
-                { title: 'Live Registry', text: 'Directly synchronized with Google Sheet database for real-time resource updates.', icon: '02' },
-                { title: 'Zero barriers', text: 'Forget about registration. Instant one-click access to all your course modules.', icon: '03' }
+                { title: 'Live Registry', text: 'Directly synchronized with departmental cloud for real-time resource updates.', icon: '02' },
+                { title: 'Seamless Flow', text: 'Zero barriers to entry. No registration, no login, just pure education.', icon: '03' }
               ].map((feature, idx) => (
                 <div key={idx} className="bg-white p-10 rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-xl transition-all hover:-translate-y-2 text-left group">
                   <div className="w-16 h-16 bg-slate-50 rounded-[1.2rem] flex items-center justify-center text-slate-400 mb-8 group-hover:bg-emerald-600 group-hover:text-white transition-all duration-500">
@@ -274,12 +269,12 @@ const App: React.FC = () => {
                <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-50 rounded-full -mr-32 -mt-32 opacity-50"></div>
                
                <h2 className="text-5xl sm:text-7xl font-extrabold text-slate-900 mb-12 leading-tight tracking-tight relative">
-                Academic <span className="gradient-text">Efficiency.</span>
+                Academic <span className="gradient-text">Freedom.</span>
               </h2>
               
               <div className="space-y-16 text-slate-600 leading-relaxed text-lg font-normal relative">
                 <section>
-                  <h3 className="text-xs font-bold text-emerald-600 uppercase tracking-[0.3em] mb-6">Our Objective</h3>
+                  <h3 className="text-xs font-bold text-emerald-600 uppercase tracking-[0.3em] mb-6">Our Core Purpose</h3>
                   <p className="text-2xl sm:text-3xl font-semibold text-slate-800 tracking-tight leading-snug">
                     GAKA bridges the gap between students and their course materials.
                   </p>
@@ -290,7 +285,7 @@ const App: React.FC = () => {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                   <div className="bg-slate-50 p-10 rounded-[2rem] border border-slate-100">
-                    <h4 className="text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-4">Development</h4>
+                    <h4 className="text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-4">Engineering</h4>
                     <p className="text-slate-900 font-bold text-xl mb-2">Softlink Africa</p>
                     <p className="text-base font-normal">Modern engineering optimized for low-bandwidth mobile environments.</p>
                   </div>
@@ -319,10 +314,10 @@ const App: React.FC = () => {
                 <h2 className="text-5xl font-extrabold text-slate-900 tracking-tight">Directory</h2>
                 <div className="flex items-center space-x-4">
                   <div className="flex bg-emerald-100/50 px-4 py-2 rounded-full border border-emerald-200/30">
-                     <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-700">Active Registry</span>
+                     <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-700">Live Course Registry</span>
                   </div>
                   <div className="h-1 w-1 rounded-full bg-slate-300"></div>
-                  <span className="text-slate-400 font-semibold text-base tracking-tight">{filteredModules.length} Modules Online</span>
+                  <span className="text-slate-400 font-semibold text-base tracking-tight">{filteredModules.length} Modules Available</span>
                 </div>
               </div>
               
@@ -332,7 +327,7 @@ const App: React.FC = () => {
                 </div>
                 <input 
                   type="text" 
-                  placeholder="Find your course module..."
+                  placeholder="Find your module..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full pl-20 pr-10 py-7 bg-white border border-slate-100 rounded-3xl focus:ring-8 focus:ring-emerald-50 focus:border-emerald-300 outline-none transition-all shadow-sm hover:shadow-md text-xl font-medium placeholder:text-slate-200"
@@ -351,7 +346,7 @@ const App: React.FC = () => {
               ))}
               {filteredModules.length === 0 && (
                 <div className="col-span-full py-24 text-center">
-                  <p className="text-slate-400 font-medium text-lg italic">No matches found for that search term.</p>
+                  <p className="text-slate-400 font-medium text-lg">No matches found for that module.</p>
                   <button onClick={() => { setSearchQuery(''); }} className="mt-6 text-emerald-600 font-bold hover:underline">Clear Search</button>
                 </div>
               )}
@@ -378,12 +373,12 @@ const App: React.FC = () => {
                     {selectedModule.code}
                   </span>
                   <span className="bg-black/10 backdrop-blur-md px-6 py-2 rounded-full text-[11px] font-bold tracking-widest uppercase border border-white/10">
-                    {selectedModule.resources.length} Live Files
+                    {selectedModule.resources.length} Academic Assets
                   </span>
                 </div>
                 <h2 className="text-5xl sm:text-7xl font-extrabold mb-8 leading-[1.05] tracking-tight max-w-4xl">{selectedModule.name}</h2>
                 <p className="text-emerald-50/70 text-xl max-w-3xl font-normal leading-relaxed">
-                  Verified resources synchronized with the departmental library.
+                  Verified resources synchronized with official departmental requirements.
                 </p>
               </div>
             </div>
@@ -458,17 +453,17 @@ const App: React.FC = () => {
                 <span className="text-xl font-extrabold tracking-tight text-slate-900 uppercase">GAKA Portal</span>
               </div>
               <p className="text-slate-400 text-sm font-medium max-w-sm">
-                A high-speed hub for MUST students to access essential course documentation and archived examination papers.
+                A specialized hub for MUST students to access essential course documentation and study guides.
               </p>
               <div className="pt-2">
-                <p className="text-[11px] font-bold text-slate-300 uppercase tracking-[0.2em]">Crafted by</p>
+                <p className="text-[11px] font-bold text-slate-300 uppercase tracking-[0.2em]">Developed by</p>
                 <p className="text-slate-900 font-extrabold text-lg">Cleven Sam</p>
               </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-10 w-full md:w-auto">
               <div className="space-y-3">
-                <h4 className="text-[11px] font-bold text-emerald-600 uppercase tracking-widest">Enquiries</h4>
+                <h4 className="text-[11px] font-bold text-emerald-600 uppercase tracking-widest">Support</h4>
                 <a 
                   href="mailto:clevensamwel@gmail.com" 
                   className="block text-slate-600 hover:text-emerald-600 transition-colors font-medium text-base break-all"
