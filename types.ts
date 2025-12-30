@@ -1,11 +1,10 @@
-
 export type ResourceType = 'Notes' | 'Past Paper';
 
 export interface AcademicFile {
   id: string;
-  name: string;
+  title: string;
   type: ResourceType;
-  driveUrl: string;
+  downloadUrl: string;
   size?: string;
 }
 

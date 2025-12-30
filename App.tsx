@@ -21,27 +21,25 @@ const App: React.FC = () => {
       try {
         setIsLoading(true);
         const response = await fetch(LIVE_CSV_URL);
-        if (!response.ok) throw new Error('Network response was not ok');
+        if (!response.ok) throw new Error('Sync failed');
         
         const csvText = await response.text();
         const rows = csvText.split(/\r?\n/).filter(row => row.trim() !== "").slice(1); 
         
-        // Initialize from local metadata (MODULES_DATA)
         const skeletonModules: Module[] = MODULES_DATA.map(m => ({
           ...m,
-          resources: [] // Clear existing to populate with live data
+          resources: [] 
         }));
 
         rows.forEach((row, index) => {
-          // Parse CSV row respecting quoted fields
           const parts = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(val => val?.trim().replace(/^"|"$/g, ''));
           
           /**
-           * Google Sheet Column Mapping:
-           * index 0: Module Code (matching field)
-           * index 2: Resource Type (Notes / Past Paper)
-           * index 3: Resource Title (Displayed on Card/List)
-           * index 5: Download Link (For Download Button)
+           * Mapping based on requested fields:
+           * index 0: Module Code
+           * index 2: Type (Notes / Past Paper)
+           * index 3: Title
+           * index 5: Download Link
            */
           const [moduleCode, , type, title, , downloadUrl] = parts;
           
@@ -55,25 +53,22 @@ const App: React.FC = () => {
 
           if (targetModule) {
             const resource: AcademicFile = {
-              id: `live-res-${index}`,
-              name: title || 'Academic Resource',
+              id: `dynamic-${index}`,
+              title: title || 'Academic Resource',
               type: (type?.toLowerCase().includes('note')) ? 'Notes' : 'Past Paper',
-              driveUrl: downloadUrl || '#',
+              downloadUrl: downloadUrl || '#',
               size: '---' 
             };
             targetModule.resources.push(resource);
           }
         });
 
-        // "Else delete": Only keep modules that have dynamic resources fetched from the sheet
-        const finalModules = skeletonModules.filter(m => m.resources.length > 0);
-        
-        setModules(finalModules);
+        const activeModules = skeletonModules.filter(m => m.resources.length > 0);
+        setModules(activeModules);
         setError(null);
       } catch (err) {
-        console.error("GAKA Data Sync Error:", err);
-        setError("Synchronization failed. Showing offline database.");
-        // Fallback to internal data
+        console.error("Fetch Error:", err);
+        setError("Synchronizing failed. Showing offline database.");
         setModules(MODULES_DATA);
       } finally {
         setIsLoading(false);
@@ -131,9 +126,9 @@ const App: React.FC = () => {
     );
   }, [selectedModule, filterType]);
 
-  const handleShare = (resourceName: string) => {
+  const handleShare = (resourceTitle: string) => {
     const url = window.location.href;
-    const shareMessage = `Academic Resource from *GAKA Portal*: \n\n📄 *${resourceName}*\n🔗 ${url}`;
+    const shareMessage = `Academic Resource from *GAKA Portal*: \n\n📄 *${resourceTitle}*\n🔗 ${url}`;
     const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareMessage)}`;
     window.open(whatsappUrl, '_blank');
   };
@@ -185,7 +180,7 @@ const App: React.FC = () => {
             <div className="w-12 h-12 bg-emerald-600 rounded-2xl flex items-center justify-center text-white font-black text-xl shadow-lg shadow-emerald-100 animate-pulse">G</div>
           </div>
         </div>
-        <p className="mt-8 text-slate-400 font-bold text-[12px] uppercase tracking-widest animate-pulse">Syncing Dynamic Resources...</p>
+        <p className="mt-8 text-slate-400 font-bold text-[12px] uppercase tracking-widest animate-pulse">Syncing Dynamic Portal...</p>
       </div>
     );
   }
@@ -218,7 +213,7 @@ const App: React.FC = () => {
           <div className="animate-fade-in flex flex-col items-center text-center pt-16 pb-24 lg:pt-32">
             <div className="inline-flex items-center space-x-2 bg-emerald-50 px-5 py-2.5 rounded-full mb-10 border border-emerald-100/50 animate-slide-in">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-              <span className="text-[11px] font-bold uppercase tracking-widest text-emerald-700">MUST Computer Science Portal</span>
+              <span className="text-[11px] font-bold uppercase tracking-widest text-emerald-700">MUST CS Portal</span>
             </div>
             
             <h2 className="text-5xl sm:text-[90px] font-extrabold text-slate-900 mb-10 max-w-6xl leading-[1.05] tracking-tight">
@@ -226,7 +221,7 @@ const App: React.FC = () => {
             </h2>
             
             <p className="text-lg sm:text-2xl text-slate-500 max-w-3xl mb-14 font-normal leading-relaxed">
-              Verified lecture materials, modules, and past examination papers for MUST Computer Science students.
+              Verified lecture materials, modules, and past examination papers for Computer Science students.
             </p>
             
             <div className="flex flex-col sm:flex-row gap-6 w-full sm:w-auto">
@@ -269,12 +264,12 @@ const App: React.FC = () => {
                <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-50 rounded-full -mr-32 -mt-32 opacity-50"></div>
                
                <h2 className="text-5xl sm:text-7xl font-extrabold text-slate-900 mb-12 leading-tight tracking-tight relative">
-                Academic <span className="gradient-text">Freedom.</span>
+                Academic <span className="gradient-text">Efficiency.</span>
               </h2>
               
               <div className="space-y-16 text-slate-600 leading-relaxed text-lg font-normal relative">
                 <section>
-                  <h3 className="text-xs font-bold text-emerald-600 uppercase tracking-[0.3em] mb-6">Our Core Purpose</h3>
+                  <h3 className="text-xs font-bold text-emerald-600 uppercase tracking-[0.3em] mb-6">Our Objective</h3>
                   <p className="text-2xl sm:text-3xl font-semibold text-slate-800 tracking-tight leading-snug">
                     GAKA bridges the gap between students and their course materials.
                   </p>
@@ -285,9 +280,9 @@ const App: React.FC = () => {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                   <div className="bg-slate-50 p-10 rounded-[2rem] border border-slate-100">
-                    <h4 className="text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-4">Engineering</h4>
+                    <h4 className="text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-4">Development</h4>
                     <p className="text-slate-900 font-bold text-xl mb-2">Softlink Africa</p>
-                    <p className="text-base font-normal">Modern engineering optimized for low-bandwidth mobile environments.</p>
+                    <p className="text-base font-normal">Modern engineering optimized for MUST mobile environments.</p>
                   </div>
                   <div className="bg-emerald-600 p-10 rounded-[2rem] text-white shadow-xl shadow-emerald-100 group">
                     <h4 className="text-[11px] font-bold uppercase tracking-widest text-emerald-200 mb-4">Lead Developer</h4>
@@ -314,10 +309,10 @@ const App: React.FC = () => {
                 <h2 className="text-5xl font-extrabold text-slate-900 tracking-tight">Directory</h2>
                 <div className="flex items-center space-x-4">
                   <div className="flex bg-emerald-100/50 px-4 py-2 rounded-full border border-emerald-200/30">
-                     <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-700">Live Course Registry</span>
+                     <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-700">Live Registry</span>
                   </div>
                   <div className="h-1 w-1 rounded-full bg-slate-300"></div>
-                  <span className="text-slate-400 font-semibold text-base tracking-tight">{filteredModules.length} Modules Available</span>
+                  <span className="text-slate-400 font-semibold text-base tracking-tight">{filteredModules.length} Modules Online</span>
                 </div>
               </div>
               
@@ -327,7 +322,7 @@ const App: React.FC = () => {
                 </div>
                 <input 
                   type="text" 
-                  placeholder="Find your module..."
+                  placeholder="Find your course..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full pl-20 pr-10 py-7 bg-white border border-slate-100 rounded-3xl focus:ring-8 focus:ring-emerald-50 focus:border-emerald-300 outline-none transition-all shadow-sm hover:shadow-md text-xl font-medium placeholder:text-slate-200"
@@ -346,7 +341,7 @@ const App: React.FC = () => {
               ))}
               {filteredModules.length === 0 && (
                 <div className="col-span-full py-24 text-center">
-                  <p className="text-slate-400 font-medium text-lg">No matches found for that module.</p>
+                  <p className="text-slate-400 font-medium text-lg italic">No matching modules found in the registry.</p>
                   <button onClick={() => { setSearchQuery(''); }} className="mt-6 text-emerald-600 font-bold hover:underline">Clear Search</button>
                 </div>
               )}
@@ -373,12 +368,12 @@ const App: React.FC = () => {
                     {selectedModule.code}
                   </span>
                   <span className="bg-black/10 backdrop-blur-md px-6 py-2 rounded-full text-[11px] font-bold tracking-widest uppercase border border-white/10">
-                    {selectedModule.resources.length} Academic Assets
+                    {selectedModule.resources.length} Live Files
                   </span>
                 </div>
                 <h2 className="text-5xl sm:text-7xl font-extrabold mb-8 leading-[1.05] tracking-tight max-w-4xl">{selectedModule.name}</h2>
                 <p className="text-emerald-50/70 text-xl max-w-3xl font-normal leading-relaxed">
-                  Verified resources synchronized with official departmental requirements.
+                  Verified resources synchronized with the official course registry.
                 </p>
               </div>
             </div>
@@ -406,23 +401,23 @@ const App: React.FC = () => {
                       </div>
                       <div className="min-w-0">
                         <h4 className="font-bold text-slate-800 text-2xl leading-tight truncate group-hover:text-emerald-900 transition-colors">
-                          {file.name}
+                          {file.title}
                         </h4>
                         <span className={`text-[11px] font-bold uppercase tracking-widest mt-2 block ${file.type === 'Notes' ? 'text-emerald-500' : 'text-teal-500'}`}>
-                          {file.type === 'Notes' ? 'Study Material' : 'Exam Gaka'}
+                          {file.type === 'Notes' ? 'Lecture Notes' : 'Exam Archive'}
                         </span>
                       </div>
                     </div>
                     
                     <div className="flex items-center space-x-4">
                       <button 
-                        onClick={() => handleShare(file.name)}
+                        onClick={() => handleShare(file.title)}
                         className="w-14 h-14 flex items-center justify-center text-slate-400 hover:text-emerald-600 hover:bg-emerald-50/50 rounded-full transition-all"
                       >
                         <ShareIcon className="w-6 h-6" />
                       </button>
                       <a 
-                        href={file.driveUrl} 
+                        href={file.downloadUrl} 
                         target="_blank" 
                         rel="noopener noreferrer"
                         className="flex items-center space-x-4 px-12 py-5 bg-emerald-600 text-white font-bold text-[14px] rounded-2xl hover:bg-emerald-700 transition-all shadow-xl shadow-emerald-100 active:scale-95"
@@ -453,17 +448,17 @@ const App: React.FC = () => {
                 <span className="text-xl font-extrabold tracking-tight text-slate-900 uppercase">GAKA Portal</span>
               </div>
               <p className="text-slate-400 text-sm font-medium max-w-sm">
-                A specialized hub for MUST students to access essential course documentation and study guides.
+                A streamlined hub for MUST students to access essential course documentation and archived examination papers.
               </p>
               <div className="pt-2">
-                <p className="text-[11px] font-bold text-slate-300 uppercase tracking-[0.2em]">Developed by</p>
+                <p className="text-[11px] font-bold text-slate-300 uppercase tracking-[0.2em]">Designed by</p>
                 <p className="text-slate-900 font-extrabold text-lg">Cleven Sam</p>
               </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-10 w-full md:w-auto">
               <div className="space-y-3">
-                <h4 className="text-[11px] font-bold text-emerald-600 uppercase tracking-widest">Support</h4>
+                <h4 className="text-[11px] font-bold text-emerald-600 uppercase tracking-widest">Enquiries</h4>
                 <a 
                   href="mailto:clevensamwel@gmail.com" 
                   className="block text-slate-600 hover:text-emerald-600 transition-colors font-medium text-base break-all"

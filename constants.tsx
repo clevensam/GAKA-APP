@@ -1,4 +1,3 @@
-
 import { Module } from './types';
 
 export const MODULES_DATA: Module[] = [
@@ -8,8 +7,8 @@ export const MODULES_DATA: Module[] = [
     name: 'Principles of Counting',
     description: 'Foundational mathematics for computing, combinatorics, and discrete structures.',
     resources: [
-      { id: '1', name: 'Permutations & Combinations Notes', type: 'Notes', driveUrl: '#', size: '1.2MB' },
-      { id: '2', name: '2022 End of Semester GAKA', type: 'Past Paper', driveUrl: '#', size: '800KB' },
+      { id: 'p1', title: 'Permutations & Combinations (Placeholder)', type: 'Notes', downloadUrl: '#', size: '---' },
+      { id: 'p2', title: '2022 Semester Examination (Placeholder)', type: 'Past Paper', downloadUrl: '#', size: '---' },
     ]
   },
   {
@@ -18,8 +17,7 @@ export const MODULES_DATA: Module[] = [
     name: 'Professional Issues in IS Practice',
     description: 'Ethics, legalities, and professional standards in the IT industry.',
     resources: [
-      { id: '3', name: 'Ethics in IT Lecture Slides', type: 'Notes', driveUrl: '#', size: '2.5MB' },
-      { id: '4', name: 'Mock Professional Exam', type: 'Past Paper', driveUrl: '#', size: '450KB' },
+      { id: 'p3', title: 'Ethics in IT Lecture (Placeholder)', type: 'Notes', downloadUrl: '#', size: '---' },
     ]
   },
   {
@@ -28,8 +26,7 @@ export const MODULES_DATA: Module[] = [
     name: 'Distributed Systems',
     description: 'Architectures, algorithms, and models for distributed computing environments.',
     resources: [
-      { id: '5', name: 'Client-Server Model Overview', type: 'Notes', driveUrl: '#', size: '1.8MB' },
-      { id: '6', name: '2021 Supplementary GAKA', type: 'Past Paper', driveUrl: '#', size: '1.1MB' },
+      { id: 'p4', title: 'Client-Server Architecture (Placeholder)', type: 'Notes', downloadUrl: '#', size: '---' },
     ]
   },
   {
@@ -38,8 +35,7 @@ export const MODULES_DATA: Module[] = [
     name: 'Network Design and Administration',
     description: 'Implementation and management of complex network infrastructures.',
     resources: [
-      { id: '7', name: 'Subnetting & IP Configuration', type: 'Notes', driveUrl: '#', size: '3.2MB' },
-      { id: '8', name: 'Mid-term Assessment GAKA', type: 'Past Paper', driveUrl: '#', size: '920KB' },
+      { id: 'p5', title: 'Subnetting Guide (Placeholder)', type: 'Notes', downloadUrl: '#', size: '---' },
     ]
   },
   {
@@ -48,8 +44,7 @@ export const MODULES_DATA: Module[] = [
     name: 'Advanced OOP',
     description: 'Design patterns, concurrency, and advanced architectural paradigms.',
     resources: [
-      { id: '9', name: 'Design Patterns Handbook', type: 'Notes', driveUrl: '#', size: '4.5MB' },
-      { id: '10', name: 'Practical Coding GAKA', type: 'Past Paper', driveUrl: '#', size: '600KB' },
+      { id: 'p6', title: 'Design Patterns Handbook (Placeholder)', type: 'Notes', downloadUrl: '#', size: '---' },
     ]
   },
   {
@@ -58,8 +53,7 @@ export const MODULES_DATA: Module[] = [
     name: 'Application Development for Mobile Devices',
     description: 'Native and hybrid mobile app creation frameworks.',
     resources: [
-      { id: '11', name: 'React Native Basics', type: 'Notes', driveUrl: '#', size: '2.8MB' },
-      { id: '12', name: 'Final Project Guidelines', type: 'Notes', driveUrl: '#', size: '1.5MB' },
+      { id: 'p7', title: 'Mobile Frameworks Intro (Placeholder)', type: 'Notes', downloadUrl: '#', size: '---' },
     ]
   },
   {
@@ -68,7 +62,7 @@ export const MODULES_DATA: Module[] = [
     name: 'Final Year Project I',
     description: 'Proposal writing and system analysis for final year requirements.',
     resources: [
-      { id: '13', name: 'Proposal Template', type: 'Notes', driveUrl: '#', size: '500KB' },
+      { id: 'p8', title: 'Project Proposal Format (Placeholder)', type: 'Notes', downloadUrl: '#', size: '---' },
     ]
   },
   {
@@ -77,8 +71,7 @@ export const MODULES_DATA: Module[] = [
     name: 'Statistics and Numerical Analysis',
     description: 'Statistical methods and numerical computations for data-driven decisions.',
     resources: [
-      { id: '14', name: 'Probability Distributions', type: 'Notes', driveUrl: '#', size: '1.9MB' },
-      { id: '15', name: '2022 Statistics GAKA', type: 'Past Paper', driveUrl: '#', size: '1.3MB' },
+      { id: 'p9', title: 'Probability & Distributions (Placeholder)', type: 'Notes', downloadUrl: '#', size: '---' },
     ]
   }
 ];
