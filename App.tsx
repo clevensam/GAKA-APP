@@ -63,13 +63,14 @@ const App: React.FC = () => {
           }
         });
 
+        // Only display modules that have at least one resource in the sheet
         const activeModules = skeletonModules.filter(m => m.resources.length > 0);
         setModules(activeModules);
         setError(null);
       } catch (err) {
         console.error("Fetch Error:", err);
-        setError("Synchronizing failed. Showing offline database.");
-        setModules(MODULES_DATA);
+        setError("Synchronizing failed. No live data available.");
+        setModules([]); // Ensure no dummy data is shown
       } finally {
         setIsLoading(false);
       }
@@ -94,6 +95,8 @@ const App: React.FC = () => {
           setFilterType('All'); 
         } else if (modules.length > 0) {
           setCurrentView('modules');
+        } else {
+          setCurrentView('home');
         }
       } else {
         setCurrentView('home');
@@ -341,8 +344,12 @@ const App: React.FC = () => {
               ))}
               {filteredModules.length === 0 && (
                 <div className="col-span-full py-24 text-center">
-                  <p className="text-slate-400 font-medium text-lg italic">No matching modules found in the registry.</p>
-                  <button onClick={() => { setSearchQuery(''); }} className="mt-6 text-emerald-600 font-bold hover:underline">Clear Search</button>
+                  <p className="text-slate-400 font-medium text-lg italic">
+                    {modules.length === 0 ? "The registry is currently empty." : "No matching modules found in the registry."}
+                  </p>
+                  {modules.length > 0 && (
+                    <button onClick={() => { setSearchQuery(''); }} className="mt-6 text-emerald-600 font-bold hover:underline">Clear Search</button>
+                  )}
                 </div>
               )}
             </div>
@@ -368,7 +375,7 @@ const App: React.FC = () => {
                     {selectedModule.code}
                   </span>
                   <span className="bg-black/10 backdrop-blur-md px-6 py-2 rounded-full text-[11px] font-bold tracking-widest uppercase border border-white/10">
-                    {selectedModule.resources.length} Live Files
+                    {selectedModule.resources.length} Academic Assets
                   </span>
                 </div>
                 <h2 className="text-5xl sm:text-7xl font-extrabold mb-8 leading-[1.05] tracking-tight max-w-4xl">{selectedModule.name}</h2>
