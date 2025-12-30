@@ -7,6 +7,17 @@ import { MODULES_DATA } from './constants';
 
 const LIVE_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRn-pw2j_BMf_v--CHjpGLos3oFFAyOjrlZ8vsM0uFs4E23GPcGZ2F0tdBvRZGeg7VwZ-ZkIOpHU8zm/pub?output=csv";
 
+// Helper to convert Google Drive "view" links to "direct download" links
+const transformToDirectDownload = (url: string): string => {
+  if (!url || url === '#') return '#';
+  const driveRegex = /\/file\/d\/([^/]+)\/(?:view|edit)/;
+  const match = url.match(driveRegex);
+  if (match && match[1]) {
+    return `https://drive.google.com/uc?export=download&id=${match[1]}`;
+  }
+  return url;
+};
+
 const App: React.FC = () => {
   const [modules, setModules] = useState<Module[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -15,6 +26,7 @@ const App: React.FC = () => {
   const [selectedModule, setSelectedModule] = useState<Module | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<ResourceType | 'All'>('All');
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -31,10 +43,10 @@ const App: React.FC = () => {
         const headers = allRows[0].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(h => h.trim().replace(/^"|"$/g, '').toLowerCase());
         
         const colIdx = {
-          code: headers.findIndex(h => h.includes('code') || h.includes('module')),
-          type: headers.findIndex(h => h.includes('type')),
-          title: headers.findIndex(h => h.includes('title')),
-          download: headers.findIndex(h => h.includes('download url') || h.includes('download link') || h.includes('url'))
+          code: headers.findIndex(h => h === 'module code' || h === 'code' || h.includes('module')),
+          type: headers.findIndex(h => h === 'type'),
+          title: headers.findIndex(h => h === 'title'),
+          download: headers.findIndex(h => h === 'download url' || h === 'download link' || h === 'url')
         };
 
         const rows = allRows.slice(1); 
@@ -49,7 +61,8 @@ const App: React.FC = () => {
           const moduleCode = parts[colIdx.code] || "";
           const typeStr = parts[colIdx.type] || "";
           const title = parts[colIdx.title] || "";
-          const downloadUrl = parts[colIdx.download] || "#";
+          const rawUrl = parts[colIdx.download] || "#";
+          const downloadUrl = transformToDirectDownload(rawUrl);
           
           if (!moduleCode) return;
 
@@ -143,6 +156,21 @@ const App: React.FC = () => {
     window.open(whatsappUrl, '_blank');
   };
 
+  const handleDownloadClick = (e: React.MouseEvent<HTMLAnchorElement>, file: AcademicFile) => {
+    if (file.downloadUrl === '#') {
+      e.preventDefault();
+      return;
+    }
+    
+    // Set downloading state for animation
+    setDownloadingId(file.id);
+    
+    // Reset after a few seconds (simulating start of stream)
+    setTimeout(() => {
+      setDownloadingId(null);
+    }, 3000);
+  };
+
   const Breadcrumbs = () => (
     <nav className="flex items-center space-x-2 text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-8 overflow-x-auto whitespace-nowrap pb-2 scrollbar-hide animate-fade-in">
       <button onClick={() => navigateTo('#/home')} className="hover:text-emerald-600 transition-colors">Home</button>
@@ -190,7 +218,6 @@ const App: React.FC = () => {
             <div className="w-12 h-12 bg-emerald-600 rounded-2xl flex items-center justify-center text-white font-black text-xl shadow-lg shadow-emerald-100 animate-pulse">G</div>
           </div>
         </div>
-        <p className="mt-8 text-slate-400 font-bold text-[12px] uppercase tracking-widest animate-pulse">Syncing Dynamic Portal...</p>
       </div>
     );
   }
@@ -432,12 +459,24 @@ const App: React.FC = () => {
                       </button>
                       <a 
                         href={file.downloadUrl} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="flex items-center space-x-4 px-12 py-5 bg-emerald-600 text-white font-bold text-[14px] rounded-2xl hover:bg-emerald-700 transition-all shadow-xl shadow-emerald-100 active:scale-95"
+                        onClick={(e) => handleDownloadClick(e, file)}
+                        className={`relative overflow-hidden flex items-center space-x-4 px-12 py-5 font-bold text-[14px] rounded-2xl transition-all shadow-xl active:scale-95 ${
+                          downloadingId === file.id 
+                          ? 'bg-slate-800 text-white shadow-slate-100 cursor-default' 
+                          : 'bg-emerald-600 text-white shadow-emerald-100 hover:bg-emerald-700'
+                        }`}
                       >
-                        <DownloadIcon className="w-5 h-5" />
-                        <span>Download</span>
+                        {downloadingId === file.id ? (
+                          <>
+                            <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
+                            <span>Starting...</span>
+                          </>
+                        ) : (
+                          <>
+                            <DownloadIcon className="w-5 h-5" />
+                            <span>Download</span>
+                          </>
+                        )}
                       </a>
                     </div>
                   </div>
