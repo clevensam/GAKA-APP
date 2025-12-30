@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { Navbar } from './components/Navbar';
 import { ModuleCard } from './components/ModuleCard';
@@ -6,7 +5,6 @@ import { SearchIcon, BackIcon, FileIcon, DownloadIcon, ShareIcon, ChevronRightIc
 import { Module, ResourceType, AcademicFile } from './types';
 import { MODULES_DATA } from './constants';
 
-// The live Google Sheet URL provided by the user
 const LIVE_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRn-pw2j_BMf_v--CHjpGLos3oFFAyOjrlZ8vsM0uFs4E23GPcGZ2F0tdBvRZGeg7VwZ-ZkIOpHU8zm/pub?output=csv";
 
 const App: React.FC = () => {
@@ -18,7 +16,6 @@ const App: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<ResourceType | 'All'>('All');
 
-  // Fetch and parse Google Sheet data
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -42,7 +39,7 @@ const App: React.FC = () => {
               id: moduleCode.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
               code: moduleCode,
               name: moduleName,
-              description: `All resources for ${moduleName}. Curated for students.`,
+              description: `All resources for ${moduleName}. Curated for CS students.`,
               resources: []
             };
           }
@@ -66,7 +63,7 @@ const App: React.FC = () => {
         setModules(modulesArray);
         setError(null);
       } catch (err) {
-        console.error("Data Error:", err);
+        console.error("GAKA Portal Fetch Error:", err);
         setError(err instanceof Error ? err.message : 'Connection failed');
         setModules(MODULES_DATA);
       } finally {
@@ -82,6 +79,7 @@ const App: React.FC = () => {
       const hash = window.location.hash;
       if (hash === '#/modules') {
         setCurrentView('modules');
+        setFilterType('All'); // Reset filter when coming back to directory
       } else if (hash === '#/about') {
         setCurrentView('about');
       } else if (hash.startsWith('#/module/')) {
@@ -90,6 +88,7 @@ const App: React.FC = () => {
         if (module) {
           setSelectedModule(module);
           setCurrentView('detail');
+          setFilterType('All'); // Reset filter when opening detail
         } else if (modules.length > 0) {
           setCurrentView('modules');
         }
@@ -106,14 +105,20 @@ const App: React.FC = () => {
 
   const navigateTo = (path: string) => {
     window.location.hash = path;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const filteredModules = useMemo(() => {
-    return modules.filter(m => 
-      m.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-      m.code.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-  }, [modules, searchQuery]);
+    return modules.filter(m => {
+      const matchesSearch = m.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                           m.code.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      const matchesType = filterType === 'All' || 
+                         m.resources.some(r => r.type === filterType);
+      
+      return matchesSearch && matchesType;
+    });
+  }, [modules, searchQuery, filterType]);
 
   const filteredResources = useMemo(() => {
     if (!selectedModule) return [];
@@ -124,28 +129,10 @@ const App: React.FC = () => {
 
   const copyToClipboard = async (text: string) => {
     try {
-      if (navigator.clipboard && window.isSecureContext) {
-        await navigator.clipboard.writeText(text);
-        alert('Link copied to clipboard!');
-        return;
-      }
-      throw new Error('Clipboard API unavailable');
+      await navigator.clipboard.writeText(text);
+      alert('Share link copied!');
     } catch (err) {
-      try {
-        const textArea = document.createElement("textarea");
-        textArea.value = text;
-        textArea.style.position = "fixed";
-        textArea.style.left = "-999999px";
-        textArea.style.top = "-999999px";
-        document.body.appendChild(textArea);
-        textArea.focus();
-        textArea.select();
-        const successful = document.execCommand('copy');
-        document.body.removeChild(textArea);
-        if (successful) alert('Link copied to clipboard!');
-      } catch (fallbackErr) {
-        window.prompt("Copy link to clipboard: Ctrl+C, Enter", text);
-      }
+      window.prompt("Copy link:", text);
     }
   };
 
@@ -154,27 +141,25 @@ const App: React.FC = () => {
     if (navigator.share) {
       navigator.share({
         title: `GAKA: ${resourceName}`,
-        text: `Shared academic resource from GAKA Portal`,
+        text: `Check out this academic resource on GAKA Portal`,
         url: url,
-      }).catch((err) => {
-        if (err.name !== 'AbortError') copyToClipboard(url);
-      });
+      }).catch(() => copyToClipboard(url));
     } else {
       copyToClipboard(url);
     }
   };
 
   const Breadcrumbs = () => (
-    <nav className="flex items-center space-x-2 text-[10px] font-black uppercase tracking-widest text-slate-400 mb-6 overflow-x-auto whitespace-nowrap pb-2 scrollbar-hide">
+    <nav className="flex items-center space-x-2 text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-8 overflow-x-auto whitespace-nowrap pb-2 scrollbar-hide animate-fade-in">
       <button onClick={() => navigateTo('#/home')} className="hover:text-emerald-600 transition-colors">Home</button>
       <ChevronRightIcon className="w-3 h-3 text-slate-300 flex-shrink-0" />
-      {currentView === 'modules' && <span className="text-slate-900">Modules</span>}
-      {currentView === 'about' && <span className="text-slate-900">About</span>}
+      {currentView === 'modules' && <span className="text-slate-900 font-bold">Modules</span>}
+      {currentView === 'about' && <span className="text-slate-900 font-bold">About</span>}
       {currentView === 'detail' && (
         <>
           <button onClick={() => navigateTo('#/modules')} className="hover:text-emerald-600 transition-colors">Modules</button>
           <ChevronRightIcon className="w-3 h-3 text-slate-300 flex-shrink-0" />
-          <span className="text-slate-900">{selectedModule?.code}</span>
+          <span className="text-slate-900 font-bold">{selectedModule?.code}</span>
         </>
       )}
     </nav>
@@ -183,129 +168,122 @@ const App: React.FC = () => {
   if (isLoading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-white">
-        <div className="relative">
-          <div className="w-20 h-20 border-[6px] border-slate-50 border-t-emerald-600 rounded-full animate-spin"></div>
+        <div className="relative group">
+          <div className="w-24 h-24 border-[4px] border-slate-100 border-t-emerald-600 rounded-full animate-spin transition-all"></div>
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-10 h-10 bg-emerald-600 rounded-lg flex items-center justify-center text-white">
-              <BookOpenIcon className="w-6 h-6" />
-            </div>
+            <div className="w-12 h-12 bg-emerald-600 rounded-2xl flex items-center justify-center text-white font-black text-xl shadow-lg shadow-emerald-100 animate-pulse">G</div>
           </div>
         </div>
+        <p className="mt-8 text-slate-400 font-bold text-[12px] uppercase tracking-widest animate-pulse">Syncing Resources...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#fcfdfe]">
-      <Navbar onLogoClick={() => navigateTo('#/home')} />
+    <div className="min-h-screen flex flex-col selection:bg-emerald-100 selection:text-emerald-900">
+      <Navbar 
+        onLogoClick={() => navigateTo('#/home')} 
+        onHomeClick={() => navigateTo('#/home')}
+        onDirectoryClick={() => navigateTo('#/modules')}
+      />
 
-      <main className="flex-grow container mx-auto max-w-7xl px-4 py-8 sm:px-8">
+      <main className="flex-grow container mx-auto max-w-7xl px-4 py-12 sm:px-8">
         {currentView !== 'home' && <Breadcrumbs />}
 
         {error && (
-          <div className="mb-8 p-4 bg-red-50 border border-red-100 rounded-2xl text-red-700 text-xs font-bold flex items-center justify-between animate-fade-in">
-            <span className="flex items-center">
-              <span className="w-2 h-2 rounded-full bg-red-500 mr-3 animate-ping"></span>
-              Update Status: Showing cached module data.
-            </span>
-            <button onClick={() => window.location.reload()} className="bg-white px-4 py-1.5 rounded-lg shadow-sm hover:shadow-md transition-all active:scale-95">Retry</button>
+          <div className="mb-12 p-6 bg-red-50/50 border border-red-100 rounded-3xl text-red-700 text-sm font-medium flex flex-col sm:flex-row items-center justify-between animate-fade-in gap-4">
+            <div className="flex items-center">
+              <span className="relative flex h-3 w-3 mr-4">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+              </span>
+              <p>Unable to fetch live updates. Showing offline backup modules.</p>
+            </div>
+            <button onClick={() => window.location.reload()} className="bg-white px-6 py-2.5 rounded-full shadow-sm hover:shadow-md transition-all active:scale-95 text-red-600 border border-red-100 font-semibold">Sync Now</button>
           </div>
         )}
 
         {currentView === 'home' && (
-          <div className="animate-fade-in flex flex-col items-center text-center py-16 lg:py-32">
-            <h2 className="text-5xl sm:text-8xl font-black text-slate-900 mb-8 max-w-5xl leading-[1.05] tracking-tight">
-              Access Your Academic Modules <span className="gradient-text italic">Anytime, Freely.</span>
+          <div className="animate-fade-in flex flex-col items-center text-center pt-16 pb-24 lg:pt-32">
+            <div className="inline-flex items-center space-x-2 bg-emerald-50 px-5 py-2.5 rounded-full mb-10 border border-emerald-100/50 animate-slide-in">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span className="text-[11px] font-bold uppercase tracking-widest text-emerald-700">MUST Computer Science Portal</span>
+            </div>
+            
+            <h2 className="text-5xl sm:text-[90px] font-extrabold text-slate-900 mb-10 max-w-6xl leading-[1.05] tracking-tight">
+              Centralized <span className="gradient-text">Academic</span> <br className="hidden sm:block"/> Repository.
             </h2>
-            <p className="text-lg sm:text-2xl text-slate-500 max-w-3xl mb-12 font-medium leading-relaxed">
-              Experience seamless learning with instant access to comprehensive module resources. Designed to simplify your academic life and provide unrestricted support for your studies.
+            
+            <p className="text-lg sm:text-2xl text-slate-500 max-w-3xl mb-14 font-normal leading-relaxed">
+              Unrestricted access to lecture materials, modules, and past exam papers. Designed for simplicity and clarity.
             </p>
-            <div className="flex flex-col sm:flex-row gap-5 w-full sm:w-auto">
+            
+            <div className="flex flex-col sm:flex-row gap-6 w-full sm:w-auto">
               <button 
                 onClick={() => navigateTo('#/modules')}
-                className="group flex items-center justify-center px-12 py-5 bg-emerald-600 text-white rounded-[2rem] font-bold shadow-2xl shadow-emerald-100 hover:bg-emerald-700 hover:scale-[1.02] transition-all duration-300"
+                className="group flex items-center justify-center px-16 py-6 bg-emerald-600 text-white rounded-full font-bold text-base shadow-2xl shadow-emerald-200 hover:bg-emerald-700 hover:scale-[1.03] transition-all duration-300 active:scale-95"
               >
-                Explore Modules
+                Start Exploring
                 <SearchIcon className="ml-3 w-5 h-5 group-hover:rotate-12 transition-transform" />
               </button>
               <button 
                 onClick={() => navigateTo('#/about')}
-                className="px-12 py-5 bg-white text-slate-700 border border-slate-200 rounded-[2rem] font-bold hover:bg-slate-50 hover:border-slate-300 transition-all duration-300 shadow-sm"
+                className="px-16 py-6 bg-white text-slate-700 border border-slate-200 rounded-full font-bold text-base hover:bg-slate-50 hover:border-slate-300 transition-all duration-300 shadow-sm active:scale-95"
               >
-                About the Portal
+                Our Mission
               </button>
             </div>
             
-            <div className="mt-24 grid grid-cols-1 md:grid-cols-3 gap-8 w-full max-w-6xl">
-              <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-xl transition-all hover:-translate-y-2 group">
-                <div className="w-14 h-14 bg-emerald-50 rounded-2xl flex items-center justify-center text-emerald-600 mb-6 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
-                  <span className="text-2xl font-black">1</span>
+            <div className="mt-32 grid grid-cols-1 md:grid-cols-3 gap-10 w-full max-w-6xl">
+              {[
+                { title: 'Open Access', text: 'Built for students, by students. Completely free of charge and always accessible.', icon: '01' },
+                { title: 'Cloud Integrated', text: 'Directly synchronized with departmental storage for real-time resource updates.', icon: '02' },
+                { title: 'No Registration', text: 'Forget about account passwords. Instant one-click access to all your course modules.', icon: '03' }
+              ].map((feature, idx) => (
+                <div key={idx} className="bg-white p-10 rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-xl transition-all hover:-translate-y-2 text-left group">
+                  <div className="w-16 h-16 bg-slate-50 rounded-[1.2rem] flex items-center justify-center text-slate-400 mb-8 group-hover:bg-emerald-600 group-hover:text-white transition-all duration-500">
+                    <span className="text-xl font-bold">{feature.icon}</span>
+                  </div>
+                  <h3 className="text-2xl font-bold text-slate-900 mb-4 tracking-tight">{feature.title}</h3>
+                  <p className="text-slate-500 text-base font-normal leading-relaxed">{feature.text}</p>
                 </div>
-                <h3 className="text-xl font-black text-slate-900 mb-3 tracking-tight">Zero Registration</h3>
-                <p className="text-slate-500 text-sm font-medium leading-relaxed">We value your time. No mandatory accounts, signups, or authentication required. Simply browse and access materials instantly.</p>
-              </div>
-              <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-xl transition-all hover:-translate-y-2 group">
-                <div className="w-14 h-14 bg-emerald-50 rounded-2xl flex items-center justify-center text-emerald-600 mb-6 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
-                  <span className="text-2xl font-black">2</span>
-                </div>
-                <h3 className="text-xl font-black text-slate-900 mb-3 tracking-tight">24/7 Availability</h3>
-                <p className="text-slate-500 text-sm font-medium leading-relaxed">Your education doesn't sleep. Every module is accessible around the clock, allowing you to study at your own pace whenever you need.</p>
-              </div>
-              <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-xl transition-all hover:-translate-y-2 group">
-                <div className="w-14 h-14 bg-emerald-50 rounded-2xl flex items-center justify-center text-emerald-600 mb-6 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
-                  <span className="text-2xl font-black">3</span>
-                </div>
-                <h3 className="text-xl font-black text-slate-900 mb-3 tracking-tight">Student Verified</h3>
-                <p className="text-slate-500 text-sm font-medium leading-relaxed">Trust in quality. All lecture notes and past papers are verified and curated by the academic community for accuracy.</p>
-              </div>
+              ))}
             </div>
           </div>
         )}
 
         {currentView === 'about' && (
-          <div className="animate-fade-in max-w-4xl mx-auto py-12">
-            <button 
-              onClick={() => navigateTo('#/home')}
-              className="flex items-center text-slate-500 font-black text-[10px] uppercase tracking-[0.2em] mb-10 hover:text-emerald-600 transition-all group"
-            >
-              <BackIcon className="mr-3 w-5 h-5 group-hover:-translate-x-2 transition-transform duration-300" />
-              Back to Home
-            </button>
-
-            <div className="bg-white rounded-[3rem] p-10 sm:p-20 shadow-sm border border-slate-100">
-              <h2 className="text-4xl sm:text-6xl font-black text-slate-900 mb-8 leading-tight tracking-tight">
-                About <span className="gradient-text">GAKA Portal</span>
+          <div className="animate-fade-in max-w-5xl mx-auto py-12">
+            <div className="bg-white rounded-[3.5rem] p-10 sm:p-24 shadow-sm border border-slate-100 relative overflow-hidden">
+               <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-50 rounded-full -mr-32 -mt-32 opacity-50"></div>
+               
+               <h2 className="text-5xl sm:text-7xl font-extrabold text-slate-900 mb-12 leading-tight tracking-tight relative">
+                Academic <span className="gradient-text">Freedom.</span>
               </h2>
               
-              <div className="space-y-12 text-slate-600 leading-relaxed text-lg font-medium">
+              <div className="space-y-16 text-slate-600 leading-relaxed text-lg font-normal relative">
                 <section>
-                  <h3 className="text-xl font-black text-slate-900 uppercase tracking-widest mb-4">Our Mission</h3>
-                  <p>
-                    GAKA Portal was conceived with a single, clear objective: to democratize academic resources for students. We believe that access to lecture materials, past examination papers, and reference guides should be frictionless, transparent, and free from barriers.
+                  <h3 className="text-xs font-bold text-emerald-600 uppercase tracking-[0.3em] mb-6">Our Core Purpose</h3>
+                  <p className="text-2xl sm:text-3xl font-semibold text-slate-800 tracking-tight leading-snug">
+                    GAKA was built to remove the friction between a student and their learning materials.
+                  </p>
+                  <p className="mt-8">
+                    The Computer Science curriculum is demanding. Finding resources shouldn't be. By aggregating lecture notes and past papers into a single, high-speed interface, we simplify the educational experience for every student.
                   </p>
                 </section>
 
-                <section>
-                  <h3 className="text-xl font-black text-slate-900 uppercase tracking-widest mb-4">Philosophy</h3>
-                  <p>
-                    In an age of digital complexity, we chose simplicity. By removing mandatory accounts, we ensure that students can focus entirely on learning. Your attention belongs to your studies.
-                  </p>
-                </section>
-
-                <section className="bg-slate-50 p-8 rounded-[2rem] border border-slate-100">
-                  <h3 className="text-xl font-black text-slate-900 uppercase tracking-widest mb-4">Contact Information</h3>
-                  <p>
-                    For resource contributions or technical feedback, please reach out to the Computer Science Association.
-                  </p>
-                  <div className="mt-8 flex flex-col sm:flex-row gap-4">
-                    <a 
-                      href="mailto:clevensamwel@gmail.com"
-                      className="flex items-center justify-center px-10 py-4 bg-slate-900 text-white rounded-2xl font-bold hover:bg-slate-800 transition-all shadow-xl active:scale-95"
-                    >
-                      Email Support
-                    </a>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                  <div className="bg-slate-50 p-10 rounded-[2rem] border border-slate-100">
+                    <h4 className="text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-4">Engineering</h4>
+                    <p className="text-slate-900 font-bold text-xl mb-4">Softlink Africa</p>
+                    <p className="text-base font-normal">Modern web standards optimized for legibility and accessibility on any student device.</p>
                   </div>
-                </section>
+                  <div className="bg-emerald-600 p-10 rounded-[2rem] text-white shadow-xl shadow-emerald-100">
+                    <h4 className="text-[11px] font-bold uppercase tracking-widest text-emerald-200 mb-4">Lead Developer</h4>
+                    <p className="font-bold text-2xl mb-4">Cleven Samwel</p>
+                    <a href="mailto:clevensamwel@gmail.com" className="inline-block mt-4 text-[11px] font-bold uppercase tracking-widest bg-white/20 px-6 py-3 rounded-full hover:bg-white/30 transition-all">Get in Touch</a>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -313,44 +291,65 @@ const App: React.FC = () => {
 
         {currentView === 'modules' && (
           <div className="animate-fade-in">
-            <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-10">
-              <div className="space-y-2">
-                <h2 className="text-4xl font-black text-slate-900 tracking-tight">Module Directory</h2>
-                <div className="flex items-center space-x-3 text-slate-500 font-bold text-sm">
-                  <span className="px-2 py-0.5 bg-slate-100 rounded text-[10px] uppercase">UQF8</span>
-                  <span>Semester I</span>
-                  <span className="w-1 h-1 rounded-full bg-slate-300"></span>
-                  <span className="text-emerald-600">{modules.length} Modules Online</span>
+            <div className="flex flex-col lg:flex-row lg:items-end justify-between mb-8 gap-10">
+              <div className="space-y-4">
+                <h2 className="text-5xl font-extrabold text-slate-900 tracking-tight">Directory</h2>
+                <div className="flex items-center space-x-4">
+                  <div className="flex bg-emerald-100/50 px-4 py-2 rounded-full border border-emerald-200/30">
+                     <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-700">Semester I Resources</span>
+                  </div>
+                  <div className="h-1 w-1 rounded-full bg-slate-300"></div>
+                  <span className="text-slate-400 font-semibold text-base tracking-tight">{filteredModules.length} Matches</span>
                 </div>
               </div>
               
-              <div className="relative w-full md:w-[400px] group">
-                <SearchIcon className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-emerald-500 transition-colors" />
+              <div className="relative w-full lg:w-[480px] group">
+                <div className="absolute inset-y-0 left-8 flex items-center pointer-events-none">
+                  <SearchIcon className="w-6 h-6 text-slate-300 group-focus-within:text-emerald-500 transition-colors" />
+                </div>
                 <input 
                   type="text" 
                   placeholder="Find your module..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-14 pr-8 py-5 bg-white border border-slate-200 rounded-[2rem] focus:ring-8 focus:ring-emerald-50 focus:border-emerald-400 outline-none transition-all shadow-sm group-hover:shadow-md text-lg font-medium"
+                  className="w-full pl-20 pr-10 py-7 bg-white border border-slate-100 rounded-3xl focus:ring-8 focus:ring-emerald-50 focus:border-emerald-300 outline-none transition-all shadow-sm hover:shadow-md text-xl font-medium placeholder:text-slate-200"
                 />
               </div>
             </div>
 
+            <div className="flex bg-slate-50/50 p-2 rounded-[2rem] border border-slate-100 mb-12 w-fit mx-auto sm:mx-0 overflow-x-auto scrollbar-hide max-w-full">
+              {[
+                { label: 'ALL', value: 'All' },
+                { label: 'Notes', value: 'Notes' },
+                { label: 'Gaka', value: 'Past Paper' }
+              ].map((tab) => (
+                <button
+                  key={tab.value}
+                  onClick={() => setFilterType(tab.value as any)}
+                  className={`px-10 py-4 rounded-[1.6rem] text-[11px] font-bold tracking-widest uppercase transition-all duration-500 whitespace-nowrap ${
+                    filterType === tab.value 
+                    ? 'bg-white text-emerald-600 shadow-lg scale-[1.05] border border-slate-100' 
+                    : 'text-slate-400 hover:text-slate-800'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-              {filteredModules.map((module) => (
-                <ModuleCard 
-                  key={module.id} 
-                  module={module} 
-                  onClick={() => navigateTo(`#/module/${module.id}`)} 
-                />
+              {filteredModules.map((module, i) => (
+                <div key={module.id} className="animate-fade-in" style={{ animationDelay: `${i * 50}ms` }}>
+                  <ModuleCard 
+                    module={module} 
+                    onClick={() => navigateTo(`#/module/${module.id}`)} 
+                  />
+                </div>
               ))}
               {filteredModules.length === 0 && (
-                <div className="col-span-full py-32 text-center bg-white rounded-[3rem] border border-slate-100 shadow-sm">
-                  <div className="w-20 h-20 bg-slate-50 rounded-3xl flex items-center justify-center mx-auto mb-6 transform rotate-12">
-                    <SearchIcon className="text-slate-200 w-10 h-10" />
-                  </div>
-                  <h3 className="text-2xl font-black text-slate-800 tracking-tight">No results</h3>
-                  <button onClick={() => setSearchQuery('')} className="mt-6 text-emerald-600 font-black text-xs uppercase tracking-widest hover:underline">Clear Search</button>
+                <div className="col-span-full py-24 text-center">
+                  <p className="text-slate-400 font-medium text-lg">No modules found matching your current selection.</p>
+                  <button onClick={() => { setSearchQuery(''); setFilterType('All'); }} className="mt-6 text-emerald-600 font-bold hover:underline">Clear all filters</button>
                 </div>
               )}
             </div>
@@ -358,83 +357,87 @@ const App: React.FC = () => {
         )}
 
         {currentView === 'detail' && selectedModule && (
-          <div className="animate-fade-in max-w-5xl mx-auto pb-20">
-            <button 
-              onClick={() => navigateTo('#/modules')}
-              className="flex items-center text-slate-500 font-black text-[10px] uppercase tracking-[0.2em] mb-10 hover:text-emerald-600 transition-all group"
-            >
-              <BackIcon className="mr-3 w-5 h-5 group-hover:-translate-x-2 transition-transform duration-300" />
-              Back to Directory
-            </button>
+          <div className="animate-fade-in max-w-5xl mx-auto pb-32">
+            <div className="mb-10">
+               <button 
+                onClick={() => navigateTo('#/modules')}
+                className="flex items-center text-slate-400 font-bold text-[11px] uppercase tracking-widest hover:text-emerald-600 transition-all group"
+              >
+                <BackIcon className="mr-3 w-5 h-5 group-hover:-translate-x-1.5 transition-transform" />
+                Return to Directory
+              </button>
+            </div>
 
-            <div className="bg-gradient-to-br from-emerald-600 via-emerald-700 to-teal-800 p-12 sm:p-20 rounded-[3rem] text-white shadow-2xl shadow-emerald-100 mb-12 relative overflow-hidden">
+            <div className="bg-gradient-to-br from-emerald-600 via-emerald-700 to-teal-900 p-12 sm:p-24 rounded-[3.5rem] text-white shadow-2xl shadow-emerald-100 mb-12 relative overflow-hidden">
               <div className="relative z-10">
-                <div className="flex items-center space-x-3 mb-8">
-                  <span className="bg-white/20 backdrop-blur-xl px-5 py-2 rounded-full text-[10px] font-black tracking-[0.2em] uppercase border border-white/10">
+                <div className="flex flex-wrap items-center gap-4 mb-10">
+                  <span className="bg-white/15 backdrop-blur-md px-6 py-2 rounded-full text-[11px] font-bold tracking-widest uppercase border border-white/10">
                     {selectedModule.code}
                   </span>
-                  <span className="bg-emerald-500/30 backdrop-blur-xl px-5 py-2 rounded-full text-[10px] font-black tracking-[0.2em] uppercase border border-white/10">
-                    {selectedModule.resources.length} Items
+                  <span className="bg-black/10 backdrop-blur-md px-6 py-2 rounded-full text-[11px] font-bold tracking-widest uppercase border border-white/10">
+                    {selectedModule.resources.length} Academic Assets
                   </span>
                 </div>
-                <h2 className="text-4xl sm:text-6xl font-black mb-8 leading-[1.05] tracking-tight max-w-3xl">{selectedModule.name}</h2>
-                <p className="text-emerald-50/70 text-xl max-w-2xl font-medium leading-relaxed">
-                  {selectedModule.description}
+                <h2 className="text-5xl sm:text-7xl font-extrabold mb-8 leading-[1.05] tracking-tight max-w-4xl">{selectedModule.name}</h2>
+                <p className="text-emerald-50/70 text-xl max-w-3xl font-normal leading-relaxed">
+                  Verified study materials including lecture notes and archived exam papers.
                 </p>
               </div>
             </div>
 
-            <div className="bg-white rounded-[3rem] p-10 sm:p-14 shadow-sm border border-slate-100">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-8 mb-14">
-                <div className="space-y-1">
-                  <h3 className="text-3xl font-black text-slate-900 tracking-tight">Available Assets</h3>
-                  <p className="text-slate-400 font-medium text-sm">Download shared documents</p>
-                </div>
-                <div className="flex bg-slate-50 p-2 rounded-2xl border border-slate-100">
-                  {['All', 'Notes', 'Past Paper'].map((type) => (
+            <div className="bg-white rounded-[3rem] p-10 sm:p-20 shadow-sm border border-slate-100">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-8 mb-12">
+                <h3 className="text-3xl font-bold text-slate-800">Resources</h3>
+                <div className="flex bg-slate-50 p-1.5 rounded-[1.8rem] border border-slate-100 overflow-x-auto scrollbar-hide">
+                  {[
+                    { label: 'All', value: 'All' },
+                    { label: 'Notes', value: 'Notes' },
+                    { label: 'Gaka', value: 'Past Paper' }
+                  ].map((tab) => (
                     <button
-                      key={type}
-                      onClick={() => setFilterType(type as any)}
-                      className={`px-8 py-3 rounded-xl text-[10px] font-black tracking-widest uppercase transition-all duration-300 ${
-                        filterType === type 
-                        ? 'bg-white text-emerald-600 shadow-sm scale-[1.05] border border-slate-100' 
+                      key={tab.value}
+                      onClick={() => setFilterType(tab.value as any)}
+                      className={`px-8 py-3 rounded-[1.4rem] text-[10px] font-bold tracking-widest uppercase transition-all duration-300 ${
+                        filterType === tab.value 
+                        ? 'bg-white text-emerald-600 shadow-sm border border-slate-100' 
                         : 'text-slate-400 hover:text-slate-800'
                       }`}
                     >
-                      {type === 'Past Paper' ? 'Papers' : type}
+                      {tab.label}
                     </button>
                   ))}
                 </div>
               </div>
 
-              <div className="space-y-5">
-                {filteredResources.map((file) => (
-                  <div key={file.id} className="group flex flex-col sm:flex-row sm:items-center justify-between p-6 bg-[#fcfdfe] hover:bg-white border border-slate-100 hover:border-emerald-100 rounded-[2.2rem] transition-all duration-500 hover:shadow-xl hover:shadow-emerald-50/50">
-                    <div className="flex items-center space-x-6 mb-6 sm:mb-0">
-                      <div className={`p-5 rounded-2xl flex-shrink-0 transition-all duration-700 group-hover:scale-110 group-hover:rotate-[5deg] ${
+              <div className="space-y-6">
+                {filteredResources.map((file, i) => (
+                  <div 
+                    key={file.id} 
+                    className="group flex flex-col sm:flex-row sm:items-center justify-between p-8 bg-[#fcfdfe] hover:bg-white border border-slate-50 hover:border-emerald-100 rounded-3xl transition-all duration-500 hover:shadow-xl hover:shadow-emerald-50/30 animate-fade-in"
+                    style={{ animationDelay: `${i * 80}ms` }}
+                  >
+                    <div className="flex items-center space-x-8 mb-8 sm:mb-0">
+                      <div className={`w-16 h-16 rounded-2xl flex items-center justify-center flex-shrink-0 transition-all duration-500 group-hover:scale-105 ${
                         file.type === 'Notes' 
                         ? 'bg-emerald-50 text-emerald-600' 
                         : 'bg-teal-50 text-teal-600'
                       }`}>
-                        <FileIcon className="w-7 h-7" />
+                        <FileIcon className="w-8 h-8" />
                       </div>
                       <div className="min-w-0">
-                        <h4 className="font-bold text-slate-800 text-xl leading-snug truncate pr-6 group-hover:text-emerald-900 transition-colors">
+                        <h4 className="font-bold text-slate-800 text-2xl leading-tight truncate group-hover:text-emerald-900 transition-colors">
                           {file.name}
                         </h4>
-                        <div className="flex items-center text-[10px] text-slate-400 font-black uppercase tracking-widest mt-2">
-                          <span className={`${file.type === 'Notes' ? 'text-emerald-500' : 'text-teal-500'}`}>
-                            {file.type === 'Notes' ? 'Lecture Material' : 'Examination'}
-                          </span>
-                        </div>
+                        <span className={`text-[11px] font-bold uppercase tracking-widest mt-2 block ${file.type === 'Notes' ? 'text-emerald-500' : 'text-teal-500'}`}>
+                          {file.type === 'Notes' ? 'Study Material' : 'Exam Archive'}
+                        </span>
                       </div>
                     </div>
                     
                     <div className="flex items-center space-x-4">
                       <button 
                         onClick={() => handleShare(file.name)}
-                        className="p-5 text-slate-400 hover:text-emerald-600 hover:bg-white rounded-2xl transition-all shadow-sm hover:shadow border border-transparent hover:border-emerald-50"
-                        title="Share link"
+                        className="w-14 h-14 flex items-center justify-center text-slate-400 hover:text-emerald-600 hover:bg-emerald-50/50 rounded-full transition-all"
                       >
                         <ShareIcon className="w-6 h-6" />
                       </button>
@@ -442,7 +445,7 @@ const App: React.FC = () => {
                         href={file.driveUrl} 
                         target="_blank" 
                         rel="noopener noreferrer"
-                        className="flex-grow sm:flex-grow-0 flex items-center justify-center space-x-3 px-10 py-5 bg-emerald-600 text-white font-black text-[10px] uppercase tracking-[0.2em] border border-emerald-500 rounded-2xl hover:bg-emerald-700 hover:scale-[1.03] transition-all shadow-lg shadow-emerald-100 active:scale-95"
+                        className="flex items-center space-x-4 px-12 py-5 bg-emerald-600 text-white font-bold text-[14px] rounded-2xl hover:bg-emerald-700 transition-all shadow-xl shadow-emerald-100 active:scale-95"
                       >
                         <DownloadIcon className="w-5 h-5" />
                         <span>Download</span>
@@ -450,38 +453,58 @@ const App: React.FC = () => {
                     </div>
                   </div>
                 ))}
+                {filteredResources.length === 0 && (
+                  <p className="text-center py-10 text-slate-400 font-medium">No resources found in this category.</p>
+                )}
               </div>
             </div>
           </div>
         )}
       </main>
 
-      <footer className="bg-white border-t border-slate-100 py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-8">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-10">
+      <footer className="bg-white border-t border-slate-50 py-16">
+        <div className="container mx-auto px-8 max-w-7xl">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-12">
             <div className="space-y-4">
               <div className="flex items-center space-x-3">
-                <div className="w-9 h-9 bg-emerald-600 rounded-xl flex items-center justify-center text-white">
-                  <BookOpenIcon className="w-5 h-5" />
-                </div>
-                <span className="text-xl font-black tracking-tighter text-slate-900 uppercase">Gaka Portal</span>
+                <div className="w-10 h-10 bg-emerald-600 rounded-xl flex items-center justify-center text-white font-black text-lg">G</div>
+                <span className="text-xl font-extrabold tracking-tight text-slate-900 uppercase">GAKA Portal</span>
               </div>
-              <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.2em]">
-                &copy; {new Date().getFullYear()} Computer Science Association
+              <p className="text-slate-400 text-sm font-medium max-w-sm">
+                Empowering Mbeya University of Science and Technology students with seamless academic resource access.
               </p>
+              <div className="pt-2">
+                <p className="text-[11px] font-bold text-slate-300 uppercase tracking-[0.2em]">Designed by</p>
+                <p className="text-slate-900 font-extrabold text-lg">Cleven Sam</p>
+              </div>
             </div>
 
-            <div className="space-y-3">
-              <h4 className="text-xs font-black uppercase tracking-widest text-slate-900">Contact Support</h4>
-              <div className="space-y-2">
-                <a href="mailto:clevensamwel@gmail.com" className="flex items-center text-xs font-semibold text-slate-500 hover:text-emerald-600 transition-colors">
-                  <span className="mr-2 opacity-70">✉️</span> clevensamwel@gmail.com
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-10 w-full md:w-auto">
+              <div className="space-y-3">
+                <h4 className="text-[11px] font-bold text-emerald-600 uppercase tracking-widest">Contact Support</h4>
+                <a 
+                  href="mailto:clevensamwel@gmail.com" 
+                  className="block text-slate-600 hover:text-emerald-600 transition-colors font-medium text-base break-all"
+                >
+                  clevensamwel@gmail.com
                 </a>
-                <a href="tel:0685208576" className="flex items-center text-xs font-semibold text-slate-500 hover:text-emerald-600 transition-colors">
-                  <span className="mr-2 opacity-70">📞</span> 0685208576
+              </div>
+              <div className="space-y-3">
+                <h4 className="text-[11px] font-bold text-emerald-600 uppercase tracking-widest">Phone Enquiries</h4>
+                <a 
+                  href="tel:+255685208576" 
+                  className="block text-slate-600 hover:text-emerald-600 transition-colors font-medium text-base"
+                >
+                  +255 685 208 576
                 </a>
               </div>
             </div>
+          </div>
+          
+          <div className="mt-16 pt-8 border-t border-slate-100 text-center">
+            <p className="text-slate-300 text-[11px] font-bold uppercase tracking-[0.3em]">
+              &copy; {new Date().getFullYear()} Softlink Africa | All Rights Reserved
+            </p>
           </div>
         </div>
       </footer>
