@@ -26,29 +26,30 @@ const App: React.FC = () => {
         const csvText = await response.text();
         const rows = csvText.split(/\r?\n/).filter(row => row.trim() !== "").slice(1); 
         
-        // Master list from backup (Skeleton)
+        // Initialize from backup (skeleton) - using names and codes from MODULES_DATA
         const skeletonModules: Module[] = MODULES_DATA.map(m => ({
           ...m,
-          resources: [] // Clear dummy resources, we want live data
+          resources: [] // Clear static resources; we fetch titles/types from live sheet
         }));
 
         rows.forEach((row, index) => {
           // Robust CSV parsing for quoted fields
           const parts = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(val => val?.trim().replace(/^"|"$/g, ''));
-          // Row structure: [0: Code, 1: Name, 2: Type, 3: Title, 4: View, 5: Download]
+          // Row structure: [0: Module Code, 1: Module Name, 2: Type, 3: Title, 4: View URL, 5: Download URL]
           const [moduleCode, , type, title, viewUrl, downloadUrl] = parts;
           
           if (!moduleCode) return;
 
-          // Normalize codes for matching (e.g. "CS 8301" matching "cs8301")
+          // Compare module code from sheet with module code from backup (ignoring spaces/case)
           const targetModule = skeletonModules.find(
             m => m.code.replace(/\s+/g, '').toLowerCase() === moduleCode.replace(/\s+/g, '').toLowerCase()
           );
 
           if (targetModule) {
+            // Fetch the title and type from the sheet as requested
             const resource: AcademicFile = {
               id: `live-res-${index}`,
-              name: title || 'Academic Resource',
+              name: title || 'Unnamed Resource',
               type: (type?.toLowerCase().includes('note')) ? 'Notes' : 'Past Paper',
               driveUrl: downloadUrl || viewUrl || '#',
               size: '---' 
@@ -57,19 +58,19 @@ const App: React.FC = () => {
           }
         });
 
-        // "Else delete" - Only show modules that actually have resources in the sheet
-        const syncedModules = skeletonModules.filter(m => m.resources.length > 0);
+        // Filter: Keep only modules that have resources. Else delete.
+        const activeModules = skeletonModules.filter(m => m.resources.length > 0);
         
-        if (syncedModules.length === 0) {
-           throw new Error("The live registry is currently empty.");
+        if (activeModules.length === 0) {
+           throw new Error("No live resources currently registered.");
         }
         
-        setModules(syncedModules);
+        setModules(activeModules);
         setError(null);
       } catch (err) {
-        console.error("GAKA Portal Sync Error:", err);
-        setError(err instanceof Error ? err.message : 'Connection failed');
-        // Fallback to original backup data on total failure
+        console.error("GAKA Sync Error:", err);
+        setError(err instanceof Error ? err.message : 'Sync Failed');
+        // Fallback to original backup on absolute failure
         setModules(MODULES_DATA);
       } finally {
         setIsLoading(false);
@@ -181,7 +182,7 @@ const App: React.FC = () => {
             <div className="w-12 h-12 bg-emerald-600 rounded-2xl flex items-center justify-center text-white font-black text-xl shadow-lg shadow-emerald-100 animate-pulse">G</div>
           </div>
         </div>
-        <p className="mt-8 text-slate-400 font-bold text-[12px] uppercase tracking-widest animate-pulse">Synchronizing Core Registry...</p>
+        <p className="mt-8 text-slate-400 font-bold text-[12px] uppercase tracking-widest animate-pulse">Syncing Academic Registry...</p>
       </div>
     );
   }
@@ -198,15 +199,15 @@ const App: React.FC = () => {
         {currentView !== 'home' && <Breadcrumbs />}
 
         {error && (
-          <div className="mb-12 p-6 bg-red-50/50 border border-red-100 rounded-3xl text-red-700 text-sm font-medium flex flex-col sm:flex-row items-center justify-between animate-fade-in gap-4">
+          <div className="mb-12 p-6 bg-red-50/50 border border-red-100 rounded-3xl text-red-700 text-sm font-medium flex flex-col sm:flex-row items-center justify-between animate-fade-in gap-4 shadow-sm">
             <div className="flex items-center">
               <span className="relative flex h-3 w-3 mr-4">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
               </span>
-              <p>Connection issue. Showing locally cached module list.</p>
+              <p>Connection issue. Showing locally cached backup.</p>
             </div>
-            <button onClick={() => window.location.reload()} className="bg-white px-6 py-2.5 rounded-full shadow-sm hover:shadow-md transition-all active:scale-95 text-red-600 border border-red-100 font-semibold">Retry Sync</button>
+            <button onClick={() => window.location.reload()} className="bg-white px-6 py-2.5 rounded-full shadow-sm hover:shadow-md transition-all active:scale-95 text-red-600 border border-red-100 font-semibold">Retry Live Sync</button>
           </div>
         )}
 
@@ -214,7 +215,7 @@ const App: React.FC = () => {
           <div className="animate-fade-in flex flex-col items-center text-center pt-16 pb-24 lg:pt-32">
             <div className="inline-flex items-center space-x-2 bg-emerald-50 px-5 py-2.5 rounded-full mb-10 border border-emerald-100/50 animate-slide-in">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-              <span className="text-[11px] font-bold uppercase tracking-widest text-emerald-700">MUST CS Academic Portal</span>
+              <span className="text-[11px] font-bold uppercase tracking-widest text-emerald-700">MUST CS Portal</span>
             </div>
             
             <h2 className="text-5xl sm:text-[90px] font-extrabold text-slate-900 mb-10 max-w-6xl leading-[1.05] tracking-tight">
@@ -222,7 +223,7 @@ const App: React.FC = () => {
             </h2>
             
             <p className="text-lg sm:text-2xl text-slate-500 max-w-3xl mb-14 font-normal leading-relaxed">
-              Verified lecture materials, modules, and past exam papers for the modern Computer Science student.
+              Verified lecture materials, modules, and past examination papers for MUST Computer Science students.
             </p>
             
             <div className="flex flex-col sm:flex-row gap-6 w-full sm:w-auto">
@@ -237,7 +238,7 @@ const App: React.FC = () => {
                 onClick={() => navigateTo('#/about')}
                 className="px-16 py-6 bg-white text-slate-700 border border-slate-200 rounded-full font-bold text-base hover:bg-slate-50 hover:border-slate-300 transition-all duration-300 shadow-sm active:scale-95"
               >
-                Mission Statement
+                Learn More
               </button>
             </div>
             
@@ -283,10 +284,10 @@ const App: React.FC = () => {
                   <div className="bg-slate-50 p-10 rounded-[2rem] border border-slate-100">
                     <h4 className="text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-4">Development</h4>
                     <p className="text-slate-900 font-bold text-xl mb-2">Softlink Africa</p>
-                    <p className="text-base font-normal">Modern, responsive engineering optimized for low-bandwidth mobile environments.</p>
+                    <p className="text-base font-normal">Modern, responsive engineering optimized for MUST student environment.</p>
                   </div>
                   <div className="bg-emerald-600 p-10 rounded-[2rem] text-white shadow-xl shadow-emerald-100 group">
-                    <h4 className="text-[11px] font-bold uppercase tracking-widest text-emerald-200 mb-4">Lead Engineer</h4>
+                    <h4 className="text-[11px] font-bold uppercase tracking-widest text-emerald-200 mb-4">Lead Developer</h4>
                     <p className="font-bold text-2xl mb-4">Cleven Samwel</p>
                     <a 
                       href="https://wa.me/255685208576" 
@@ -307,13 +308,13 @@ const App: React.FC = () => {
           <div className="animate-fade-in">
             <div className="flex flex-col lg:flex-row lg:items-end justify-between mb-16 gap-10">
               <div className="space-y-4">
-                <h2 className="text-5xl font-extrabold text-slate-900 tracking-tight">Registry</h2>
+                <h2 className="text-5xl font-extrabold text-slate-900 tracking-tight">Directory</h2>
                 <div className="flex items-center space-x-4">
                   <div className="flex bg-emerald-100/50 px-4 py-2 rounded-full border border-emerald-200/30">
-                     <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-700">Course Materials</span>
+                     <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-700">Course Registry</span>
                   </div>
                   <div className="h-1 w-1 rounded-full bg-slate-300"></div>
-                  <span className="text-slate-400 font-semibold text-base tracking-tight">{filteredModules.length} Modules Available</span>
+                  <span className="text-slate-400 font-semibold text-base tracking-tight">{filteredModules.length} Modules Online</span>
                 </div>
               </div>
               
@@ -323,7 +324,7 @@ const App: React.FC = () => {
                 </div>
                 <input 
                   type="text" 
-                  placeholder="Filter by code or title..."
+                  placeholder="Find your course..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full pl-20 pr-10 py-7 bg-white border border-slate-100 rounded-3xl focus:ring-8 focus:ring-emerald-50 focus:border-emerald-300 outline-none transition-all shadow-sm hover:shadow-md text-xl font-medium placeholder:text-slate-200"
@@ -342,8 +343,8 @@ const App: React.FC = () => {
               ))}
               {filteredModules.length === 0 && (
                 <div className="col-span-full py-24 text-center">
-                  <p className="text-slate-400 font-medium text-lg italic">No matches found for your current search.</p>
-                  <button onClick={() => { setSearchQuery(''); }} className="mt-6 text-emerald-600 font-bold hover:underline">Clear Search</button>
+                  <p className="text-slate-400 font-medium text-lg">No matches found for that search term.</p>
+                  <button onClick={() => { setSearchQuery(''); }} className="mt-6 text-emerald-600 font-bold hover:underline">Clear Filters</button>
                 </div>
               )}
             </div>
@@ -369,19 +370,19 @@ const App: React.FC = () => {
                     {selectedModule.code}
                   </span>
                   <span className="bg-black/10 backdrop-blur-md px-6 py-2 rounded-full text-[11px] font-bold tracking-widest uppercase border border-white/10">
-                    {selectedModule.resources.length} Live Files
+                    {selectedModule.resources.length} Academic Files
                   </span>
                 </div>
                 <h2 className="text-5xl sm:text-7xl font-extrabold mb-8 leading-[1.05] tracking-tight max-w-4xl">{selectedModule.name}</h2>
                 <p className="text-emerald-50/70 text-xl max-w-3xl font-normal leading-relaxed">
-                  All synchronized resources from the central MUST cloud server.
+                  Verified resources synchronized with the official course syllabus.
                 </p>
               </div>
             </div>
 
             <div className="bg-white rounded-[3rem] p-10 sm:p-20 shadow-sm border border-slate-100">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-8 mb-12">
-                <h3 className="text-3xl font-bold text-slate-800">Resources</h3>
+                <h3 className="text-3xl font-bold text-slate-800">Files</h3>
                 <FilterTabs />
               </div>
 
@@ -405,7 +406,7 @@ const App: React.FC = () => {
                           {file.name}
                         </h4>
                         <span className={`text-[11px] font-bold uppercase tracking-widest mt-2 block ${file.type === 'Notes' ? 'text-emerald-500' : 'text-teal-500'}`}>
-                          {file.type === 'Notes' ? 'Study Material' : 'Exam Gaka'}
+                          {file.type === 'Notes' ? 'Lecture Material' : 'Exam Archive'}
                         </span>
                       </div>
                     </div>
@@ -431,7 +432,7 @@ const App: React.FC = () => {
                 ))}
                 {filteredResources.length === 0 && (
                   <div className="text-center py-20 bg-slate-50/50 rounded-[2rem] border border-dashed border-slate-200">
-                     <p className="text-slate-400 font-medium italic">No {filterType !== 'All' ? filterType.toLowerCase() : ''} found in this category.</p>
+                     <p className="text-slate-400 font-medium italic">No resources found in the {filterType.toLowerCase()} category.</p>
                   </div>
                 )}
               </div>
@@ -449,17 +450,17 @@ const App: React.FC = () => {
                 <span className="text-xl font-extrabold tracking-tight text-slate-900 uppercase">GAKA Portal</span>
               </div>
               <p className="text-slate-400 text-sm font-medium max-w-sm">
-                Empowering Mbeya University of Science and Technology students with seamless academic access.
+                A streamlined hub for MUST students to access essential course documentation and study guides.
               </p>
               <div className="pt-2">
-                <p className="text-[11px] font-bold text-slate-300 uppercase tracking-[0.2em]">Crafted by</p>
+                <p className="text-[11px] font-bold text-slate-300 uppercase tracking-[0.2em]">Developed by</p>
                 <p className="text-slate-900 font-extrabold text-lg">Cleven Sam</p>
               </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-10 w-full md:w-auto">
               <div className="space-y-3">
-                <h4 className="text-[11px] font-bold text-emerald-600 uppercase tracking-widest">Email</h4>
+                <h4 className="text-[11px] font-bold text-emerald-600 uppercase tracking-widest">Support</h4>
                 <a 
                   href="mailto:clevensamwel@gmail.com" 
                   className="block text-slate-600 hover:text-emerald-600 transition-colors font-medium text-base break-all"
@@ -468,9 +469,9 @@ const App: React.FC = () => {
                 </a>
               </div>
               <div className="space-y-3">
-                <h4 className="text-[11px] font-bold text-emerald-600 uppercase tracking-widest">Enquiries</h4>
+                <h4 className="text-[11px] font-bold text-emerald-600 uppercase tracking-widest">WhatsApp</h4>
                 <a 
-                  href="tel:+255685208576" 
+                  href="https://wa.me/255685208576" 
                   className="block text-slate-600 hover:text-emerald-600 transition-colors font-medium text-base"
                 >
                   +255 685 208 576
@@ -481,7 +482,7 @@ const App: React.FC = () => {
           
           <div className="mt-16 pt-8 border-t border-slate-100 text-center">
             <p className="text-slate-300 text-[11px] font-bold uppercase tracking-[0.3em]">
-              &copy; {new Date().getFullYear()} Softlink Africa | MUST Engineering
+              &copy; {new Date().getFullYear()} Softlink Africa | MUST CS Engineering
             </p>
           </div>
         </div>
