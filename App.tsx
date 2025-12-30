@@ -137,15 +137,9 @@ const App: React.FC = () => {
 
   const handleShare = (resourceName: string) => {
     const url = window.location.href;
-    if (navigator.share) {
-      navigator.share({
-        title: `GAKA: ${resourceName}`,
-        text: `Check out this academic resource on GAKA Portal`,
-        url: url,
-      }).catch(() => copyToClipboard(url));
-    } else {
-      copyToClipboard(url);
-    }
+    const shareMessage = `Check out this academic resource on *GAKA Portal*: \n\n📄 *${resourceName}*\n🔗 ${url}`;
+    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareMessage)}`;
+    window.open(whatsappUrl, '_blank');
   };
 
   const Breadcrumbs = () => (
