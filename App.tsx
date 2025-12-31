@@ -151,7 +151,7 @@ const App: React.FC = () => {
 
   const handleShare = (resourceTitle: string) => {
     const url = window.location.href;
-    const shareMessage = `Academic Resource from *GAKA Portal*: \n\n📄 *${resourceTitle}*\n🔗 ${url}`;
+    const shareMessage = `Academic Resource from *GAKA Portal*: \n\n *${resourceTitle}*\n ${url}`;
     const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareMessage)}`;
     window.open(whatsappUrl, '_blank');
   };
