@@ -151,7 +151,7 @@ const App: React.FC = () => {
 
   const handleShare = (resourceTitle: string) => {
     const url = window.location.href;
-    const shareMessage = `Academic Resource from *GAKA Portal*: \n\n📄 *${resourceTitle}*\n ${url}`;
+    const shareMessage = `Academic Resource from *GAKA Portal*: \n\n📄 *${resourceTitle}*\n🔗 ${url}`;
     const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareMessage)}`;
     window.open(whatsappUrl, '_blank');
   };
@@ -343,13 +343,13 @@ const App: React.FC = () => {
           <div className="animate-fade-in">
             <div className="flex flex-col lg:flex-row lg:items-end justify-between mb-10 sm:mb-16 gap-8 sm:gap-10">
               <div className="space-y-3 sm:space-y-4">
-                <h2 className="text-4xl sm:text-5xl font-extrabold text-slate-900 tracking-tight">Modules</h2>
+                <h2 className="text-4xl sm:text-5xl font-extrabold text-slate-900 tracking-tight">Directory</h2>
                 <div className="flex items-center space-x-3 sm:space-x-4">
                   <div className="flex bg-emerald-100/50 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full border border-emerald-200/30">
-                     <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700">Available Modules</span>
+                     <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700">Live Registry</span>
                   </div>
                   <div className="h-1 w-1 rounded-full bg-slate-300"></div>
-                  <span className="text-slate-400 font-semibold text-sm sm:text-base tracking-tight">{filteredModules.length} Modules</span>
+                  <span className="text-slate-400 font-semibold text-sm sm:text-base tracking-tight">{filteredModules.length} Modules Online</span>
                 </div>
               </div>
               
@@ -398,7 +398,7 @@ const App: React.FC = () => {
                 className="flex items-center text-slate-400 font-bold text-[10px] sm:text-[11px] uppercase tracking-widest hover:text-emerald-600 transition-all group"
               >
                 <BackIcon className="mr-2 sm:mr-3 w-4 h-4 sm:w-5 sm:h-5 group-hover:-translate-x-1.5 transition-transform" />
-                Return to Modules
+                Return to Directory
               </button>
             </div>
 
