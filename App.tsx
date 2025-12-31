@@ -39,7 +39,7 @@ const App: React.FC = () => {
   const [filterType, setFilterType] = useState<ResourceType | 'All'>('All');
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
-  /* ---------------- Fetch Data ---------------- */
+  /* ---------------- Data Fetch ---------------- */
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -94,7 +94,7 @@ const App: React.FC = () => {
         setModules(base.filter(m => m.resources.length));
         setError(null);
       } catch {
-        setError('Something went wrong on our side. Please try again in a moment.');
+        setError('Something went wrong. Please try again shortly.');
         setModules([]);
       } finally {
         setLoading(false);
@@ -104,19 +104,17 @@ const App: React.FC = () => {
     fetchData();
   }, []);
 
-  /* ---------------- Routing (NO #) ---------------- */
+  /* ---------------- Hash Routing ---------------- */
   useEffect(() => {
     const handleRoute = () => {
-      const path = window.location.pathname;
+      const hash = window.location.hash.replace('#', '');
 
-      if (path === '/' || path === '/home') {
-        setCurrentView('home');
-      } else if (path === '/modules') {
+      if (hash === '/modules') {
         setCurrentView('modules');
-      } else if (path === '/about') {
+      } else if (hash === '/about') {
         setCurrentView('about');
-      } else if (path.startsWith('/module/')) {
-        const id = path.split('/').pop();
+      } else if (hash.startsWith('/module/')) {
+        const id = hash.split('/').pop();
         const module = modules.find(m => m.id === id);
 
         if (module) {
@@ -131,16 +129,15 @@ const App: React.FC = () => {
       }
     };
 
-    window.addEventListener('popstate', handleRoute);
+    window.addEventListener('hashchange', handleRoute);
     handleRoute();
 
-    return () => window.removeEventListener('popstate', handleRoute);
+    return () => window.removeEventListener('hashchange', handleRoute);
   }, [modules]);
 
   const navigateTo = (path: string) => {
-    window.history.pushState({}, '', path);
+    window.location.hash = path.startsWith('#') ? path : `#${path}`;
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    window.dispatchEvent(new PopStateEvent('popstate'));
   };
 
   /* ---------------- Filters ---------------- */
@@ -185,8 +182,8 @@ const App: React.FC = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar
-        onLogoClick={() => navigateTo('/')}
-        onHomeClick={() => navigateTo('/')}
+        onLogoClick={() => navigateTo('/home')}
+        onHomeClick={() => navigateTo('/home')}
         onDirectoryClick={() => navigateTo('/modules')}
       />
 
