@@ -343,7 +343,7 @@ const App: React.FC = () => {
           <div className="animate-fade-in">
             <div className="flex flex-col lg:flex-row lg:items-end justify-between mb-10 sm:mb-16 gap-8 sm:gap-10">
               <div className="space-y-3 sm:space-y-4">
-                <h2 className="text-4xl sm:text-5xl font-extrabold text-slate-900 tracking-tight">Directory</h2>
+                <h2 className="text-4xl sm:text-5xl font-extrabold text-slate-900 tracking-tight">Modules</h2>
                 <div className="flex items-center space-x-3 sm:space-x-4">
                   <div className="flex bg-emerald-100/50 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full border border-emerald-200/30">
                      <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700">Registered Modules</span>
