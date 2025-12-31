@@ -89,7 +89,7 @@ const App: React.FC = () => {
         setError(null);
       } catch (err) {
         console.error("Fetch Error:", err);
-        setError("Synchronizing failed. No live data available.");
+        setError("Internal Server Error");
         setModules([]); 
       } finally {
         setIsLoading(false);
@@ -179,7 +179,7 @@ const App: React.FC = () => {
       {currentView === 'about' && <span className="text-slate-900 font-bold">About</span>}
       {currentView === 'detail' && (
         <>
-          <button onClick={() => navigateTo('#/modules')} className="hover:text-emerald-600 transition-colors">Directory</button>
+          <button onClick={() => navigateTo('#/modules')} className="hover:text-emerald-600 transition-colors">Modules</button>
           <ChevronRightIcon className="w-3 h-3 text-slate-300 flex-shrink-0" />
           <span className="text-slate-900 font-bold">{selectedModule?.code}</span>
         </>
@@ -242,7 +242,7 @@ const App: React.FC = () => {
               </span>
               <p>{error}</p>
             </div>
-            <button onClick={() => window.location.reload()} className="bg-white px-6 py-2.5 rounded-full shadow-sm hover:shadow-md transition-all active:scale-95 text-amber-600 border border-amber-100 font-semibold">Retry Sync</button>
+            <button onClick={() => window.location.reload()} className="bg-white px-6 py-2.5 rounded-full shadow-sm hover:shadow-md transition-all active:scale-95 text-amber-600 border border-amber-100 font-semibold">Try Again</button>
           </div>
         )}
 
@@ -414,7 +414,7 @@ const App: React.FC = () => {
                 </div>
                 <h2 className="text-3xl sm:text-7xl font-extrabold mb-6 sm:mb-8 leading-tight sm:leading-[1.05] tracking-tight max-w-4xl break-words">{selectedModule.name}</h2>
                 <p className="text-emerald-50/70 text-base sm:text-xl max-w-3xl font-normal leading-relaxed">
-                  Verified resources synchronized with the official course registry.
+              All lecture notes and past papers available for free.
                 </p>
               </div>
             </div>
@@ -511,7 +511,7 @@ const App: React.FC = () => {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 sm:gap-10 w-full md:w-auto">
               <div className="space-y-2 sm:space-y-3">
-                <h4 className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">Enquiries</h4>
+                <h4 className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">Email</h4>
                 <a 
                   href="mailto:clevensamwel@gmail.com" 
                   className="block text-slate-600 hover:text-emerald-600 transition-colors font-medium text-sm sm:text-base break-all"
@@ -520,7 +520,7 @@ const App: React.FC = () => {
                 </a>
               </div>
               <div className="space-y-2 sm:space-y-3">
-                <h4 className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">WhatsApp</h4>
+                <h4 className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">Contact</h4>
                 <a 
                   href="https://wa.me/255685208576" 
                   className="block text-slate-600 hover:text-emerald-600 transition-colors font-medium text-sm sm:text-base"
