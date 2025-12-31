@@ -398,7 +398,7 @@ const App: React.FC = () => {
                 className="flex items-center text-slate-400 font-bold text-[10px] sm:text-[11px] uppercase tracking-widest hover:text-emerald-600 transition-all group"
               >
                 <BackIcon className="mr-2 sm:mr-3 w-4 h-4 sm:w-5 sm:h-5 group-hover:-translate-x-1.5 transition-transform" />
-                Return to Directory
+                Return to Modules
               </button>
             </div>
 
