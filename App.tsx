@@ -151,7 +151,7 @@ const App: React.FC = () => {
 
   const handleShare = (resourceTitle: string) => {
     const url = window.location.href;
-    const shareMessage = `Academic Resource from *GAKA Portal*: \n\n📄 *${resourceTitle}*\n🔗 ${url}`;
+    const shareMessage = `Academic Resource from *GAKA Portal*: \n\n*${resourceTitle}*\n ${url}`;
     const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareMessage)}`;
     window.open(whatsappUrl, '_blank');
   };
@@ -175,7 +175,7 @@ const App: React.FC = () => {
     <nav className="flex items-center space-x-2 text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-6 sm:mb-8 overflow-x-auto whitespace-nowrap pb-2 scrollbar-hide animate-fade-in">
       <button onClick={() => navigateTo('#/home')} className="hover:text-emerald-600 transition-colors">Home</button>
       <ChevronRightIcon className="w-3 h-3 text-slate-300 flex-shrink-0" />
-      {currentView === 'modules' && <span className="text-slate-900 font-bold">Directory</span>}
+      {currentView === 'modules' && <span className="text-slate-900 font-bold">Modules</span>}
       {currentView === 'about' && <span className="text-slate-900 font-bold">About</span>}
       {currentView === 'detail' && (
         <>
@@ -323,7 +323,7 @@ const App: React.FC = () => {
                   </div>
                   <div className="bg-emerald-600 p-8 sm:p-10 rounded-[1.5rem] sm:rounded-[2rem] text-white shadow-xl shadow-emerald-100 group">
                     <h4 className="text-[10px] font-bold uppercase tracking-widest text-emerald-200 mb-3">Lead Developer</h4>
-                    <p className="font-bold text-xl sm:text-2xl mb-4">Cleven Samwel</p>
+                    <p className="font-bold text-xl sm:text-2xl mb-4">Cleven Sam</p>
                     <a 
                       href="https://wa.me/255685208576" 
                       target="_blank" 
@@ -346,10 +346,10 @@ const App: React.FC = () => {
                 <h2 className="text-4xl sm:text-5xl font-extrabold text-slate-900 tracking-tight">Directory</h2>
                 <div className="flex items-center space-x-3 sm:space-x-4">
                   <div className="flex bg-emerald-100/50 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full border border-emerald-200/30">
-                     <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700">Live Registry</span>
+                     <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700">Registered Modules</span>
                   </div>
                   <div className="h-1 w-1 rounded-full bg-slate-300"></div>
-                  <span className="text-slate-400 font-semibold text-sm sm:text-base tracking-tight">{filteredModules.length} Modules Online</span>
+                  <span className="text-slate-400 font-semibold text-sm sm:text-base tracking-tight">{filteredModules.length} Modules Available</span>
                 </div>
               </div>
               
@@ -398,7 +398,7 @@ const App: React.FC = () => {
                 className="flex items-center text-slate-400 font-bold text-[10px] sm:text-[11px] uppercase tracking-widest hover:text-emerald-600 transition-all group"
               >
                 <BackIcon className="mr-2 sm:mr-3 w-4 h-4 sm:w-5 sm:h-5 group-hover:-translate-x-1.5 transition-transform" />
-                Return to Directory
+                Return to Modules
               </button>
             </div>
 
