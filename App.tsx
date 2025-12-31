@@ -89,7 +89,8 @@ const App: React.FC = () => {
         setError(null);
       } catch (err) {
         console.error("Fetch Error:", err);
-        setError("Synchronizing failed. No live data available.");
+       setError("Something went wrong on our side. Please try again in a momen.");
+
         setModules([]); 
       } finally {
         setIsLoading(false);
