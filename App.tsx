@@ -409,7 +409,7 @@ const App: React.FC = () => {
                     {selectedModule.code}
                   </span>
                   <span className="bg-black/10 backdrop-blur-md px-4 py-1.5 sm:px-6 sm:py-2 rounded-full text-[10px] font-bold tracking-widest uppercase border border-white/10">
-                    {selectedModule.resources.length} Academic Assets
+                    {selectedModule.resources.length} file
                   </span>
                 </div>
                 <h2 className="text-3xl sm:text-7xl font-extrabold mb-6 sm:mb-8 leading-tight sm:leading-[1.05] tracking-tight max-w-4xl break-words">{selectedModule.name}</h2>
