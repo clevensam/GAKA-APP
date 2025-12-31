@@ -174,7 +174,7 @@ const App: React.FC = () => {
 
   const Breadcrumbs = () => (
     <nav className="flex items-center space-x-2 text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-6 sm:mb-8 overflow-x-auto whitespace-nowrap pb-2 scrollbar-hide animate-fade-in">
-      <button onClick={() => navigateTo('/home')} className="hover:text-emerald-600 transition-colors">Home</button>
+      <button onClick={() => navigateTo('home')} className="hover:text-emerald-600 transition-colors">Home</button>
       <ChevronRightIcon className="w-3 h-3 text-slate-300 flex-shrink-0" />
       {currentView === 'modules' && <span className="text-slate-900 font-bold">Directory</span>}
       {currentView === 'about' && <span className="text-slate-900 font-bold">About</span>}
@@ -228,7 +228,7 @@ const App: React.FC = () => {
       <Navbar 
         onLogoClick={() => navigateTo('/home')} 
         onHomeClick={() => navigateTo('/home')}
-        onDirectoryClick={() => navigateTo('/modules')}
+        onDirectoryClick={() => navigateTo('#/modules')}
       />
 
       <main className="flex-grow container mx-auto max-w-7xl px-5 py-8 sm:py-12 sm:px-8">
