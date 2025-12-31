@@ -103,11 +103,11 @@ const App: React.FC = () => {
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash;
-      if (hash === '#/modules') {
+      if (hash === '/modules') {
         setCurrentView('modules');
-      } else if (hash === '#/about') {
+      } else if (hash === '/about') {
         setCurrentView('about');
-      } else if (hash.startsWith('#/module/')) {
+      } else if (hash.startsWith('/module/')) {
         const moduleId = hash.split('/').pop();
         const module = modules.find(m => m.id === moduleId);
         if (module) {
@@ -174,13 +174,13 @@ const App: React.FC = () => {
 
   const Breadcrumbs = () => (
     <nav className="flex items-center space-x-2 text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-6 sm:mb-8 overflow-x-auto whitespace-nowrap pb-2 scrollbar-hide animate-fade-in">
-      <button onClick={() => navigateTo('#/home')} className="hover:text-emerald-600 transition-colors">Home</button>
+      <button onClick={() => navigateTo('/home')} className="hover:text-emerald-600 transition-colors">Home</button>
       <ChevronRightIcon className="w-3 h-3 text-slate-300 flex-shrink-0" />
       {currentView === 'modules' && <span className="text-slate-900 font-bold">Directory</span>}
       {currentView === 'about' && <span className="text-slate-900 font-bold">About</span>}
       {currentView === 'detail' && (
         <>
-          <button onClick={() => navigateTo('#/modules')} className="hover:text-emerald-600 transition-colors">Directory</button>
+          <button onClick={() => navigateTo('/modules')} className="hover:text-emerald-600 transition-colors">Directory</button>
           <ChevronRightIcon className="w-3 h-3 text-slate-300 flex-shrink-0" />
           <span className="text-slate-900 font-bold">{selectedModule?.code}</span>
         </>
@@ -226,9 +226,9 @@ const App: React.FC = () => {
   return (
     <div className="min-h-screen flex flex-col selection:bg-emerald-100 selection:text-emerald-900">
       <Navbar 
-        onLogoClick={() => navigateTo('#/home')} 
-        onHomeClick={() => navigateTo('#/home')}
-        onDirectoryClick={() => navigateTo('#/modules')}
+        onLogoClick={() => navigateTo('/home')} 
+        onHomeClick={() => navigateTo('/home')}
+        onDirectoryClick={() => navigateTo('/modules')}
       />
 
       <main className="flex-grow container mx-auto max-w-7xl px-5 py-8 sm:py-12 sm:px-8">
@@ -243,7 +243,7 @@ const App: React.FC = () => {
               </span>
               <p>{error}</p>
             </div>
-            <button onClick={() => window.location.reload()} className="bg-white px-6 py-2.5 rounded-full shadow-sm hover:shadow-md transition-all active:scale-95 text-amber-600 border border-amber-100 font-semibold">Retry Sync</button>
+            <button onClick={() => window.location.reload()} className="bg-white px-6 py-2.5 rounded-full shadow-sm hover:shadow-md transition-all active:scale-95 text-amber-600 border border-amber-100 font-semibold">Try Again</button>
           </div>
         )}
 
@@ -264,14 +264,14 @@ const App: React.FC = () => {
             
             <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto px-4">
               <button 
-                onClick={() => navigateTo('#/modules')}
+                onClick={() => navigateTo('/modules')}
                 className="group flex items-center justify-center px-10 py-5 sm:px-16 sm:py-6 bg-emerald-600 text-white rounded-full font-bold text-sm sm:text-base shadow-2xl shadow-emerald-200 hover:bg-emerald-700 hover:scale-[1.03] transition-all duration-300 active:scale-95"
               >
                 Access Modules
                 <SearchIcon className="ml-3 w-5 h-5 group-hover:rotate-12 transition-transform" />
               </button>
               <button 
-                onClick={() => navigateTo('#/about')}
+                onClick={() => navigateTo('/about')}
                 className="px-10 py-5 sm:px-16 sm:py-6 bg-white text-slate-700 border border-slate-200 rounded-full font-bold text-sm sm:text-base hover:bg-slate-50 hover:border-slate-300 transition-all duration-300 shadow-sm active:scale-95"
               >
                 Learn More
@@ -395,7 +395,7 @@ const App: React.FC = () => {
           <div className="animate-fade-in max-w-5xl mx-auto pb-20 sm:pb-32">
             <div className="mb-8 sm:mb-10">
                <button 
-                onClick={() => navigateTo('#/modules')}
+                onClick={() => navigateTo('/modules')}
                 className="flex items-center text-slate-400 font-bold text-[10px] sm:text-[11px] uppercase tracking-widest hover:text-emerald-600 transition-all group"
               >
                 <BackIcon className="mr-2 sm:mr-3 w-4 h-4 sm:w-5 sm:h-5 group-hover:-translate-x-1.5 transition-transform" />
