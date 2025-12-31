@@ -51,8 +51,8 @@ export const MODULES_DATA: Module[] = [
     resources: []
   },
   {
-    id: 'ist-8122',
-    code: 'IST 8122',
+    id: 'st-8122',
+    code: 'ST 8122',
     name: 'Statistics and Numerical Analysis',
     description: 'Statistical methods and numerical computations for data-driven decisions.',
     resources: []
