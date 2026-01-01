@@ -315,7 +315,6 @@ const App: React.FC = () => {
                     By providing a unified interface for Mbeya University of Science and Technology (MUST) resources, we ensure that focus remains on learning rather than logistics.
                   </p>
                 </section>
- <Analytics />
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-10">
                   <div className="bg-slate-50 p-8 sm:p-10 rounded-[1.5rem] sm:rounded-[2rem] border border-slate-100">
                     <h4 className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-3">Development</h4>
@@ -539,6 +538,8 @@ const App: React.FC = () => {
           </div>
         </div>
       </footer>
+
+      <Analytics />
     </div>
   );
 };
