@@ -4,6 +4,7 @@ import { ModuleCard } from './components/ModuleCard';
 import { SearchIcon, BackIcon, FileIcon, DownloadIcon, ShareIcon, ChevronRightIcon, BookOpenIcon } from './components/Icons';
 import { Module, ResourceType, AcademicFile } from './types';
 import { MODULES_DATA } from './constants';
+import { Analytics } from '@vercel/analytics/react';
 
 const LIVE_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRn-pw2j_BMf_v--CHjpGLos3oFFAyOjrlZ8vsM0uFs4E23GPcGZ2F0tdBvRZGeg7VwZ-ZkIOpHU8zm/pub?output=csv";
 
@@ -314,7 +315,7 @@ const App: React.FC = () => {
                     By providing a unified interface for Mbeya University of Science and Technology (MUST) resources, we ensure that focus remains on learning rather than logistics.
                   </p>
                 </section>
-
+ <Analytics />
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-10">
                   <div className="bg-slate-50 p-8 sm:p-10 rounded-[1.5rem] sm:rounded-[2rem] border border-slate-100">
                     <h4 className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-3">Development</h4>
