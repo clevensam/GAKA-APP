@@ -15,7 +15,7 @@
 ## ⚠️ The Problem
 
 Academic resources in university environments are frequently:
-1.  **Fragmented**: Scattered across various WhatsApp groups, Telegram channels, and personal cloud drives.
+1.  **Fragmented**: Scattered across various WhatsApp groups,  personal cloud drives.
 2.  **Inaccessible**: Hidden behind complex folder structures or requiring institutional logins that fail during high-traffic periods (like exam seasons).
 3.  **Heavy**: Many student portals are slow, data-heavy, and poorly optimized for mobile devices with limited connectivity.
 
