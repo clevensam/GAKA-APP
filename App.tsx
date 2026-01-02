@@ -7,9 +7,7 @@ import { MODULES_DATA } from './constants';
 import { Analytics } from '@vercel/analytics/react';
 
 const LIVE_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRn-pw2j_BMf_v--CHjpGLos3oFFAyOjrlZ8vsM0uFs4E23GPcGZ2F0tdBvRZGeg7VwZ-ZkIOpHU8zm/pub?output=csv";
-// Add this temporary EyeIcon component in App.tsx if you can't modify Icons.tsx
-
-const EyeIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
+const EyeIcon = ({ className = "w-5 h-5" }) => (
   <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" className={className}>
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
