@@ -1,27 +1,45 @@
-# GAKA-APP
+# GAKA Portal 🎓
 
-GAKA-APP is a simple, user-friendly web app that helps you [short description of app purpose — replace with a one-line purpose]. It's built to be fast and easy to use.
+**GAKA** is a centralized, high-performance academic repository specifically designed for Computer Science students at Mbeya University of Science and Technology (MUST). It serves as a streamlined bridge between students and their learning materials.
 
-## What this app offers (features for users)
-- Clear, responsive interface that works on mobile and desktop
-- Fast navigation and instant updates as you interact
-- Simple controls for [primary user action — e.g., "creating and browsing items"]
-- Helpful on-screen hints and labels to guide you through tasks
-- Lightweight and clean design so you can focus on your content
+## 🚀 Features
 
-## How to try it (quick, non-technical)
-- If there's a live demo, open it in your browser.
-- Or open the app's main page (index.html) in your browser to preview it locally.
+- **Live Registry Sync**: Directly integrated with a Google Sheets backend for real-time updates without redeploying code.
+- **Direct Download Engine**: Automatically transforms Google Drive "view" links into "direct download" streams, bypassing the "Choose an account" prompt for a smoother experience.
+- **Mobile-First UX**: A modern, responsive interface built for the student on the move, featuring high-readability typography and thumb-friendly navigation.
+- **Zero Friction Access**: No registration, no login, and no data harvesting. Just immediate access to educational content.
+- **Smart Filtering**: Categorize resources by "Lecture Notes" or "Gaka" (Past Papers) with instant search capabilities.
+- **One-Tap Sharing**: Integrated WhatsApp sharing functionality to distribute resources to study groups instantly.
+- **Modern Aesthetics**: Built with Tailwind CSS, featuring glassmorphism, smooth micro-interactions, and a premium "Lexend" font-driven design.
 
-If you want a short guided tour of the interface or a list of actions you can perform, tell me what part you'd like to highlight and I’ll add it.
+## ⚠️ The Problem
 
-## Feedback and help
-Found something confusing or want a new feature? Open an issue or send a short note describing what you'd like changed — we’ll prioritize clarity and usability.
+Academic resources in university environments are frequently:
+1.  **Fragmented**: Scattered across various WhatsApp groups, Telegram channels, and personal cloud drives.
+2.  **Inaccessible**: Hidden behind complex folder structures or requiring institutional logins that fail during high-traffic periods (like exam seasons).
+3.  **Heavy**: Many student portals are slow, data-heavy, and poorly optimized for mobile devices with limited connectivity.
+
+## ✅ The Solution: GAKA
+
+GAKA solves these bottlenecks by providing a **Lightweight Single Source of Truth**:
+
+- **Optimization**: The portal is a Single Page Application (SPA) that loads only the necessary metadata, saving student data and battery life.
+- **Availability**: By leveraging Google's global infrastructure for file hosting and CSV data, the portal remains online even when internal university systems are under maintenance.
+- **Simplicity**: It reduces the path from "Searching for a paper" to "Downloading the file" from several minutes to just seconds.
+
+## 🛠️ Technical Stack
+
+- **Frontend**: React 19 + TypeScript
+- **Styling**: Tailwind CSS (PostCSS)
+- **Data Architecture**: Google Sheets CSV API
+- **Icons**: Custom SVG Component Library
+- **Typography**: Google Fonts (Lexend)
+- **Deployment**: Vite-optimized production build
+
+## 👨‍💻 Development
+
+Developed by **Cleven Samwel** under **Softlink Africa**.
+GAKA is an initiative to digitize and simplify the MUST engineering experience.
 
 ---
-
-If you want, I can:
-- Add short screenshots or a quick walkthrough,
-- Replace placeholders above (like the app purpose) with exact text from the app,
-- Keep the README non-technical but add a one-click demo link if you have hosting.
-Tell me which and I’ll update the file. 
+*Built with ❤️ for the MUST CS Community.*
