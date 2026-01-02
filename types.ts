@@ -5,7 +5,7 @@ export interface AcademicFile {
   title: string;
   type: ResourceType;
   downloadUrl: string;
-  size?: string;
+  viewUrl: string;
 }
 
 export interface Module {
