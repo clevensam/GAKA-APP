@@ -5,7 +5,7 @@
 ## 🚀 Features
 
 - **Live Registry Sync**: Directly integrated with a Google Sheets backend for real-time updates without redeploying code.
-- **Direct Download Engine**: Automatically transforms Google Drive "view" links into "direct download" streams, bypassing the "Choose an account" prompt for a smoother experience.
+- **Free Material Downloads**: Students can download learning materials directly and freely without sign-in prompts or extra steps.
 - **Mobile-First UX**: A modern, responsive interface built for the student on the move, featuring high-readability typography and thumb-friendly navigation.
 - **Zero Friction Access**: No registration, no login, and no data harvesting. Just immediate access to educational content.
 - **Smart Filtering**: Categorize resources by "Lecture Notes" or "Gaka" (Past Papers) with instant search capabilities.
