@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Navbar } from './components/Navbar';
 import { ModuleCard } from './components/ModuleCard';
-import { SearchIcon, BackIcon, FileIcon, DownloadIcon, ShareIcon, ChevronRightIcon, BookOpenIcon } from './components/Icons';
+import { SearchIcon, BackIcon, FileIcon, DownloadIcon, ShareIcon, ChevronRightIcon, EyeIcon } from './components/Icons';
 import { Module, ResourceType, AcademicFile } from './types';
 import { MODULES_DATA } from './constants';
 import { Analytics } from '@vercel/analytics/react';
@@ -19,6 +19,22 @@ const transformToDirectDownload = (url: string): string => {
   return url;
 };
 
+// Helper to keep original view URL for viewing purposes
+const getViewUrl = (url: string): string => {
+  if (!url || url === '#') return '#';
+  // If it's already a view link, keep it; otherwise, ensure it's a view link
+  if (url.includes('/view') || url.includes('/edit')) {
+    return url;
+  }
+  // If it's a direct download link, try to convert it back to view link
+  const directRegex = /\/uc\?export=download&id=([^&]+)/;
+  const match = url.match(directRegex);
+  if (match && match[1]) {
+    return `https://drive.google.com/file/d/${match[1]}/view`;
+  }
+  return url;
+};
+
 const App: React.FC = () => {
   const [modules, setModules] = useState<Module[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -28,6 +44,7 @@ const App: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<ResourceType | 'All'>('All');
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const [viewingId, setViewingId] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -64,6 +81,7 @@ const App: React.FC = () => {
           const title = parts[colIdx.title] || "";
           const rawUrl = parts[colIdx.download] || "#";
           const downloadUrl = transformToDirectDownload(rawUrl);
+          const viewUrl = getViewUrl(rawUrl);
           
           if (!moduleCode) return;
 
@@ -79,7 +97,7 @@ const App: React.FC = () => {
               title: title || 'Academic Resource',
               type: (typeStr.toLowerCase().includes('note')) ? 'Notes' : 'Past Paper',
               downloadUrl: downloadUrl.startsWith('http') ? downloadUrl : '#',
-              size: '---' 
+              viewUrl: viewUrl.startsWith('http') ? viewUrl : '#'
             };
             targetModule.resources.push(resource);
           }
@@ -170,6 +188,21 @@ const App: React.FC = () => {
     setTimeout(() => {
       setDownloadingId(null);
     }, 3000);
+  };
+
+  const handleViewClick = (e: React.MouseEvent<HTMLAnchorElement>, file: AcademicFile) => {
+    if (file.viewUrl === '#') {
+      e.preventDefault();
+      return;
+    }
+    
+    // Set viewing state for animation
+    setViewingId(file.id);
+    
+    // Reset after a few seconds
+    setTimeout(() => {
+      setViewingId(null);
+    }, 2000);
   };
 
   const Breadcrumbs = () => (
@@ -457,14 +490,39 @@ const App: React.FC = () => {
                       >
                         <ShareIcon className="w-5 h-5 sm:w-6 sm:h-6" />
                       </button>
+                      {/* View Button */}
+                      <a 
+                        href={file.viewUrl} 
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => handleViewClick(e, file)}
+                        className={`relative overflow-hidden w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center rounded-full transition-all ${
+                          viewingId === file.id 
+                          ? 'bg-blue-100 text-blue-600 cursor-default' 
+                          : file.viewUrl !== '#'
+                            ? 'text-blue-400 hover:text-blue-600 hover:bg-blue-50/50'
+                            : 'text-slate-200 cursor-not-allowed'
+                        }`}
+                        title="View file in browser"
+                      >
+                        {viewingId === file.id ? (
+                          <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-blue-400/20 border-t-blue-500 rounded-full animate-spin"></div>
+                        ) : (
+                          <EyeIcon className="w-5 h-5 sm:w-6 sm:h-6" />
+                        )}
+                      </a>
+                      {/* Download Button */}
                       <a 
                         href={file.downloadUrl} 
                         onClick={(e) => handleDownloadClick(e, file)}
                         className={`relative overflow-hidden flex flex-1 sm:flex-none items-center justify-center space-x-3 sm:space-x-4 px-8 py-3.5 sm:px-12 sm:py-5 font-bold text-[12px] sm:text-[14px] rounded-[1rem] sm:rounded-2xl transition-all shadow-xl active:scale-95 ${
                           downloadingId === file.id 
                           ? 'bg-slate-800 text-white shadow-slate-100 cursor-default' 
-                          : 'bg-emerald-600 text-white shadow-emerald-100 hover:bg-emerald-700'
+                          : file.downloadUrl !== '#'
+                            ? 'bg-emerald-600 text-white shadow-emerald-100 hover:bg-emerald-700'
+                            : 'bg-slate-200 text-slate-400 shadow-slate-100 cursor-not-allowed'
                         }`}
+                        title={file.downloadUrl !== '#' ? "Download file" : "Download not available"}
                       >
                         {downloadingId === file.id ? (
                           <>
