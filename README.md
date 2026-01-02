@@ -1,20 +1,27 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# GAKA-APP
 
-# Run and deploy your AI Studio app
+GAKA-APP is a simple, user-friendly web app that helps you [short description of app purpose — replace with a one-line purpose]. It's built to be fast and easy to use.
 
-This contains everything you need to run your app locally.
+## What this app offers (features for users)
+- Clear, responsive interface that works on mobile and desktop
+- Fast navigation and instant updates as you interact
+- Simple controls for [primary user action — e.g., "creating and browsing items"]
+- Helpful on-screen hints and labels to guide you through tasks
+- Lightweight and clean design so you can focus on your content
 
-View your app in AI Studio: https://ai.studio/apps/drive/1bQ3OZpuTjjYqYfyq-Z5hgKy5vtQwO_eS
+## How to try it (quick, non-technical)
+- If there's a live demo, open it in your browser.
+- Or open the app's main page (index.html) in your browser to preview it locally.
 
-## Run Locally
+If you want a short guided tour of the interface or a list of actions you can perform, tell me what part you'd like to highlight and I’ll add it.
 
-**Prerequisites:**  Node.js
+## Feedback and help
+Found something confusing or want a new feature? Open an issue or send a short note describing what you'd like changed — we’ll prioritize clarity and usability.
 
+---
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+If you want, I can:
+- Add short screenshots or a quick walkthrough,
+- Replace placeholders above (like the app purpose) with exact text from the app,
+- Keep the README non-technical but add a one-click demo link if you have hosting.
+Tell me which and I’ll update the file. 
