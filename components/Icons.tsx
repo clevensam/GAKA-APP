@@ -32,11 +32,7 @@ export const FileIcon = ({ className = "w-5 h-5" }) => (
 );
 
 
-export const EyeIcon = ({ className = "w-5 h-5" }) => (
-  <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" className={className}>
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-  </svg>
-);
+
 
 export const ChevronRightIcon = ({ className = "w-5 h-5" }) => (
   <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" className={className}>
