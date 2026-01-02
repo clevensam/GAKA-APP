@@ -1,4 +1,3 @@
-Add View Icon for Resource Direct Link
 import React, { useState, useEffect, useMemo } from 'react';
 import { Navbar } from './components/Navbar';
 import { ModuleCard } from './components/ModuleCard';
