@@ -180,7 +180,6 @@ const App: React.FC = () => {
     setTimeout(() => setDownloadingId(null), 3000);
   };
 
-  // Fixed: explicitly typed ResourceItem as React.FC to handle the 'key' prop correctly in mapping functions
   const ResourceItem: React.FC<{ file: AcademicFile; moduleCode?: string; delay: number }> = ({ file, moduleCode, delay }) => (
     <div 
       className="group flex flex-col sm:flex-row sm:items-center justify-between p-5 sm:p-7 bg-white hover:bg-slate-50/50 border border-slate-100 hover:border-emerald-100 rounded-3xl transition-all duration-500 hover:shadow-xl hover:shadow-emerald-500/5 animate-fade-in"
@@ -361,6 +360,12 @@ const App: React.FC = () => {
               </div>
             )}
             
+            {/* Features Section Heading (As requested in screenshot) */}
+            <div className="w-full max-w-5xl mb-12 px-4 text-left sm:text-center mt-12 sm:mt-24">
+              <h3 className="text-[10px] font-bold text-emerald-600 uppercase tracking-[0.3em] mb-4">Core Principles</h3>
+              <h2 className="text-3xl sm:text-5xl font-black text-slate-900 tracking-tight">Our Core Pillars</h2>
+            </div>
+
             {/* Features Grid */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-10 w-full max-w-6xl px-4 pb-20">
               {[
