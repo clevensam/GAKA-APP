@@ -5,7 +5,7 @@
 ## 🚀 Features
 
 - **Live Registry Sync**: Directly integrated with a Google Sheets backend for real-time updates without redeploying code.
-- **Free Material Downloads**: Students can download learning materials directly and freely without sign-in prompts or extra steps.
+- **Direct Download Engine**: Automatically transforms Google Drive "view" links into "direct download" streams, bypassing the "Choose an account" prompt for a smoother experience.
 - **Mobile-First UX**: A modern, responsive interface built for the student on the move, featuring high-readability typography and thumb-friendly navigation.
 - **Zero Friction Access**: No registration, no login, and no data harvesting. Just immediate access to educational content.
 - **Smart Filtering**: Categorize resources by "Lecture Notes" or "Gaka" (Past Papers) with instant search capabilities.
@@ -15,7 +15,7 @@
 ## ⚠️ The Problem
 
 Academic resources in university environments are frequently:
-1.  **Fragmented**: Scattered across various WhatsApp groups,  personal cloud drives.
+1.  **Fragmented**: Scattered across various WhatsApp groups, Telegram channels, and personal cloud drives.
 2.  **Inaccessible**: Hidden behind complex folder structures or requiring institutional logins that fail during high-traffic periods (like exam seasons).
 3.  **Heavy**: Many student portals are slow, data-heavy, and poorly optimized for mobile devices with limited connectivity.
 

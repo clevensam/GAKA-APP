@@ -38,7 +38,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               onClick={onDirectoryClick} 
               className="hover:text-emerald-600 transition-colors py-2"
             >
-              Modules
+              Directory
             </button>
           </div>
           {/* Badge removed as per request */}
