@@ -97,7 +97,8 @@ const App: React.FC = () => {
               viewUrl: viewUrl.startsWith('http') ? viewUrl : '#',
               size: '---' 
             };
-            targetModule.resources.push(resource);
+            // Use unshift to put the most recently added items (bottom of sheet) at the top of the array
+            targetModule.resources.unshift(resource);
           }
         });
 
