@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Navbar } from './components/Navbar';
 import { ModuleCard } from './components/ModuleCard';
-import { SearchIcon, BackIcon, FileIcon, DownloadIcon, ShareIcon, ChevronRightIcon, BookOpenIcon } from './components/Icons';
+import { SearchIcon, BackIcon, FileIcon, DownloadIcon, ShareIcon, ChevronRightIcon, ViewIcon } from './components/Icons';
 import { Module, ResourceType, AcademicFile } from './types';
 import { MODULES_DATA } from './constants';
 import { Analytics } from '@vercel/analytics/react';
@@ -15,6 +15,17 @@ const transformToDirectDownload = (url: string): string => {
   const match = url.match(driveRegex);
   if (match && match[1]) {
     return `https://drive.google.com/uc?export=download&id=${match[1]}`;
+  }
+  return url;
+};
+
+// Helper to ensure URL is a clean view URL
+const ensureViewUrl = (url: string): string => {
+  if (!url || url === '#') return '#';
+  const driveRegex = /\/file\/d\/([^/]+)\/(?:view|edit|uc)/;
+  const match = url.match(driveRegex);
+  if (match && match[1]) {
+    return `https://drive.google.com/file/d/${match[1]}/view`;
   }
   return url;
 };
@@ -64,6 +75,7 @@ const App: React.FC = () => {
           const title = parts[colIdx.title] || "";
           const rawUrl = parts[colIdx.download] || "#";
           const downloadUrl = transformToDirectDownload(rawUrl);
+          const viewUrl = ensureViewUrl(rawUrl);
           
           if (!moduleCode) return;
 
@@ -79,6 +91,7 @@ const App: React.FC = () => {
               title: title || 'Academic Resource',
               type: (typeStr.toLowerCase().includes('note')) ? 'Notes' : 'Past Paper',
               downloadUrl: downloadUrl.startsWith('http') ? downloadUrl : '#',
+              viewUrl: viewUrl.startsWith('http') ? viewUrl : '#',
               size: '---' 
             };
             targetModule.resources.push(resource);
@@ -166,7 +179,7 @@ const App: React.FC = () => {
     // Set downloading state for animation
     setDownloadingId(file.id);
     
-    // Reset after a few seconds (simulating start of stream)
+    // Reset after a few seconds
     setTimeout(() => {
       setDownloadingId(null);
     }, 3000);
@@ -414,7 +427,7 @@ const App: React.FC = () => {
                 </div>
                 <h2 className="text-3xl sm:text-7xl font-extrabold mb-6 sm:mb-8 leading-tight sm:leading-[1.05] tracking-tight max-w-4xl break-words">{selectedModule.name}</h2>
                 <p className="text-emerald-50/70 text-base sm:text-xl max-w-3xl font-normal leading-relaxed">
-              All lecture notes and past papers available for free.
+                  All lecture notes and past papers available for free.
                 </p>
               </div>
             </div>
@@ -450,17 +463,30 @@ const App: React.FC = () => {
                       </div>
                     </div>
                     
-                    <div className="flex items-center justify-between sm:justify-start space-x-4">
-                      <button 
-                        onClick={() => handleShare(file.title)}
-                        className="w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center text-slate-400 hover:text-emerald-600 hover:bg-emerald-50/50 rounded-full transition-all"
-                      >
-                        <ShareIcon className="w-5 h-5 sm:w-6 sm:h-6" />
-                      </button>
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
+                      <div className="flex items-center justify-end space-x-2">
+                        <button 
+                          onClick={() => handleShare(file.title)}
+                          className="w-12 h-12 flex items-center justify-center text-slate-400 hover:text-emerald-600 hover:bg-emerald-50/50 rounded-full transition-all"
+                          title="Share via WhatsApp"
+                        >
+                          <ShareIcon className="w-5 h-5" />
+                        </button>
+                        <a 
+                          href={file.viewUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center justify-center space-x-2 px-5 py-3.5 sm:px-6 sm:py-4 bg-slate-100 text-slate-700 font-bold text-[12px] sm:text-[13px] rounded-[1rem] sm:rounded-2xl transition-all hover:bg-slate-200 active:scale-95"
+                        >
+                          <ViewIcon className="w-4 h-4" />
+                          <span>View</span>
+                        </a>
+                      </div>
+                      
                       <a 
                         href={file.downloadUrl} 
                         onClick={(e) => handleDownloadClick(e, file)}
-                        className={`relative overflow-hidden flex flex-1 sm:flex-none items-center justify-center space-x-3 sm:space-x-4 px-8 py-3.5 sm:px-12 sm:py-5 font-bold text-[12px] sm:text-[14px] rounded-[1rem] sm:rounded-2xl transition-all shadow-xl active:scale-95 ${
+                        className={`relative overflow-hidden flex items-center justify-center space-x-3 sm:space-x-4 px-8 py-3.5 sm:px-10 sm:py-4 font-bold text-[12px] sm:text-[13px] rounded-[1rem] sm:rounded-2xl transition-all shadow-lg active:scale-95 ${
                           downloadingId === file.id 
                           ? 'bg-slate-800 text-white shadow-slate-100 cursor-default' 
                           : 'bg-emerald-600 text-white shadow-emerald-100 hover:bg-emerald-700'
