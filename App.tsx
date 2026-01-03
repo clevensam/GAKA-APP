@@ -58,7 +58,8 @@ const App: React.FC = () => {
           code: headers.findIndex(h => h === 'module code' || h === 'code' || h.includes('module')),
           type: headers.findIndex(h => h === 'type'),
           title: headers.findIndex(h => h === 'title'),
-          download: headers.findIndex(h => h === 'download url' || h === 'download link' || h === 'url')
+          download: headers.findIndex(h => h === 'download url' || h === 'download link' || h === 'url'),
+          view: headers.findIndex(h => h === 'view url' || h === 'preview url' || h === 'view link')
         };
 
         const rows = allRows.slice(1); 
@@ -73,9 +74,11 @@ const App: React.FC = () => {
           const moduleCode = parts[colIdx.code] || "";
           const typeStr = parts[colIdx.type] || "";
           const title = parts[colIdx.title] || "";
-          const rawUrl = parts[colIdx.download] || "#";
-          const downloadUrl = transformToDirectDownload(rawUrl);
-          const viewUrl = ensureViewUrl(rawUrl);
+          const rawDownloadUrl = parts[colIdx.download] || "#";
+          const rawViewUrl = colIdx.view !== -1 ? parts[colIdx.view] : rawDownloadUrl;
+
+          const downloadUrl = transformToDirectDownload(rawDownloadUrl);
+          const viewUrl = ensureViewUrl(rawViewUrl);
           
           if (!moduleCode) return;
 
@@ -176,17 +179,14 @@ const App: React.FC = () => {
       return;
     }
     
-    // Set downloading state for animation
     setDownloadingId(file.id);
-    
-    // Reset after a few seconds
     setTimeout(() => {
       setDownloadingId(null);
     }, 3000);
   };
 
   const Breadcrumbs = () => (
-    <nav className="flex items-center space-x-2 text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-6 sm:mb-8 overflow-x-auto whitespace-nowrap pb-2 scrollbar-hide animate-fade-in">
+    <nav className="flex items-center space-x-2 text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-6 sm:mb-8 overflow-x-auto whitespace-nowrap pb-2 scrollbar-hide animate-fade-in px-1">
       <button onClick={() => navigateTo('#/home')} className="hover:text-emerald-600 transition-colors">Home</button>
       <ChevronRightIcon className="w-3 h-3 text-slate-300 flex-shrink-0" />
       {currentView === 'modules' && <span className="text-slate-900 font-bold">Modules</span>}
@@ -202,7 +202,7 @@ const App: React.FC = () => {
   );
 
   const FilterTabs = () => (
-    <div className="flex bg-slate-100/50 p-1 rounded-2xl w-full sm:w-fit mb-8 animate-fade-in shadow-inner">
+    <div className="flex bg-slate-100/50 p-1 rounded-2xl w-full sm:w-fit animate-fade-in shadow-inner">
       {[
         { label: 'ALL', value: 'All' },
         { label: 'Notes', value: 'Notes' },
@@ -237,14 +237,14 @@ const App: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col selection:bg-emerald-100 selection:text-emerald-900">
+    <div className="min-h-screen flex flex-col selection:bg-emerald-100 selection:text-emerald-900 overflow-x-hidden">
       <Navbar 
         onLogoClick={() => navigateTo('#/home')} 
         onHomeClick={() => navigateTo('#/home')}
         onDirectoryClick={() => navigateTo('#/modules')}
       />
 
-      <main className="flex-grow container mx-auto max-w-7xl px-5 py-8 sm:py-12 sm:px-8">
+      <main className="flex-grow container mx-auto max-w-7xl px-4 py-8 sm:py-12 sm:px-8">
         {currentView !== 'home' && <Breadcrumbs />}
 
         {error && (
@@ -261,21 +261,21 @@ const App: React.FC = () => {
         )}
 
         {currentView === 'home' && (
-          <div className="animate-fade-in flex flex-col items-center text-center pt-8 pb-16 lg:pt-32">
+          <div className="animate-fade-in flex flex-col items-center text-center pt-4 pb-16 lg:pt-32">
             <div className="inline-flex items-center space-x-2 bg-emerald-50 px-4 py-2 rounded-full mb-8 border border-emerald-100/50 animate-slide-in">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
               <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-700">MUST CS Portal</span>
             </div>
             
-            <h2 className="text-4xl sm:text-[90px] font-extrabold text-slate-900 mb-8 max-w-6xl leading-[1.1] sm:leading-[1.05] tracking-tight break-words">
+            <h2 className="text-4xl sm:text-[90px] font-extrabold text-slate-900 mb-8 max-w-6xl leading-[1.1] sm:leading-[1.05] tracking-tight break-words px-2">
               Centralized <span className="gradient-text">Academic</span> <br className="hidden sm:block"/> Repository.
             </h2>
             
-            <p className="text-base sm:text-2xl text-slate-500 max-w-3xl mb-12 font-normal leading-relaxed px-2">
+            <p className="text-base sm:text-2xl text-slate-500 max-w-3xl mb-12 font-normal leading-relaxed px-4">
               Verified lecture materials, modules, and past examination papers for Computer Science students.
             </p>
             
-            <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto px-4">
+            <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto px-6">
               <button 
                 onClick={() => navigateTo('#/modules')}
                 className="group flex items-center justify-center px-10 py-5 sm:px-16 sm:py-6 bg-emerald-600 text-white rounded-full font-bold text-sm sm:text-base shadow-2xl shadow-emerald-200 hover:bg-emerald-700 hover:scale-[1.03] transition-all duration-300 active:scale-95"
@@ -291,7 +291,7 @@ const App: React.FC = () => {
               </button>
             </div>
             
-            <div className="mt-20 sm:mt-32 grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-10 w-full max-w-6xl">
+            <div className="mt-20 sm:mt-32 grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-10 w-full max-w-6xl px-4">
               {[
                 { title: 'Open Access', text: 'Built for students, by students. Completely free of charge and always accessible.', icon: '01' },
                 { title: 'Live Registry', text: 'Directly synchronized with departmental cloud for real-time resource updates.', icon: '02' },
@@ -310,11 +310,11 @@ const App: React.FC = () => {
         )}
 
         {currentView === 'about' && (
-          <div className="animate-fade-in max-w-5xl mx-auto py-8 sm:py-12">
-            <div className="bg-white rounded-[2.5rem] sm:rounded-[3.5rem] p-8 sm:p-24 shadow-sm border border-slate-100 relative overflow-hidden">
+          <div className="animate-fade-in max-w-5xl mx-auto py-4 sm:py-12">
+            <div className="bg-white rounded-[2rem] sm:rounded-[3.5rem] p-8 sm:p-24 shadow-sm border border-slate-100 relative overflow-hidden">
                <div className="absolute top-0 right-0 w-48 h-48 sm:w-64 sm:h-64 bg-emerald-50 rounded-full -mr-24 -mt-24 sm:-mr-32 sm:-mt-32 opacity-50"></div>
                
-               <h2 className="text-4xl sm:text-7xl font-extrabold text-slate-900 mb-8 sm:mb-12 leading-tight tracking-tight relative break-words">
+               <h2 className="text-3xl sm:text-7xl font-extrabold text-slate-900 mb-8 sm:mb-12 leading-tight tracking-tight relative break-words">
                 Academic <span className="gradient-text">Efficiency.</span>
               </h2>
               
@@ -355,32 +355,32 @@ const App: React.FC = () => {
         {currentView === 'modules' && (
           <div className="animate-fade-in">
             <div className="flex flex-col lg:flex-row lg:items-end justify-between mb-10 sm:mb-16 gap-8 sm:gap-10">
-              <div className="space-y-3 sm:space-y-4">
+              <div className="space-y-3 sm:space-y-4 px-1">
                 <h2 className="text-4xl sm:text-5xl font-extrabold text-slate-900 tracking-tight">Modules</h2>
                 <div className="flex items-center space-x-3 sm:space-x-4">
                   <div className="flex bg-emerald-100/50 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full border border-emerald-200/30">
-                     <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700">Registered Modules</span>
+                     <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700">Registered</span>
                   </div>
                   <div className="h-1 w-1 rounded-full bg-slate-300"></div>
-                  <span className="text-slate-400 font-semibold text-sm sm:text-base tracking-tight">{filteredModules.length} Modules Available</span>
+                  <span className="text-slate-400 font-semibold text-sm sm:text-base tracking-tight">{filteredModules.length} Courses</span>
                 </div>
               </div>
               
-              <div className="relative w-full lg:w-[480px] group">
+              <div className="relative w-full lg:w-[480px] group px-1">
                 <div className="absolute inset-y-0 left-6 sm:left-8 flex items-center pointer-events-none">
                   <SearchIcon className="w-5 h-5 sm:w-6 sm:h-6 text-slate-300 group-focus-within:text-emerald-500 transition-colors" />
                 </div>
                 <input 
                   type="text" 
-                  placeholder="Find your course..."
+                  placeholder="Search course..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-16 sm:pl-20 pr-6 py-5 sm:py-7 bg-white border border-slate-100 rounded-[1.5rem] sm:rounded-3xl focus:ring-8 focus:ring-emerald-50 focus:border-emerald-300 outline-none transition-all shadow-sm hover:shadow-md text-lg sm:text-xl font-medium placeholder:text-slate-200"
+                  className="w-full pl-16 sm:pl-20 pr-6 py-5 sm:py-7 bg-white border border-slate-100 rounded-2xl sm:rounded-3xl focus:ring-8 focus:ring-emerald-50 focus:border-emerald-300 outline-none transition-all shadow-sm hover:shadow-md text-lg sm:text-xl font-medium placeholder:text-slate-200"
                 />
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 sm:gap-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-8">
               {filteredModules.map((module, i) => (
                 <div key={module.id} className="animate-fade-in" style={{ animationDelay: `${i * 50}ms` }}>
                   <ModuleCard 
@@ -391,8 +391,8 @@ const App: React.FC = () => {
               ))}
               {filteredModules.length === 0 && (
                 <div className="col-span-full py-16 sm:py-24 text-center">
-                  <p className="text-slate-400 font-medium text-base sm:text-lg italic">
-                    {modules.length === 0 ? "The registry is currently empty." : "No matching modules found in the registry."}
+                  <p className="text-slate-400 font-medium text-base sm:text-lg italic px-4">
+                    {modules.length === 0 ? "The registry is currently empty." : "No matching modules found."}
                   </p>
                   {modules.length > 0 && (
                     <button onClick={() => { setSearchQuery(''); }} className="mt-4 text-emerald-600 font-bold hover:underline">Clear Search</button>
@@ -405,111 +405,99 @@ const App: React.FC = () => {
 
         {currentView === 'detail' && selectedModule && (
           <div className="animate-fade-in max-w-5xl mx-auto pb-20 sm:pb-32">
-            <div className="mb-8 sm:mb-10">
+            <div className="mb-6 sm:mb-10 px-1">
                <button 
                 onClick={() => navigateTo('#/modules')}
                 className="flex items-center text-slate-400 font-bold text-[10px] sm:text-[11px] uppercase tracking-widest hover:text-emerald-600 transition-all group"
               >
                 <BackIcon className="mr-2 sm:mr-3 w-4 h-4 sm:w-5 sm:h-5 group-hover:-translate-x-1.5 transition-transform" />
-                Return to Modules
+                Back to Modules
               </button>
             </div>
 
-            <div className="bg-gradient-to-br from-emerald-600 via-emerald-700 to-teal-900 p-8 sm:p-24 rounded-[2.5rem] sm:rounded-[3.5rem] text-white shadow-2xl shadow-emerald-100 mb-8 sm:mb-12 relative overflow-hidden">
+            <div className="bg-gradient-to-br from-emerald-600 via-emerald-700 to-teal-900 p-8 sm:p-24 rounded-[2rem] sm:rounded-[3.5rem] text-white shadow-2xl shadow-emerald-100 mb-8 sm:mb-12 relative overflow-hidden">
               <div className="relative z-10">
-                <div className="flex flex-wrap items-center gap-3 sm:gap-4 mb-8 sm:mb-10">
+                <div className="flex flex-wrap items-center gap-2 sm:gap-4 mb-8 sm:mb-10">
                   <span className="bg-white/15 backdrop-blur-md px-4 py-1.5 sm:px-6 sm:py-2 rounded-full text-[10px] font-bold tracking-widest uppercase border border-white/10">
                     {selectedModule.code}
                   </span>
                   <span className="bg-black/10 backdrop-blur-md px-4 py-1.5 sm:px-6 sm:py-2 rounded-full text-[10px] font-bold tracking-widest uppercase border border-white/10">
-                    {selectedModule.resources.length} Academic Assets
+                    {selectedModule.resources.length} Assets
                   </span>
                 </div>
                 <h2 className="text-3xl sm:text-7xl font-extrabold mb-6 sm:mb-8 leading-tight sm:leading-[1.05] tracking-tight max-w-4xl break-words">{selectedModule.name}</h2>
-                <p className="text-emerald-50/70 text-base sm:text-xl max-w-3xl font-normal leading-relaxed">
-                  All lecture notes and past papers available for free.
-                </p>
               </div>
             </div>
 
-            <div className="bg-white rounded-[2rem] sm:rounded-[3rem] p-8 sm:p-20 shadow-sm border border-slate-100">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 sm:gap-8 mb-10 sm:mb-12">
+            <div className="bg-white rounded-[1.5rem] sm:rounded-[3rem] p-6 sm:p-16 shadow-sm border border-slate-100">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-10 sm:mb-12">
                 <h3 className="text-2xl sm:text-3xl font-bold text-slate-800">Resources</h3>
                 <FilterTabs />
               </div>
 
-              <div className="space-y-5 sm:space-y-6">
+              <div className="space-y-3 sm:space-y-4">
                 {filteredResources.map((file, i) => (
                   <div 
                     key={file.id} 
-                    className="group flex flex-col sm:flex-row sm:items-center justify-between p-6 sm:p-8 bg-[#fcfdfe] hover:bg-white border border-slate-50 hover:border-emerald-100 rounded-[1.5rem] sm:rounded-3xl transition-all duration-500 hover:shadow-xl hover:shadow-emerald-50/30 animate-fade-in"
+                    className="group flex flex-col sm:flex-row sm:items-center justify-between p-4 sm:p-6 bg-[#fcfdfe] hover:bg-white border border-slate-50 hover:border-emerald-100 rounded-2xl sm:rounded-3xl transition-all duration-500 hover:shadow-xl hover:shadow-emerald-50/30 animate-fade-in"
                     style={{ animationDelay: `${i * 80}ms` }}
                   >
-                    <div className="flex items-center space-x-5 sm:space-x-8 mb-6 sm:mb-0">
-                      <div className={`w-12 h-12 sm:w-16 sm:h-16 rounded-[1rem] sm:rounded-2xl flex items-center justify-center flex-shrink-0 transition-all duration-500 group-hover:scale-105 ${
+                    <div className="flex items-center space-x-4 sm:space-x-6 mb-4 sm:mb-0">
+                      <div className={`w-12 h-12 sm:w-16 sm:h-16 rounded-xl sm:rounded-2xl flex items-center justify-center flex-shrink-0 transition-all duration-500 group-hover:scale-105 ${
                         file.type === 'Notes' 
                         ? 'bg-emerald-50 text-emerald-600' 
                         : 'bg-teal-50 text-teal-600'
                       }`}>
                         <FileIcon className="w-6 h-6 sm:w-8 sm:h-8" />
                       </div>
-                      <div className="min-w-0">
-                        <h4 className="font-bold text-slate-800 text-lg sm:text-2xl leading-tight break-words sm:truncate group-hover:text-emerald-900 transition-colors">
+                      <div className="min-w-0 pr-2">
+                        <h4 className="font-bold text-slate-800 text-base sm:text-xl leading-snug break-words group-hover:text-emerald-900 transition-colors">
                           {file.title}
                         </h4>
-                        <span className={`text-[10px] font-bold uppercase tracking-widest mt-1.5 sm:mt-2 block ${file.type === 'Notes' ? 'text-emerald-500' : 'text-teal-500'}`}>
-                          {file.type === 'Notes' ? 'Lecture Notes' : 'Gaka'}
+                        <span className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-widest mt-1 block ${file.type === 'Notes' ? 'text-emerald-500' : 'text-teal-500'}`}>
+                          {file.type === 'Notes' ? 'Lecture Notes' : 'Past Paper'}
                         </span>
                       </div>
                     </div>
                     
-                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
-                      <div className="flex items-center justify-end space-x-2">
-                        <button 
-                          onClick={() => handleShare(file.title)}
-                          className="w-12 h-12 flex items-center justify-center text-slate-400 hover:text-emerald-600 hover:bg-emerald-50/50 rounded-full transition-all"
-                          title="Share via WhatsApp"
-                        >
-                          <ShareIcon className="w-5 h-5" />
-                        </button>
-                        <a 
-                          href={file.viewUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center justify-center space-x-2 px-5 py-3.5 sm:px-6 sm:py-4 bg-slate-100 text-slate-700 font-bold text-[12px] sm:text-[13px] rounded-[1rem] sm:rounded-2xl transition-all hover:bg-slate-200 active:scale-95"
-                        >
-                          <ViewIcon className="w-4 h-4" />
-                          <span>View</span>
-                        </a>
-                      </div>
+                    <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-3 bg-slate-50/50 sm:bg-transparent p-2 sm:p-0 rounded-xl">
+                      <button 
+                        onClick={() => handleShare(file.title)}
+                        className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-full transition-all active:scale-90"
+                      >
+                        <ShareIcon className="w-5 h-5 sm:w-6 sm:h-6" />
+                      </button>
+                      
+                      <a 
+                        href={file.viewUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900 rounded-xl sm:rounded-2xl transition-all active:scale-90"
+                      >
+                        <ViewIcon className="w-5 h-5 sm:w-6 sm:h-6" />
+                      </a>
                       
                       <a 
                         href={file.downloadUrl} 
                         onClick={(e) => handleDownloadClick(e, file)}
-                        className={`relative overflow-hidden flex items-center justify-center space-x-3 sm:space-x-4 px-8 py-3.5 sm:px-10 sm:py-4 font-bold text-[12px] sm:text-[13px] rounded-[1rem] sm:rounded-2xl transition-all shadow-lg active:scale-95 ${
+                        className={`w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-xl sm:rounded-2xl transition-all shadow-md active:scale-90 ${
                           downloadingId === file.id 
-                          ? 'bg-slate-800 text-white shadow-slate-100 cursor-default' 
+                          ? 'bg-slate-800 text-white shadow-none cursor-default' 
                           : 'bg-emerald-600 text-white shadow-emerald-100 hover:bg-emerald-700'
                         }`}
                       >
                         {downloadingId === file.id ? (
-                          <>
-                            <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
-                            <span>Starting...</span>
-                          </>
+                          <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
                         ) : (
-                          <>
-                            <DownloadIcon className="w-4 h-4 sm:w-5 sm:h-5" />
-                            <span>Download</span>
-                          </>
+                          <DownloadIcon className="w-5 h-5 sm:w-6 sm:h-6" />
                         )}
                       </a>
                     </div>
                   </div>
                 ))}
                 {filteredResources.length === 0 && (
-                  <div className="text-center py-16 sm:py-20 bg-slate-50/50 rounded-[1.5rem] sm:rounded-[2rem] border border-dashed border-slate-200 px-4">
-                     <p className="text-slate-400 font-medium text-sm sm:text-base italic">No files available in this category.</p>
+                  <div className="text-center py-12 sm:py-20 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
+                     <p className="text-slate-400 font-medium text-sm italic">No resources found.</p>
                   </div>
                 )}
               </div>
@@ -518,47 +506,33 @@ const App: React.FC = () => {
         )}
       </main>
 
-      <footer className="bg-white border-t border-slate-50 py-12 sm:py-16">
-        <div className="container mx-auto px-6 sm:px-8 max-w-7xl">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-10 sm:gap-12">
-            <div className="space-y-3 sm:space-y-4">
-              <div className="flex items-center space-x-3">
-                <div className="w-9 h-9 sm:w-10 sm:h-10 bg-emerald-600 rounded-xl flex items-center justify-center text-white font-black text-lg">G</div>
-                <span className="text-lg sm:text-xl font-extrabold tracking-tight text-slate-900 uppercase">GAKA Portal</span>
+      <footer className="bg-white border-t border-slate-50 py-12">
+        <div className="container mx-auto px-6 sm:px-8 max-w-7xl text-center md:text-left">
+          <div className="flex flex-col md:flex-row justify-between items-center md:items-start gap-10">
+            <div className="space-y-4">
+              <div className="flex items-center justify-center md:justify-start space-x-3">
+                <div className="w-9 h-9 bg-emerald-600 rounded-xl flex items-center justify-center text-white font-black text-lg">G</div>
+                <span className="text-lg font-extrabold tracking-tight text-slate-900 uppercase">GAKA Portal</span>
               </div>
-              <p className="text-slate-400 text-xs sm:text-sm font-medium max-w-sm leading-relaxed">
-                A streamlined hub for MUST students to access essential course documentation and archived examination papers.
+              <p className="text-slate-400 text-xs sm:text-sm font-medium max-w-sm leading-relaxed mx-auto md:mx-0">
+                Centralized academic hub for MUST Computer Science students. No login, no delays, just education.
               </p>
-              <div className="pt-1 sm:pt-2">
-                <p className="text-[10px] font-bold text-slate-300 uppercase tracking-[0.2em]">Designed by</p>
-                <p className="text-slate-900 font-extrabold text-base sm:text-lg">Cleven Sam</p>
-              </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 sm:gap-10 w-full md:w-auto">
-              <div className="space-y-2 sm:space-y-3">
-                <h4 className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">Email</h4>
-                <a 
-                  href="mailto:clevensamwel@gmail.com" 
-                  className="block text-slate-600 hover:text-emerald-600 transition-colors font-medium text-sm sm:text-base break-all"
-                >
-                  clevensamwel@gmail.com
-                </a>
+            <div className="flex flex-col sm:flex-row gap-8 sm:gap-12 text-sm">
+              <div className="space-y-2">
+                <h4 className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">Connect</h4>
+                <a href="https://wa.me/255685208576" className="block text-slate-600 hover:text-emerald-600 transition-colors font-medium">+255 685 208 576</a>
               </div>
-              <div className="space-y-2 sm:space-y-3">
-                <h4 className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">Contact</h4>
-                <a 
-                  href="https://wa.me/255685208576" 
-                  className="block text-slate-600 hover:text-emerald-600 transition-colors font-medium text-sm sm:text-base"
-                >
-                  +255 685 208 576
-                </a>
+              <div className="space-y-2">
+                <h4 className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">Developer</h4>
+                <p className="text-slate-900 font-bold">Cleven Sam</p>
               </div>
             </div>
           </div>
           
-          <div className="mt-12 sm:mt-16 pt-6 sm:pt-8 border-t border-slate-100 text-center">
-            <p className="text-slate-300 text-[9px] sm:text-[11px] font-bold uppercase tracking-[0.3em]">
+          <div className="mt-12 pt-8 border-t border-slate-50 text-center">
+            <p className="text-slate-300 text-[9px] font-bold uppercase tracking-[0.3em]">
               &copy; {new Date().getFullYear()} Softlink Africa | MUST Engineering
             </p>
           </div>
