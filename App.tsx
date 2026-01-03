@@ -435,69 +435,80 @@ const App: React.FC = () => {
                 <FilterTabs />
               </div>
 
-              <div className="space-y-3 sm:space-y-4">
+              <div className="space-y-4">
                 {filteredResources.map((file, i) => (
                   <div 
                     key={file.id} 
-                    className="group flex flex-col sm:flex-row sm:items-center justify-between p-4 sm:p-6 bg-[#fcfdfe] hover:bg-white border border-slate-50 hover:border-emerald-100 rounded-2xl sm:rounded-3xl transition-all duration-500 hover:shadow-xl hover:shadow-emerald-50/30 animate-fade-in"
+                    className="group flex flex-col sm:flex-row sm:items-center justify-between p-5 sm:p-8 bg-[#fcfdfe] hover:bg-white border border-slate-50 hover:border-emerald-100 rounded-3xl transition-all duration-500 hover:shadow-2xl hover:shadow-emerald-50/40 animate-fade-in"
                     style={{ animationDelay: `${i * 80}ms` }}
                   >
-                    <div className="flex items-center space-x-4 sm:space-x-6 mb-4 sm:mb-0">
-                      <div className={`w-12 h-12 sm:w-16 sm:h-16 rounded-xl sm:rounded-2xl flex items-center justify-center flex-shrink-0 transition-all duration-500 group-hover:scale-105 ${
+                    <div className="flex items-center space-x-5 sm:space-x-8 mb-6 sm:mb-0">
+                      <div className={`w-14 h-14 sm:w-20 sm:h-20 rounded-2xl sm:rounded-[1.5rem] flex items-center justify-center flex-shrink-0 transition-all duration-500 group-hover:scale-110 ${
                         file.type === 'Notes' 
                         ? 'bg-emerald-50 text-emerald-600' 
                         : 'bg-teal-50 text-teal-600'
                       }`}>
-                        <FileIcon className="w-6 h-6 sm:w-8 sm:h-8" />
+                        <FileIcon className="w-7 h-7 sm:w-9 sm:h-9" />
                       </div>
-                      <div className="min-w-0 pr-2">
-                        <h4 className="font-bold text-slate-800 text-base sm:text-xl leading-snug break-words group-hover:text-emerald-900 transition-colors">
+                      <div className="min-w-0">
+                        <h4 className="font-bold text-slate-800 text-lg sm:text-2xl leading-tight break-words group-hover:text-emerald-900 transition-colors">
                           {file.title}
                         </h4>
-                        <span className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-widest mt-1 block ${file.type === 'Notes' ? 'text-emerald-500' : 'text-teal-500'}`}>
-                          {file.type === 'Notes' ? 'Lecture Notes' : 'Past Paper'}
-                        </span>
+                        <div className="flex items-center mt-2 space-x-2">
+                           <span className={`text-[10px] sm:text-[11px] font-bold uppercase tracking-widest ${file.type === 'Notes' ? 'text-emerald-500' : 'text-teal-500'}`}>
+                             {file.type === 'Notes' ? 'Lecture Notes' : 'Past Paper'}
+                           </span>
+                           {file.size && <span className="text-[10px] text-slate-300 font-bold">• {file.size}</span>}
+                        </div>
                       </div>
                     </div>
                     
-                    <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-3 bg-slate-50/50 sm:bg-transparent p-2 sm:p-0 rounded-xl">
+                    <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-4">
+                      {/* Share - Icon Only */}
                       <button 
                         onClick={() => handleShare(file.title)}
-                        className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-full transition-all active:scale-90"
+                        className="w-12 h-12 flex items-center justify-center text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-full transition-all active:scale-90 border border-transparent hover:border-emerald-100"
+                        title="Share"
                       >
                         <ShareIcon className="w-5 h-5 sm:w-6 sm:h-6" />
                       </button>
                       
+                      {/* View - Icon Only */}
                       <a 
                         href={file.viewUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900 rounded-xl sm:rounded-2xl transition-all active:scale-90"
+                        className="w-12 h-12 flex items-center justify-center bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-800 rounded-2xl transition-all active:scale-90"
+                        title="View Online"
                       >
                         <ViewIcon className="w-5 h-5 sm:w-6 sm:h-6" />
                       </a>
                       
+                      {/* Download - Text + Icon, Primary Style */}
                       <a 
                         href={file.downloadUrl} 
                         onClick={(e) => handleDownloadClick(e, file)}
-                        className={`w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-xl sm:rounded-2xl transition-all shadow-md active:scale-90 ${
+                        className={`group/btn relative overflow-hidden flex flex-1 sm:flex-none items-center justify-center space-x-3 px-8 py-4 sm:px-12 sm:py-5 font-bold text-sm rounded-2xl transition-all shadow-xl active:scale-95 ${
                           downloadingId === file.id 
                           ? 'bg-slate-800 text-white shadow-none cursor-default' 
-                          : 'bg-emerald-600 text-white shadow-emerald-100 hover:bg-emerald-700'
+                          : 'bg-emerald-600 text-white shadow-emerald-200 hover:bg-emerald-700'
                         }`}
                       >
                         {downloadingId === file.id ? (
                           <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
                         ) : (
-                          <DownloadIcon className="w-5 h-5 sm:w-6 sm:h-6" />
+                          <>
+                            <DownloadIcon className="w-5 h-5 group-hover/btn:translate-y-0.5 transition-transform" />
+                            <span>Download</span>
+                          </>
                         )}
                       </a>
                     </div>
                   </div>
                 ))}
                 {filteredResources.length === 0 && (
-                  <div className="text-center py-12 sm:py-20 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
-                     <p className="text-slate-400 font-medium text-sm italic">No resources found.</p>
+                  <div className="text-center py-16 sm:py-24 bg-slate-50/50 rounded-3xl border border-dashed border-slate-200 px-4">
+                     <p className="text-slate-400 font-medium text-base italic">No resources matched your filter criteria.</p>
                   </div>
                 )}
               </div>
