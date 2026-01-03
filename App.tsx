@@ -335,7 +335,7 @@ const App: React.FC = () => {
 
             {/* Recently Added Section */}
             {recentFiles.length > 0 && (
-              <div className="w-full max-w-5xl mb-24 px-4 animate-fade-in">
+              <div className="w-full max-w-5xl mb-12 px-4 animate-fade-in">
                 <div className="flex items-center justify-between mb-8">
                   <div className="flex items-center space-x-3">
                     <div className="relative flex h-3 w-3">
@@ -361,7 +361,7 @@ const App: React.FC = () => {
             )}
             
             {/* Features Section Heading (As requested in screenshot) */}
-            <div className="w-full max-w-5xl mb-12 px-4 text-left sm:text-center mt-12 sm:mt-24">
+            <div className="w-full max-w-5xl mb-12 px-4 text-left sm:text-center mt-6 sm:mt-8">
               <h3 className="text-[10px] font-bold text-emerald-600 uppercase tracking-[0.3em] mb-4">Core Principles</h3>
               <h2 className="text-3xl sm:text-5xl font-black text-slate-900 tracking-tight">Our Core Pillars</h2>
             </div>
