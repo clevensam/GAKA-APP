@@ -5,6 +5,7 @@ import { SearchIcon, BackIcon, FileIcon, DownloadIcon, ShareIcon, ChevronRightIc
 import { Module, ResourceType, AcademicFile } from './types';
 import { MODULES_DATA } from './constants';
 import { Analytics } from '@vercel/analytics/react';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 
 const LIVE_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRn-pw2j_BMf_v--CHjpGLos3oFFAyOjrlZ8vsM0uFs4E23GPcGZ2F0tdBvRZGeg7VwZ-ZkIOpHU8zm/pub?output=csv";
 
@@ -521,6 +522,7 @@ const App: React.FC = () => {
         </div>
       </footer>
       <Analytics />
+      <SpeedInsights />
     </div>
   );
 };
