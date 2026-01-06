@@ -5,7 +5,6 @@ import { SearchIcon, BackIcon, FileIcon, DownloadIcon, ShareIcon, ChevronRightIc
 import { Module, ResourceType, AcademicFile } from './types';
 import { MODULES_DATA } from './constants';
 import { Analytics } from '@vercel/analytics/react';
-import { SpeedInsights } from '@vercel/speed-insights/react';
 
 const LIVE_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRn-pw2j_BMf_v--CHjpGLos3oFFAyOjrlZ8vsM0uFs4E23GPcGZ2F0tdBvRZGeg7VwZ-ZkIOpHU8zm/pub?output=csv";
 
@@ -309,11 +308,11 @@ const App: React.FC = () => {
                 <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-700">MUST CS Portal</span>
               </div>
               
-              <h2 className="text-4xl sm:text-[90px] font-extrabold text-slate-900 mb-8 max-w-6xl leading-[1.1] sm:leading-[1.05] tracking-tight break-words px-2">
+              <h2 className="text-4xl sm:text-[90px] font-extrabold text-slate-900 mb-8 max-w-6xl mx-auto leading-[1.1] sm:leading-[1.05] tracking-tight break-words px-2 text-center">
                 Centralized <span className="gradient-text">Academic</span> <br className="hidden sm:block"/> Repository.
               </h2>
               
-              <p className="text-base sm:text-2xl text-slate-500 max-w-3xl mb-12 font-normal leading-relaxed px-4">
+              <p className="text-base sm:text-2xl text-slate-500 max-w-3xl mx-auto mb-12 font-normal leading-relaxed px-4 text-center">
                 Verified lecture materials, modules, and past examination papers for Computer Science students.
               </p>
               
@@ -361,7 +360,7 @@ const App: React.FC = () => {
               </div>
             )}
             
-            {/* Features Section Heading (As requested in screenshot) */}
+            {/* Features Section Heading */}
             <div className="w-full max-w-5xl mb-12 px-4 text-left sm:text-center mt-6 sm:mt-8">
               <h3 className="text-[10px] font-bold text-emerald-600 uppercase tracking-[0.3em] mb-4">Core Principles</h3>
               <h2 className="text-3xl sm:text-5xl font-black text-slate-900 tracking-tight">Our Core Pillars</h2>
@@ -522,7 +521,6 @@ const App: React.FC = () => {
         </div>
       </footer>
       <Analytics />
-      <SpeedInsights />
     </div>
   );
 };
