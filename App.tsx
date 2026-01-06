@@ -61,7 +61,12 @@ const App: React.FC = () => {
         };
 
         const rows = allRows.slice(1); 
-        const skeletonModules: Module[] = MODULES_DATA.map(m => ({ ...m, resources: [] }));
+        // Start with deep copies of hardcoded modules
+        const moduleMap = new Map<string, Module>();
+        MODULES_DATA.forEach(m => {
+          moduleMap.set(m.code.replace(/\s+/g, '').toLowerCase(), { ...m, resources: [] });
+        });
+
         const allExtractedFiles: (AcademicFile & { moduleCode: string; moduleId: string; rowIndex: number })[] = [];
 
         rows.forEach((row, index) => {
@@ -78,26 +83,41 @@ const App: React.FC = () => {
           if (!moduleCode) return;
 
           const normalizedSheetCode = moduleCode.replace(/\s+/g, '').toLowerCase();
-          const targetModule = skeletonModules.find(m => m.code.replace(/\s+/g, '').toLowerCase() === normalizedSheetCode);
-
-          if (targetModule) {
-            const resource: AcademicFile = {
-              id: `dynamic-${index}`,
-              title: title || 'Academic Resource',
-              type: (typeStr.toLowerCase().includes('note')) ? 'Notes' : 'Past Paper',
-              downloadUrl: downloadUrl.startsWith('http') ? downloadUrl : '#',
-              viewUrl: viewUrl.startsWith('http') ? viewUrl : '#',
-              size: '---' 
-            };
-            targetModule.resources.unshift(resource);
-            allExtractedFiles.push({ ...resource, moduleCode: targetModule.code, moduleId: targetModule.id, rowIndex: index });
+          
+          // DYNAMIC FETCH: If module doesn't exist, create it on the fly
+          if (!moduleMap.has(normalizedSheetCode)) {
+            moduleMap.set(normalizedSheetCode, {
+              id: `dynamic-mod-${normalizedSheetCode}`,
+              code: moduleCode.toUpperCase(),
+              name: `Module ${moduleCode.toUpperCase()}`,
+              description: 'Automatically discovered academic resource module.',
+              resources: []
+            });
           }
+
+          const targetModule = moduleMap.get(normalizedSheetCode)!;
+          const resource: AcademicFile = {
+            id: `dynamic-res-${index}`,
+            title: title || 'Academic Resource',
+            type: (typeStr.toLowerCase().includes('note')) ? 'Notes' : 'Past Paper',
+            downloadUrl: downloadUrl.startsWith('http') ? downloadUrl : '#',
+            viewUrl: viewUrl.startsWith('http') ? viewUrl : '#',
+            size: '---' 
+          };
+          
+          targetModule.resources.unshift(resource);
+          allExtractedFiles.push({ 
+            ...resource, 
+            moduleCode: targetModule.code, 
+            moduleId: targetModule.id, 
+            rowIndex: index 
+          });
         });
 
-        const activeModules = skeletonModules.filter(m => m.resources.length > 0);
-        setModules(activeModules);
+        const finalModules = Array.from(moduleMap.values()).filter(m => m.resources.length > 0);
+        setModules(finalModules);
         
-        // Sort globally by rowIndex descending to get latest across all modules
+        // Sort globally by rowIndex descending to get latest across ALL dynamically found modules
         const topRecent = allExtractedFiles
           .sort((a, b) => b.rowIndex - a.rowIndex)
           .slice(0, 4);
@@ -106,7 +126,7 @@ const App: React.FC = () => {
         setError(null);
       } catch (err) {
         console.error("Fetch Error:", err);
-        setError("Internal Server Error");
+        setError("Internal Server Error - Check Connection");
         setModules([]); 
       } finally {
         setIsLoading(false);
@@ -333,7 +353,7 @@ const App: React.FC = () => {
               </div>
             </div>
 
-            {/* Recently Added Section */}
+            {/* Recently Added Section - Now dynamic from all found modules */}
             {recentFiles.length > 0 && (
               <div className="w-full max-w-5xl mb-12 px-4 animate-fade-in">
                 <div className="flex items-center justify-between mb-8">
@@ -420,10 +440,10 @@ const App: React.FC = () => {
                 <h2 className="text-4xl sm:text-5xl font-extrabold text-slate-900 tracking-tight">Modules</h2>
                 <div className="flex items-center space-x-3 sm:space-x-4">
                   <div className="flex bg-emerald-100/50 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full border border-emerald-200/30">
-                     <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700">Registered</span>
+                     <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700">Live Feed</span>
                   </div>
                   <div className="h-1 w-1 rounded-full bg-slate-300"></div>
-                  <span className="text-slate-400 font-semibold text-sm sm:text-base tracking-tight">{filteredModules.length} Courses</span>
+                  <span className="text-slate-400 font-semibold text-sm sm:text-base tracking-tight">{filteredModules.length} Modules Found</span>
                 </div>
               </div>
               <div className="relative w-full lg:w-[480px] group px-1">
@@ -445,7 +465,7 @@ const App: React.FC = () => {
               {filteredModules.length === 0 && (
                 <div className="col-span-full py-16 sm:py-24 text-center">
                   <p className="text-slate-400 font-medium text-base sm:text-lg italic px-4">
-                    {modules.length === 0 ? "The registry is currently empty." : "No matching modules found."}
+                    {modules.length === 0 ? "Synchronizing with cloud registry..." : "No matching modules found."}
                   </p>
                 </div>
               )}
