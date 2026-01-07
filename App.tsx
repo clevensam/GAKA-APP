@@ -115,7 +115,6 @@ const App: React.FC = () => {
         const finalModules = Array.from(moduleMap.values()).filter(m => m.resources.length > 0);
         setModules(finalModules);
         
-        // Show exactly top 3 recently uploaded across all modules
         const topRecent = allExtractedFiles
           .sort((a, b) => b.rowIndex - a.rowIndex)
           .slice(0, 3);
@@ -390,7 +389,6 @@ const App: React.FC = () => {
               </div>
             </div>
 
-            {/* Recently Added Section - Dynamic and Vertical cards, strictly top 3 */}
             {recentFiles.length > 0 && (
               <div className="w-full max-w-6xl mb-12 px-4 animate-fade-in">
                 <div className="flex items-center justify-between mb-10">
@@ -417,13 +415,11 @@ const App: React.FC = () => {
               </div>
             )}
             
-            {/* Features Section Heading */}
             <div className="w-full max-w-5xl mb-12 px-4 text-left sm:text-center mt-6 sm:mt-8">
               <h3 className="text-[10px] font-bold text-emerald-600 uppercase tracking-[0.3em] mb-4">Core Principles</h3>
               <h2 className="text-3xl sm:text-5xl font-black text-slate-900 tracking-tight">Our Core Pillars</h2>
             </div>
 
-            {/* Features Grid */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-10 w-full max-w-6xl px-4 pb-20">
               {[
                 { title: 'Open Access', text: 'Built for students, by students. Completely free of charge and always accessible.', icon: '01' },
@@ -512,21 +508,27 @@ const App: React.FC = () => {
 
         {currentView === 'detail' && selectedModule && (
           <div className="animate-fade-in max-w-5xl mx-auto pb-20 sm:pb-32">
-            <div className="mb-6 sm:mb-10 px-1">
-               <button onClick={() => navigateTo('#/modules')} className="flex items-center text-slate-400 font-bold text-[10px] sm:text-[11px] uppercase tracking-widest hover:text-emerald-600 transition-all group">
-                <BackIcon className="mr-2 sm:mr-3 w-4 h-4 sm:w-5 sm:h-5 group-hover:-translate-x-1.5 transition-transform" />
+            <div className="mb-8 px-1">
+              <span className="text-[11px] font-black text-emerald-600 uppercase tracking-widest mb-2 block opacity-70">{selectedModule.code}</span>
+              <button 
+                onClick={() => navigateTo('#/modules')} 
+                className="flex items-center text-slate-800 font-bold text-[13px] sm:text-[14px] uppercase tracking-widest hover:text-emerald-600 transition-all group"
+              >
+                <BackIcon className="mr-3 w-6 h-6 sm:w-7 sm:h-7 group-hover:-translate-x-2 transition-transform" />
                 Back to Modules
               </button>
             </div>
+            
             <div className="bg-gradient-to-br from-emerald-600 via-emerald-700 to-teal-900 p-8 sm:p-24 rounded-[2rem] sm:rounded-[3.5rem] text-white shadow-2xl shadow-emerald-100 mb-8 sm:mb-12 relative overflow-hidden">
               <div className="relative z-10">
                 <div className="flex flex-wrap items-center gap-2 sm:gap-4 mb-8 sm:mb-10">
                   <span className="bg-white/15 backdrop-blur-md px-4 py-1.5 sm:px-6 sm:py-2 rounded-full text-[10px] font-bold tracking-widest uppercase border border-white/10">{selectedModule.code}</span>
-                  <span className="bg-black/10 backdrop-blur-md px-4 py-1.5 sm:px-6 sm:py-2 rounded-full text-[10px] font-bold tracking-widest uppercase border border-white/10">{selectedModule.resources.length} Assets</span>
+                  <span className="bg-black/10 backdrop-blur-md px-4 py-1.5 sm:px-6 sm:py-2 rounded-full text-[10px] font-bold tracking-widest uppercase border border-white/10">{selectedModule.resources.length} Files</span>
                 </div>
                 <h2 className="text-3xl sm:text-7xl font-extrabold mb-6 sm:mb-8 leading-tight sm:leading-[1.05] tracking-tight max-w-4xl break-words">{selectedModule.name}</h2>
               </div>
             </div>
+            
             <div className="bg-white rounded-[1.5rem] sm:rounded-[3rem] p-6 sm:p-16 shadow-sm border border-slate-100">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-10 sm:mb-12">
                 <h3 className="text-2xl sm:text-3xl font-bold text-slate-800">Resources</h3>
