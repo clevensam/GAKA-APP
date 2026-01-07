@@ -416,7 +416,6 @@ const App: React.FC = () => {
             )}
             
             <div className="w-full max-w-5xl mb-12 px-4 text-left sm:text-center mt-6 sm:mt-8">
-              <h3 className="text-[10px] font-bold text-emerald-600 uppercase tracking-[0.3em] mb-4">Functional Hub</h3>
               <h2 className="text-3xl sm:text-5xl font-black text-slate-900 tracking-tight">Our Services</h2>
             </div>
 
@@ -481,7 +480,7 @@ const App: React.FC = () => {
               </div>
               <div className="relative w-full lg:w-[480px] group px-1">
                 <div className="absolute inset-y-0 left-6 sm:left-8 flex items-center pointer-events-none">
-                  <SearchIcon className="w-5 h-5 sm:w-6 sm:h-6 text-slate-300 group-focus-within:text-emerald-500 transition-colors" />
+                  <SearchIcon className="w-5 h-5 sm:w-6 h-6 text-slate-300 group-focus-within:text-emerald-500 transition-colors" />
                 </div>
                 <input 
                   type="text" placeholder="Search course..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
@@ -574,7 +573,7 @@ const App: React.FC = () => {
             </div>
           </div>
           <div className="mt-12 pt-8 border-t border-slate-50 text-center">
-            <p className="text-slate-300 text-[9px] font-bold uppercase tracking-[0.3em]">&copy; {new Date().getFullYear()} Softlink Africa | MUST Engineering</p>
+            <p className="text-slate-300 text-[9px] font-bold uppercase tracking-[0.3em]">&copy; {new Date().getFullYear()} Softlink Africa | MUST ICT</p>
           </div>
         </div>
       </footer>
