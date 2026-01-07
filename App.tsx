@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Navbar } from './components/Navbar';
 import { ModuleCard } from './components/ModuleCard';
-import { SearchIcon, BackIcon, FileIcon, DownloadIcon, ShareIcon, ChevronRightIcon, ViewIcon } from './components/Icons';
+import { SearchIcon, BackIcon, FileIcon, DownloadIcon, ShareIcon, ChevronRightIcon, ViewIcon, BookOpenIcon } from './components/Icons';
 import { Module, ResourceType, AcademicFile } from './types';
 import { MODULES_DATA } from './constants';
 import { Analytics } from '@vercel/analytics/react';
@@ -416,22 +416,22 @@ const App: React.FC = () => {
             )}
             
             <div className="w-full max-w-5xl mb-12 px-4 text-left sm:text-center mt-6 sm:mt-8">
-              <h3 className="text-[10px] font-bold text-emerald-600 uppercase tracking-[0.3em] mb-4">Core Principles</h3>
-              <h2 className="text-3xl sm:text-5xl font-black text-slate-900 tracking-tight">Our Core Pillars</h2>
+              <h3 className="text-[10px] font-bold text-emerald-600 uppercase tracking-[0.3em] mb-4">Functional Hub</h3>
+              <h2 className="text-3xl sm:text-5xl font-black text-slate-900 tracking-tight">Our Services</h2>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-10 w-full max-w-6xl px-4 pb-20">
               {[
-                { title: 'Open Access', text: 'Built for students, by students. Completely free of charge and always accessible.', icon: '01' },
-                { title: 'Live Registry', text: 'Directly synchronized with departmental cloud for real-time resource updates.', icon: '02' },
-                { title: 'Seamless Flow', text: 'Zero barriers to entry. No registration, no login, just pure education.', icon: '03' }
-              ].map((feature, idx) => (
+                { title: 'Material Distribution', text: 'Seamless delivery of lecture notes and academic modules directly to your device.', icon: <BookOpenIcon className="w-6 h-6 sm:w-8 sm:h-8" /> },
+                { title: 'One-Tap Downloads', text: 'Accelerated file retrieval engine that bypasses secondary login prompts and redirects.', icon: <DownloadIcon className="w-6 h-6 sm:w-8 sm:h-8" /> },
+                { title: 'Exam Preparation', text: 'Extensive archive of verified past examination papers (Gaka) to enhance your revision process.', icon: <FileIcon className="w-6 h-6 sm:w-8 sm:h-8" /> }
+              ].map((service, idx) => (
                 <div key={idx} className="bg-white p-8 sm:p-10 rounded-[2rem] sm:rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-xl transition-all hover:-translate-y-2 text-left group">
                   <div className="w-14 h-14 sm:w-16 sm:h-16 bg-slate-50 rounded-[1.2rem] flex items-center justify-center text-slate-400 mb-6 sm:mb-8 group-hover:bg-emerald-600 group-hover:text-white transition-all duration-500">
-                    <span className="text-lg sm:text-xl font-bold">{feature.icon}</span>
+                    {service.icon}
                   </div>
-                  <h3 className="text-xl sm:text-2xl font-bold text-slate-900 mb-3 sm:mb-4 tracking-tight">{feature.title}</h3>
-                  <p className="text-slate-500 text-sm sm:text-base font-normal leading-relaxed">{feature.text}</p>
+                  <h3 className="text-xl sm:text-2xl font-bold text-slate-900 mb-3 sm:mb-4 tracking-tight">{service.title}</h3>
+                  <p className="text-slate-500 text-sm sm:text-base font-normal leading-relaxed">{service.text}</p>
                 </div>
               ))}
             </div>
