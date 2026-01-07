@@ -327,15 +327,15 @@ const App: React.FC = () => {
 
       <main className="flex-grow container mx-auto max-w-7xl px-4 py-8 sm:py-12 sm:px-8">
         {currentView !== 'home' && (
-          <nav className="flex items-center space-x-2 text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-6 sm:mb-8 overflow-x-auto whitespace-nowrap pb-2 scrollbar-hide animate-fade-in px-1">
+          <nav className="flex items-center space-x-2 text-[12px] sm:text-[14px] font-semibold uppercase tracking-wider text-slate-400 mb-6 sm:mb-8 overflow-x-auto whitespace-nowrap pb-2 scrollbar-hide animate-fade-in px-1">
             <button onClick={() => navigateTo('#/home')} className="hover:text-emerald-600 transition-colors">Home</button>
-            <ChevronRightIcon className="w-3 h-3 text-slate-300 flex-shrink-0" />
+            <ChevronRightIcon className="w-3.5 h-3.5 text-slate-300 flex-shrink-0" />
             {currentView === 'modules' && <span className="text-slate-900 font-bold">Modules</span>}
             {currentView === 'about' && <span className="text-slate-900 font-bold">About</span>}
             {currentView === 'detail' && (
               <>
                 <button onClick={() => navigateTo('#/modules')} className="hover:text-emerald-600 transition-colors">Modules</button>
-                <ChevronRightIcon className="w-3 h-3 text-slate-300 flex-shrink-0" />
+                <ChevronRightIcon className="w-3.5 h-3.5 text-slate-300 flex-shrink-0" />
                 <span className="text-slate-900 font-bold">{selectedModule?.code}</span>
               </>
             )}
@@ -509,7 +509,6 @@ const App: React.FC = () => {
         {currentView === 'detail' && selectedModule && (
           <div className="animate-fade-in max-w-5xl mx-auto pb-20 sm:pb-32">
             <div className="mb-8 px-1">
-              <span className="text-[11px] font-black text-emerald-600 uppercase tracking-widest mb-2 block opacity-70">{selectedModule.code}</span>
               <button 
                 onClick={() => navigateTo('#/modules')} 
                 className="flex items-center text-slate-800 font-bold text-[13px] sm:text-[14px] uppercase tracking-widest hover:text-emerald-600 transition-all group"
