@@ -115,7 +115,7 @@ const App: React.FC = () => {
         const finalModules = Array.from(moduleMap.values()).filter(m => m.resources.length > 0);
         setModules(finalModules);
         
-        // Show only top 3 recently uploaded across all modules
+        // Show exactly top 3 recently uploaded across all modules
         const topRecent = allExtractedFiles
           .sort((a, b) => b.rowIndex - a.rowIndex)
           .slice(0, 3);
@@ -132,7 +132,7 @@ const App: React.FC = () => {
     };
 
     fetchData();
-  }, []);
+  }, [modules.length]);
 
   useEffect(() => {
     const handleHashChange = () => {
@@ -272,34 +272,35 @@ const App: React.FC = () => {
 
     return (
       <div 
-        className="group bg-white p-6 sm:p-8 rounded-[2.5rem] border border-slate-100 hover:border-emerald-100 transition-all duration-500 hover:shadow-2xl hover:shadow-emerald-500/5 flex flex-col h-full animate-fade-in relative overflow-hidden"
+        className="group bg-white p-8 sm:p-10 rounded-[2.5rem] border border-slate-100 hover:border-emerald-100 transition-all duration-500 hover:shadow-2xl hover:shadow-emerald-500/5 flex flex-col h-full animate-fade-in relative overflow-hidden"
         style={{ animationDelay: `${delay}ms` }}
       >
-        <div className="flex items-center justify-between mb-5">
-          <div className="flex items-center space-x-2">
-            <span className="text-[10px] font-black bg-emerald-50 text-emerald-600 px-3 py-1 rounded-xl uppercase tracking-tighter">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center space-x-3">
+             <div className={`w-3 h-3 rounded-full animate-pulse ${file.type === 'Notes' ? 'bg-emerald-500' : 'bg-teal-500'}`}></div>
+             <span className="text-[10px] font-black bg-emerald-50 text-emerald-600 px-3 py-1.5 rounded-xl uppercase tracking-tighter">
               {file.moduleCode}
             </span>
           </div>
-          <div className={`w-2 h-2 rounded-full ${file.type === 'Notes' ? 'bg-emerald-500' : 'bg-teal-500'}`}></div>
+          <span className={`text-[9px] font-bold uppercase tracking-widest ${file.type === 'Notes' ? 'text-emerald-400' : 'text-teal-400'}`}>
+            {file.type === 'Notes' ? 'Lecture Note' : 'Past Paper'}
+          </span>
         </div>
         
         <div className="flex-grow">
-          <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2 line-clamp-1">{moduleName}</h4>
-          <h3 className="text-xl font-bold text-slate-800 leading-[1.2] mb-8 line-clamp-2 group-hover:text-emerald-700 transition-colors">
+          <h4 className="text-[12px] font-bold text-slate-400 uppercase tracking-[0.1em] mb-3 line-clamp-1">{moduleName}</h4>
+          <h3 className="text-xl sm:text-2xl font-black text-slate-800 leading-[1.25] mb-8 line-clamp-2 group-hover:text-emerald-700 transition-colors tracking-tight">
             {file.title}
           </h3>
         </div>
 
-        <a 
-          href={file.viewUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="w-full py-4 bg-slate-50 text-slate-600 font-bold text-[11px] uppercase tracking-[0.2em] rounded-2xl hover:bg-emerald-600 hover:text-white transition-all active:scale-95 flex items-center justify-center gap-3 border border-slate-100 group-hover:border-transparent"
+        <button 
+          onClick={() => navigateTo(`#/module/${file.moduleId}`)}
+          className="w-full py-5 bg-slate-50 text-slate-600 font-bold text-[11px] uppercase tracking-[0.2em] rounded-2xl hover:bg-emerald-600 hover:text-white transition-all active:scale-95 flex items-center justify-center gap-3 border border-slate-100 group-hover:border-transparent group-hover:shadow-lg group-hover:shadow-emerald-100"
         >
-          <span>View</span>
-          <ViewIcon className="w-4 h-4" />
-        </a>
+          <span>View Resources</span>
+          <ChevronRightIcon className="w-4 h-4" />
+        </button>
       </div>
     );
   };
@@ -389,16 +390,16 @@ const App: React.FC = () => {
               </div>
             </div>
 
-            {/* Recently Added Section - Dynamic and Vertical cards */}
+            {/* Recently Added Section - Dynamic and Vertical cards, strictly top 3 */}
             {recentFiles.length > 0 && (
-              <div className="w-full max-w-6xl mb-8 px-4 animate-fade-in">
+              <div className="w-full max-w-6xl mb-12 px-4 animate-fade-in">
                 <div className="flex items-center justify-between mb-10">
                   <div className="flex items-center space-x-3">
                     <div className="relative flex h-3 w-3">
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                       <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
                     </div>
-                    <h3 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">Recently Uploaded</h3>
+                    <h3 className="text-xl sm:text-3xl font-black text-slate-900 tracking-tight">Recently Uploaded</h3>
                   </div>
                   <button 
                     onClick={() => navigateTo('#/modules')}
@@ -408,7 +409,7 @@ const App: React.FC = () => {
                   </button>
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-10">
                   {recentFiles.map((file, idx) => (
                     <RecentFileCard key={file.id} file={file} delay={idx * 100} />
                   ))}
