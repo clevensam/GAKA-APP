@@ -61,7 +61,6 @@ const App: React.FC = () => {
         };
 
         const rows = allRows.slice(1); 
-        // Start with deep copies of hardcoded modules
         const moduleMap = new Map<string, Module>();
         MODULES_DATA.forEach(m => {
           moduleMap.set(m.code.replace(/\s+/g, '').toLowerCase(), { ...m, resources: [] });
@@ -84,7 +83,6 @@ const App: React.FC = () => {
 
           const normalizedSheetCode = moduleCode.replace(/\s+/g, '').toLowerCase();
           
-          // DYNAMIC FETCH: If module doesn't exist, create it on the fly
           if (!moduleMap.has(normalizedSheetCode)) {
             moduleMap.set(normalizedSheetCode, {
               id: `dynamic-mod-${normalizedSheetCode}`,
@@ -117,10 +115,10 @@ const App: React.FC = () => {
         const finalModules = Array.from(moduleMap.values()).filter(m => m.resources.length > 0);
         setModules(finalModules);
         
-        // Sort globally by rowIndex descending to get latest across ALL dynamically found modules
+        // Show only top 3 recently uploaded across all modules
         const topRecent = allExtractedFiles
           .sort((a, b) => b.rowIndex - a.rowIndex)
-          .slice(0, 4);
+          .slice(0, 3);
         setRecentFiles(topRecent);
 
         setError(null);
@@ -268,6 +266,44 @@ const App: React.FC = () => {
     </div>
   );
 
+  const RecentFileCard: React.FC<{ file: AcademicFile & { moduleCode: string; moduleId: string }; delay: number }> = ({ file, delay }) => {
+    const module = modules.find(m => m.id === file.moduleId);
+    const moduleName = module ? module.name : file.moduleCode;
+
+    return (
+      <div 
+        className="group bg-white p-6 sm:p-8 rounded-[2.5rem] border border-slate-100 hover:border-emerald-100 transition-all duration-500 hover:shadow-2xl hover:shadow-emerald-500/5 flex flex-col h-full animate-fade-in relative overflow-hidden"
+        style={{ animationDelay: `${delay}ms` }}
+      >
+        <div className="flex items-center justify-between mb-5">
+          <div className="flex items-center space-x-2">
+            <span className="text-[10px] font-black bg-emerald-50 text-emerald-600 px-3 py-1 rounded-xl uppercase tracking-tighter">
+              {file.moduleCode}
+            </span>
+          </div>
+          <div className={`w-2 h-2 rounded-full ${file.type === 'Notes' ? 'bg-emerald-500' : 'bg-teal-500'}`}></div>
+        </div>
+        
+        <div className="flex-grow">
+          <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2 line-clamp-1">{moduleName}</h4>
+          <h3 className="text-xl font-bold text-slate-800 leading-[1.2] mb-8 line-clamp-2 group-hover:text-emerald-700 transition-colors">
+            {file.title}
+          </h3>
+        </div>
+
+        <a 
+          href={file.viewUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="w-full py-4 bg-slate-50 text-slate-600 font-bold text-[11px] uppercase tracking-[0.2em] rounded-2xl hover:bg-emerald-600 hover:text-white transition-all active:scale-95 flex items-center justify-center gap-3 border border-slate-100 group-hover:border-transparent"
+        >
+          <span>View</span>
+          <ViewIcon className="w-4 h-4" />
+        </a>
+      </div>
+    );
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-white">
@@ -353,10 +389,10 @@ const App: React.FC = () => {
               </div>
             </div>
 
-            {/* Recently Added Section - Now dynamic from all found modules */}
+            {/* Recently Added Section - Dynamic and Vertical cards */}
             {recentFiles.length > 0 && (
-              <div className="w-full max-w-5xl mb-12 px-4 animate-fade-in">
-                <div className="flex items-center justify-between mb-8">
+              <div className="w-full max-w-6xl mb-8 px-4 animate-fade-in">
+                <div className="flex items-center justify-between mb-10">
                   <div className="flex items-center space-x-3">
                     <div className="relative flex h-3 w-3">
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
@@ -372,9 +408,9 @@ const App: React.FC = () => {
                   </button>
                 </div>
                 
-                <div className="grid grid-cols-1 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
                   {recentFiles.map((file, idx) => (
-                    <ResourceItem key={file.id} file={file} moduleCode={file.moduleCode} delay={idx * 100} />
+                    <RecentFileCard key={file.id} file={file} delay={idx * 100} />
                   ))}
                 </div>
               </div>
