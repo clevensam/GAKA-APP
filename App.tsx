@@ -96,16 +96,33 @@ const App: React.FC = () => {
     }
   }, [isDark]);
 
+  const fetchDataWithRetry = async (url: string, retries = 3): Promise<Response> => {
+    for (let i = 0; i < retries; i++) {
+      try {
+        const cacheBuster = `&t=${Date.now()}`;
+        const response = await fetch(`${url}${cacheBuster}`);
+        if (response.ok) return response;
+      } catch (e) {
+        if (i === retries - 1) throw e;
+      }
+      // Wait before retry
+      await new Promise(res => setTimeout(res, 1000 * (i + 1)));
+    }
+    throw new Error('Sync failed after multiple attempts');
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       try {
         setIsLoading(true);
-        const response = await fetch(LIVE_CSV_URL);
-        if (!response.ok) throw new Error('Sync failed');
+        const response = await fetchDataWithRetry(LIVE_CSV_URL);
         
         const csvText = await response.text();
         const allRows = csvText.split(/\r?\n/).filter(row => row.trim() !== "");
-        if (allRows.length < 2) throw new Error('No data found in sheet');
+        
+        if (allRows.length < 2) {
+          throw new Error('Cloud registry is currently empty.');
+        }
 
         const headers = allRows[0].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(h => h.trim().replace(/^"|"$/g, '').toLowerCase());
         
@@ -117,8 +134,15 @@ const App: React.FC = () => {
           view: headers.findIndex(h => h === 'view url' || h === 'preview url' || h === 'view link')
         };
 
+        // Fallback checks for column indices
+        if (colIdx.code === -1 || colIdx.title === -1) {
+          throw new Error('Invalid cloud registry format. Contact support.');
+        }
+
         const rows = allRows.slice(1); 
         const moduleMap = new Map<string, Module>();
+        
+        // Initialize with default data
         MODULES_DATA.forEach(m => {
           moduleMap.set(m.code.replace(/\s+/g, '').toLowerCase(), { ...m, resources: [] });
         });
@@ -133,11 +157,10 @@ const App: React.FC = () => {
           const rawDownloadUrl = parts[colIdx.download] || "#";
           const rawViewUrl = colIdx.view !== -1 ? parts[colIdx.view] : rawDownloadUrl;
 
+          if (!moduleCode || !title) return;
+
           const downloadUrl = transformToDirectDownload(rawDownloadUrl);
           const viewUrl = ensureViewUrl(rawViewUrl);
-          
-          if (!moduleCode) return;
-
           const normalizedSheetCode = moduleCode.replace(/\s+/g, '').toLowerCase();
           
           if (!moduleMap.has(normalizedSheetCode)) {
@@ -178,9 +201,9 @@ const App: React.FC = () => {
         setRecentFiles(topRecent);
 
         setError(null);
-      } catch (err) {
+      } catch (err: any) {
         console.error("Fetch Error:", err);
-        setError("Internal Server Error - Check Connection");
+        setError(err.message || "Failed to sync with cloud registry. Check connection.");
         setModules([]); 
       } finally {
         setIsLoading(false);
@@ -370,6 +393,7 @@ const App: React.FC = () => {
             <div className="w-10 h-10 sm:w-12 h-12 bg-emerald-600 rounded-2xl flex items-center justify-center text-white font-black text-lg sm:text-xl shadow-lg shadow-emerald-100 dark:shadow-emerald-900/40 animate-pulse">G</div>
           </div>
         </div>
+        <p className="mt-8 text-slate-400 font-medium animate-pulse text-sm uppercase tracking-[0.2em]">Synchronizing Registry...</p>
       </div>
     );
   }
@@ -408,9 +432,12 @@ const App: React.FC = () => {
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-3 w-3 bg-amber-500"></span>
               </span>
-              <p>{error}</p>
+              <div className="flex flex-col">
+                <p className="font-bold">Sync Error</p>
+                <p className="opacity-80">{error}</p>
+              </div>
             </div>
-            <button onClick={() => window.location.reload()} className="bg-white dark:bg-slate-800 px-6 py-2.5 rounded-full shadow-sm hover:shadow-md transition-all active:scale-95 text-amber-600 dark:text-amber-300 border border-amber-100 dark:border-amber-900/30 font-semibold">Try Again</button>
+            <button onClick={() => window.location.reload()} className="bg-white dark:bg-slate-800 px-6 py-2.5 rounded-full shadow-sm hover:shadow-md transition-all active:scale-95 text-amber-600 dark:text-amber-300 border border-amber-100 dark:border-amber-900/30 font-semibold">Retry Connection</button>
           </div>
         )}
 
@@ -441,7 +468,7 @@ const App: React.FC = () => {
                 </button>
                 <button 
                   onClick={() => navigateTo('#/about')}
-                  className="px-10 py-5 sm:px-16 sm:py-6 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800 rounded-full font-bold text-sm sm:text-base hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-700 transition-all duration-300 shadow-sm dark:shadow-none active:scale-95"
+                  className="px-10 py-5 sm:px-16 sm:py-6 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-800 rounded-full font-bold text-sm sm:text-base hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-700 transition-all duration-300 shadow-sm dark:shadow-none active:scale-95"
                 >
                   Learn More
                 </button>
@@ -508,7 +535,7 @@ const App: React.FC = () => {
                   <p className="mt-6 sm:mt-8">By providing a unified interface for Mbeya University of Science and Technology (MUST) resources, we ensure that focus remains on learning rather than logistics.</p>
                 </section>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-10">
-                  <div className="bg-slate-50 dark:bg-slate-950/40 p-8 sm:p-10 rounded-[1.5rem] sm:rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-sm">
+                  <div className="bg-slate-50 dark:bg-slate-950/40 p-8 sm:p-10 rounded-[1.5rem] sm:rounded-[2rem] border border-slate-100 dark:border-slate-700 shadow-sm">
                     <h4 className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-3">Development</h4>
                     <p className="text-slate-900 dark:text-white font-bold text-lg sm:text-xl mb-1">Softlink Africa</p>
                     <p className="text-sm sm:text-base font-normal">Modern engineering optimized for MUST mobile environments.</p>
