@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Navbar } from './components/Navbar';
 import { ModuleCard } from './components/ModuleCard';
 import { SearchIcon, BackIcon, FileIcon, DownloadIcon, ShareIcon, ChevronRightIcon, ViewIcon, BookOpenIcon } from './components/Icons';
@@ -26,65 +26,6 @@ const ensureViewUrl = (url: string): string => {
     return `https://drive.google.com/file/d/${match[1]}/view`;
   }
   return url;
-};
-
-const HangingLamp: React.FC<{ isDark: boolean; onToggle: () => void }> = ({ isDark, onToggle }) => {
-  const [isPulling, setIsPulling] = useState(false);
-
-  const handlePull = useCallback(() => {
-    if (isPulling) return;
-    setIsPulling(true);
-    
-    // Toggle state halfway through the pull animation for a realistic feel
-    setTimeout(() => {
-      onToggle();
-    }, 150);
-
-    // Reset animation state
-    setTimeout(() => {
-      setIsPulling(false);
-    }, 400);
-  }, [isPulling, onToggle]);
-
-  return (
-    <div className="fixed top-0 right-8 sm:right-16 z-[100] pointer-events-none flex flex-col items-center">
-      {/* Short Static Cord from Ceiling */}
-      <div className="w-0.5 h-4 bg-slate-400 dark:bg-slate-800 transition-colors duration-500"></div>
-      
-      {/* Lamp Head */}
-      <div className="relative pointer-events-auto">
-        <svg width="50" height="40" viewBox="0 0 50 40" fill="none" xmlns="http://www.w3.org/2000/svg" className="drop-shadow-lg">
-          {/* Main Shade */}
-          <path d="M5 35 L45 35 L38 5 L12 5 Z" fill={isDark ? "#1A1A1A" : "#334155"} className="transition-colors duration-500" />
-          {/* Inner Glow Rim */}
-          <path d="M5 35 L45 35 L43 32 L7 32 Z" fill={isDark ? "#000000" : "#FBBF24"} fillOpacity={isDark ? "0.2" : "0.3"} className="transition-colors duration-500" />
-          {/* Light Bulb */}
-          <circle cx="25" cy="36" r="6" fill={isDark ? "#333333" : "#FCD34D"} className={`transition-all duration-500 ${!isDark ? 'lamp-glow' : ''}`} />
-        </svg>
-
-        {/* Realistic Pull String */}
-        <div 
-          onClick={handlePull}
-          className={`absolute left-1/2 -translate-x-1/2 cursor-pointer group active:scale-95 transition-all duration-300 ease-out flex flex-col items-center`}
-          style={{ 
-            top: '32px',
-            transform: `translateX(-50%) translateY(${isPulling ? '24px' : '0px'})`,
-            transitionTimingFunction: isPulling ? 'cubic-bezier(0.25, 0.46, 0.45, 0.94)' : 'cubic-bezier(0.175, 0.885, 0.32, 1.275)'
-          }}
-        >
-          {/* Cord */}
-          <div className="w-[1.5px] h-20 sm:h-24 bg-slate-400 dark:bg-slate-700/50 group-hover:bg-emerald-500 transition-colors"></div>
-          
-          {/* Decorative Bead/Puller */}
-          <div className="w-4 h-8 bg-slate-800 dark:bg-emerald-600 rounded-full shadow-2xl border border-white/10 dark:border-emerald-400/20 flex flex-col items-center justify-center space-y-1.5 py-2 -mt-1 group-hover:scale-110 transition-transform">
-             <div className="w-2.5 h-px bg-white/20"></div>
-             <div className="w-2.5 h-px bg-white/20"></div>
-             <div className="w-2.5 h-px bg-white/20"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
 };
 
 const App: React.FC = () => {
@@ -338,8 +279,13 @@ const App: React.FC = () => {
 
   return (
     <div className={`min-h-screen flex flex-col selection:bg-emerald-100 selection:text-emerald-900 overflow-x-hidden transition-colors duration-500 ${isDark ? 'dark bg-black' : 'bg-[#fcfdfe]'}`}>
-      <HangingLamp isDark={isDark} onToggle={() => setIsDark(!isDark)} />
-      <Navbar onLogoClick={() => navigateTo('#/home')} onHomeClick={() => navigateTo('#/home')} onDirectoryClick={() => navigateTo('#/modules')} />
+      <Navbar 
+        onLogoClick={() => navigateTo('#/home')} 
+        onHomeClick={() => navigateTo('#/home')} 
+        onDirectoryClick={() => navigateTo('#/modules')}
+        isDark={isDark}
+        onToggleDark={() => setIsDark(!isDark)}
+      />
       <main className="flex-grow container mx-auto max-w-7xl px-4 py-8 sm:py-12 sm:px-8 transition-colors duration-500">
         {currentView !== 'home' && (
           <nav className="flex items-center space-x-2 text-[12px] sm:text-[14px] font-semibold uppercase tracking-wider text-slate-400 dark:text-white/30 mb-6 sm:mb-8 overflow-x-auto whitespace-nowrap pb-2 scrollbar-hide animate-fade-in px-1">
