@@ -18,11 +18,11 @@ export const Navbar: React.FC<NavbarProps> = ({
           onClick={onLogoClick}
           className="flex items-center space-x-3 hover:opacity-80 transition-opacity active:scale-95 text-left group"
         >
-          <div className="w-11 h-11 bg-emerald-600 rounded-2xl flex items-center justify-center text-white font-extrabold text-xl shadow-xl shadow-emerald-100 dark:shadow-emerald-900/20">
+          <div className="w-11 h-11 bg-emerald-600 dark:bg-emerald-500 rounded-2xl flex items-center justify-center text-white font-extrabold text-xl shadow-xl shadow-emerald-100 dark:shadow-emerald-900/40">
             G
           </div>
           <div>
-            <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100 leading-none">GAKA</h1>
+            <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-none">GAKA</h1>
           </div>
         </button>
         
