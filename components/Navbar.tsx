@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 
 interface NavbarProps {
   onLogoClick?: () => void;
@@ -9,22 +9,56 @@ interface NavbarProps {
 }
 
 const HangingLamp: React.FC<{ isDark: boolean; onToggle: () => void }> = ({ isDark, onToggle }) => {
-  const [isPulling, setIsPulling] = useState(false);
+  const [dragY, setDragY] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const startY = useRef(0);
+  const threshold = 60; // Distance to pull before triggering
+  const maxPull = 100; // Maximum visual stretch
 
-  const handlePull = useCallback(() => {
-    if (isPulling) return;
-    setIsPulling(true);
-    
-    // Toggle state halfway through the pull animation for a realistic feel
-    setTimeout(() => {
+  const handleStart = (clientY: number) => {
+    setIsDragging(true);
+    startY.current = clientY;
+  };
+
+  const handleMove = useCallback((clientY: number) => {
+    if (!isDragging) return;
+    const deltaY = clientY - startY.current;
+    if (deltaY > 0) {
+      // Apply some resistance (logarithmic-like feel)
+      const constrainedY = Math.min(deltaY * 0.7, maxPull);
+      setDragY(constrainedY);
+    }
+  }, [isDragging]);
+
+  const handleEnd = useCallback(() => {
+    if (!isDragging) return;
+    if (dragY >= threshold) {
       onToggle();
-    }, 150);
+    }
+    setIsDragging(false);
+    setDragY(0);
+  }, [dragY, isDragging, onToggle]);
 
-    // Reset animation state
-    setTimeout(() => {
-      setIsPulling(false);
-    }, 400);
-  }, [isPulling, onToggle]);
+  useEffect(() => {
+    const onMouseMove = (e: MouseEvent) => handleMove(e.clientY);
+    const onMouseUp = () => handleEnd();
+    const onTouchMove = (e: TouchEvent) => handleMove(e.touches[0].clientY);
+    const onTouchEnd = () => handleEnd();
+
+    if (isDragging) {
+      window.addEventListener('mousemove', onMouseMove);
+      window.addEventListener('mouseup', onMouseUp);
+      window.addEventListener('touchmove', onTouchMove);
+      window.addEventListener('touchend', onTouchEnd);
+    }
+
+    return () => {
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+      window.removeEventListener('touchmove', onTouchMove);
+      window.removeEventListener('touchend', onTouchEnd);
+    };
+  }, [isDragging, handleMove, handleEnd]);
 
   return (
     <div className="absolute top-full right-6 sm:right-12 z-[100] pointer-events-none flex flex-col items-center">
@@ -45,23 +79,31 @@ const HangingLamp: React.FC<{ isDark: boolean; onToggle: () => void }> = ({ isDa
           <circle cx="25" cy="36" r="6" fill={isDark ? "#333333" : "#FCD34D"} className={`transition-all duration-500 ${!isDark ? 'lamp-glow' : ''}`} />
         </svg>
 
-        {/* Realistic Pull String */}
+        {/* Elastic Pull String */}
         <div 
-          onClick={handlePull}
-          className={`absolute left-1/2 -translate-x-1/2 cursor-pointer group active:scale-95 transition-all duration-300 ease-out flex flex-col items-center p-2`}
+          onMouseDown={(e) => handleStart(e.clientY)}
+          onTouchStart={(e) => handleStart(e.touches[0].clientY)}
+          className={`absolute left-1/2 -translate-x-1/2 select-none flex flex-col items-center pointer-events-auto transition-all ${isDragging ? '' : 'duration-500 ease-[cubic-bezier(0.175,0.885,0.32,1.275)]'}`}
           style={{ 
             top: '28px',
-            transform: `translateX(-50%) translateY(${isPulling ? '20px' : '0px'})`,
-            transitionTimingFunction: isPulling ? 'cubic-bezier(0.25, 0.46, 0.45, 0.94)' : 'cubic-bezier(0.175, 0.885, 0.32, 1.275)'
+            height: `${56 + dragY}px`, // Dynamic height for cord stretch
+            cursor: isDragging ? 'grabbing' : 'grab'
           }}
         >
-          {/* Cord */}
-          <div className="w-[1px] h-12 sm:h-16 bg-slate-400 dark:bg-slate-600 group-hover:bg-emerald-500 transition-colors"></div>
+          {/* Visual Cord - stretched via container height or scale */}
+          <div className="w-[1.5px] bg-slate-400 dark:bg-slate-600 group-hover:bg-emerald-500 transition-colors flex-grow"></div>
           
+          {/* Pull Trigger Threshold Visual Indicator (Subtle) */}
+          {isDragging && dragY < threshold && (
+             <div className="absolute top-[60px] w-1 h-1 bg-emerald-500/20 rounded-full animate-ping"></div>
+          )}
+
           {/* Decorative Bead/Puller */}
-          <div className="w-3 h-6 bg-slate-800 dark:bg-emerald-600 rounded-full shadow-lg border border-white/10 dark:border-emerald-400/20 flex flex-col items-center justify-center space-y-1 py-1 -mt-0.5 group-hover:scale-110 transition-transform">
-             <div className="w-1.5 h-px bg-white/20"></div>
-             <div className="w-1.5 h-px bg-white/20"></div>
+          <div 
+            className={`w-3.5 h-7 bg-slate-800 dark:bg-emerald-600 rounded-full shadow-lg border border-white/10 dark:border-emerald-400/20 flex flex-col items-center justify-center space-y-1 py-1 -mt-0.5 transform transition-transform ${isDragging ? 'scale-110' : 'hover:scale-110'}`}
+          >
+             <div className={`w-1.5 h-px transition-colors ${dragY >= threshold ? 'bg-white' : 'bg-white/30'}`}></div>
+             <div className={`w-1.5 h-px transition-colors ${dragY >= threshold ? 'bg-white' : 'bg-white/30'}`}></div>
           </div>
         </div>
       </div>
