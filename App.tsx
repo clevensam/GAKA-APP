@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Navbar } from './components/Navbar';
 import { ModuleCard } from './components/ModuleCard';
 import { SearchIcon, BackIcon, FileIcon, DownloadIcon, ShareIcon, ChevronRightIcon, ViewIcon, BookOpenIcon } from './components/Icons';
@@ -31,33 +31,55 @@ const ensureViewUrl = (url: string): string => {
 const HangingLamp: React.FC<{ isDark: boolean; onToggle: () => void }> = ({ isDark, onToggle }) => {
   const [isPulling, setIsPulling] = useState(false);
 
-  const handlePull = () => {
+  const handlePull = useCallback(() => {
+    if (isPulling) return;
     setIsPulling(true);
-    onToggle();
-    setTimeout(() => setIsPulling(false), 200);
-  };
+    
+    // Toggle state halfway through the pull animation for a realistic feel
+    setTimeout(() => {
+      onToggle();
+    }, 150);
+
+    // Reset animation state
+    setTimeout(() => {
+      setIsPulling(false);
+    }, 400);
+  }, [isPulling, onToggle]);
 
   return (
-    <div className="fixed top-0 right-6 sm:right-12 z-[100] pointer-events-none">
-      <div className="flex flex-col items-center">
-        <div className="w-0.5 h-6 sm:h-10 bg-slate-400 dark:bg-white/5 transition-colors duration-500"></div>
-        <div className="relative group pointer-events-auto cursor-pointer" onClick={handlePull}>
-          <svg width="46" height="46" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg" className="transform hover:scale-105 transition-transform">
-            <path d="M10 42 L50 42 L42 18 L18 18 Z" fill={isDark ? "#1A1A1A" : "#334155"} className="transition-colors duration-500" />
-            <circle cx="30" cy="46" r="7" fill={isDark ? "#2A2A2A" : "#fbbf24"} className={`transition-all duration-500 ${!isDark ? 'lamp-glow' : 'lamp-off'}`} />
-          </svg>
-          <div 
-            className="absolute left-1/2 -translate-x-1/2 transition-transform duration-200 ease-out"
-            style={{ 
-              top: '42px',
-              transform: `translateX(-50%) translateY(${isPulling ? '18px' : '0px'})`
-            }}
-          >
-            <div className="w-[1.5px] h-14 sm:h-18 bg-slate-400 dark:bg-white/5 mx-auto opacity-70"></div>
-            <div className="w-3.5 h-7 bg-slate-700 dark:bg-emerald-500 rounded-full mx-auto shadow-xl border border-white/10 dark:border-emerald-400/20 flex flex-col items-center justify-center space-y-1.5 py-1.5 active:scale-90 transition-all">
-               <div className="w-2 h-px bg-white/30 dark:bg-white/40"></div>
-               <div className="w-2 h-px bg-white/30 dark:bg-white/40"></div>
-            </div>
+    <div className="fixed top-0 right-8 sm:right-16 z-[100] pointer-events-none flex flex-col items-center">
+      {/* Short Static Cord from Ceiling */}
+      <div className="w-0.5 h-4 bg-slate-400 dark:bg-slate-800 transition-colors duration-500"></div>
+      
+      {/* Lamp Head */}
+      <div className="relative pointer-events-auto">
+        <svg width="50" height="40" viewBox="0 0 50 40" fill="none" xmlns="http://www.w3.org/2000/svg" className="drop-shadow-lg">
+          {/* Main Shade */}
+          <path d="M5 35 L45 35 L38 5 L12 5 Z" fill={isDark ? "#1A1A1A" : "#334155"} className="transition-colors duration-500" />
+          {/* Inner Glow Rim */}
+          <path d="M5 35 L45 35 L43 32 L7 32 Z" fill={isDark ? "#000000" : "#FBBF24"} fillOpacity={isDark ? "0.2" : "0.3"} className="transition-colors duration-500" />
+          {/* Light Bulb */}
+          <circle cx="25" cy="36" r="6" fill={isDark ? "#333333" : "#FCD34D"} className={`transition-all duration-500 ${!isDark ? 'lamp-glow' : ''}`} />
+        </svg>
+
+        {/* Realistic Pull String */}
+        <div 
+          onClick={handlePull}
+          className={`absolute left-1/2 -translate-x-1/2 cursor-pointer group active:scale-95 transition-all duration-300 ease-out flex flex-col items-center`}
+          style={{ 
+            top: '32px',
+            transform: `translateX(-50%) translateY(${isPulling ? '24px' : '0px'})`,
+            transitionTimingFunction: isPulling ? 'cubic-bezier(0.25, 0.46, 0.45, 0.94)' : 'cubic-bezier(0.175, 0.885, 0.32, 1.275)'
+          }}
+        >
+          {/* Cord */}
+          <div className="w-[1.5px] h-20 sm:h-24 bg-slate-400 dark:bg-slate-700/50 group-hover:bg-emerald-500 transition-colors"></div>
+          
+          {/* Decorative Bead/Puller */}
+          <div className="w-4 h-8 bg-slate-800 dark:bg-emerald-600 rounded-full shadow-2xl border border-white/10 dark:border-emerald-400/20 flex flex-col items-center justify-center space-y-1.5 py-2 -mt-1 group-hover:scale-110 transition-transform">
+             <div className="w-2.5 h-px bg-white/20"></div>
+             <div className="w-2.5 h-px bg-white/20"></div>
+             <div className="w-2.5 h-px bg-white/20"></div>
           </div>
         </div>
       </div>
