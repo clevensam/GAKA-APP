@@ -40,32 +40,32 @@ const HangingLamp: React.FC<{ isDark: boolean; onToggle: () => void }> = ({ isDa
   return (
     <div className="fixed top-0 right-6 sm:right-12 z-[100] pointer-events-none">
       <div className="flex flex-col items-center">
-        {/* Wire - Shortened */}
-        <div className="w-0.5 h-8 sm:h-12 bg-slate-400 dark:bg-slate-700 transition-colors duration-500"></div>
+        {/* Wire - Extra Short */}
+        <div className="w-0.5 h-6 sm:h-10 bg-slate-400 dark:bg-slate-700 transition-colors duration-500"></div>
         
         {/* Lamp Body */}
         <div className="relative group pointer-events-auto cursor-pointer" onClick={handlePull}>
-          <svg width="50" height="50" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <svg width="46" height="46" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg" className="transform hover:scale-105 transition-transform">
             {/* Shade */}
             <path d="M10 42 L50 42 L42 18 L18 18 Z" fill={isDark ? "#1e293b" : "#334155"} className="transition-colors duration-500" />
             {/* Bulb */}
             <circle cx="30" cy="46" r="7" fill={isDark ? "#334155" : "#fbbf24"} className={`transition-all duration-500 ${!isDark ? 'lamp-glow' : 'lamp-off'}`} />
           </svg>
           
-          {/* Pull String - Shorter and snugger */}
+          {/* Pull String - Extra Short Snug version */}
           <div 
             className="absolute left-1/2 -translate-x-1/2 transition-transform duration-200 ease-out"
             style={{ 
               top: '42px',
-              transform: `translateX(-50%) translateY(${isPulling ? '20px' : '0px'})`
+              transform: `translateX(-50%) translateY(${isPulling ? '18px' : '0px'})`
             }}
           >
             {/* Thread */}
-            <div className="w-[1px] h-20 sm:h-24 bg-slate-400 dark:bg-slate-600 mx-auto opacity-80"></div>
-            {/* Handle - Bead-style handle */}
-            <div className="w-3 h-6 bg-slate-700 dark:bg-slate-300 rounded-full mx-auto shadow-lg border border-white/10 flex flex-col items-center justify-center space-y-1 py-1 group-hover:bg-slate-800 transition-colors">
-               <div className="w-1.5 h-px bg-white/20"></div>
-               <div className="w-1.5 h-px bg-white/20"></div>
+            <div className="w-[1.5px] h-14 sm:h-18 bg-slate-400 dark:bg-slate-600 mx-auto opacity-70"></div>
+            {/* Handle */}
+            <div className="w-3.5 h-7 bg-slate-700 dark:bg-slate-200 rounded-full mx-auto shadow-xl border border-white/10 dark:border-black/10 flex flex-col items-center justify-center space-y-1.5 py-1.5 active:bg-slate-900 transition-colors">
+               <div className="w-2 h-px bg-white/30 dark:bg-black/20"></div>
+               <div className="w-2 h-px bg-white/30 dark:bg-black/20"></div>
             </div>
           </div>
         </div>
@@ -256,7 +256,7 @@ const App: React.FC = () => {
 
   const ResourceItem: React.FC<{ file: AcademicFile; moduleCode?: string; delay: number }> = ({ file, moduleCode, delay }) => (
     <div 
-      className="group flex flex-col sm:flex-row sm:items-center justify-between p-5 sm:p-7 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/80 border border-slate-100 dark:border-slate-700 hover:border-emerald-100 dark:hover:border-emerald-900 rounded-3xl transition-all duration-500 hover:shadow-xl hover:shadow-emerald-500/5 animate-fade-in"
+      className="group flex flex-col sm:flex-row sm:items-center justify-between p-5 sm:p-7 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/80 border border-slate-100 dark:border-slate-800/50 hover:border-emerald-100 dark:hover:border-emerald-700/50 rounded-3xl transition-all duration-500 hover:shadow-xl hover:shadow-emerald-500/5 animate-fade-in"
       style={{ animationDelay: `${delay}ms` }}
     >
       <div className="flex items-center space-x-5 mb-5 sm:mb-0">
@@ -268,7 +268,7 @@ const App: React.FC = () => {
         <div className="min-w-0">
           <div className="flex items-center space-x-2 mb-1">
             {moduleCode && (
-              <span className="text-[9px] font-black bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 px-2 py-0.5 rounded-md uppercase tracking-tighter">
+              <span className="text-[9px] font-black bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 px-2 py-0.5 rounded-md uppercase tracking-tighter">
                 {moduleCode}
               </span>
             )}
@@ -276,7 +276,7 @@ const App: React.FC = () => {
               {file.type === 'Notes' ? 'Note' : 'Gaka'}
             </span>
           </div>
-          <h4 className="font-bold text-slate-800 dark:text-slate-100 text-base sm:text-lg leading-tight break-words pr-4 group-hover:text-emerald-900 dark:group-hover:text-emerald-400 transition-colors">
+          <h4 className="font-bold text-slate-800 dark:text-white text-base sm:text-lg leading-tight break-words pr-4 group-hover:text-emerald-900 dark:group-hover:text-emerald-300 transition-colors">
             {file.title}
           </h4>
         </div>
@@ -294,7 +294,7 @@ const App: React.FC = () => {
             href={file.viewUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="w-11 h-11 flex items-center justify-center bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-600 hover:text-slate-800 dark:hover:text-slate-100 rounded-2xl transition-all active:scale-90"
+            className="w-11 h-11 flex items-center justify-center bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-slate-800 dark:hover:text-white rounded-2xl transition-all active:scale-90"
           >
             <ViewIcon className="w-5 h-5" />
           </a>
@@ -328,10 +328,10 @@ const App: React.FC = () => {
 
     return (
       <div 
-        className="group bg-white dark:bg-slate-900 p-8 sm:p-10 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 hover:border-emerald-100 dark:hover:border-emerald-800 transition-all duration-500 hover:shadow-2xl hover:shadow-emerald-500/5 flex flex-col h-full animate-fade-in relative overflow-hidden"
+        className="group bg-white dark:bg-slate-900 p-8 sm:p-10 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 hover:border-emerald-100 dark:hover:border-emerald-800 transition-all duration-500 hover:shadow-2xl hover:shadow-emerald-500/10 flex flex-col h-full animate-fade-in relative overflow-hidden"
         style={{ animationDelay: `${delay}ms` }}
       >
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-6 relative z-10">
           <div className="flex items-center space-x-3">
              <div className={`w-3 h-3 rounded-full animate-pulse ${file.type === 'Notes' ? 'bg-emerald-500' : 'bg-teal-500'}`}></div>
              <span className="text-[10px] font-black bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-3 py-1.5 rounded-xl uppercase tracking-tighter">
@@ -343,16 +343,16 @@ const App: React.FC = () => {
           </span>
         </div>
         
-        <div className="flex-grow">
+        <div className="flex-grow relative z-10">
           <h4 className="text-[12px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.1em] mb-3 line-clamp-1">{moduleName}</h4>
-          <h3 className="text-xl sm:text-2xl font-black text-slate-800 dark:text-slate-100 leading-[1.25] mb-8 line-clamp-2 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors tracking-tight">
+          <h3 className="text-xl sm:text-2xl font-black text-slate-800 dark:text-white leading-[1.25] mb-8 line-clamp-2 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors tracking-tight">
             {file.title}
           </h3>
         </div>
 
         <button 
           onClick={() => navigateTo(`#/module/${file.moduleId}`)}
-          className="w-full py-5 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-bold text-[11px] uppercase tracking-[0.2em] rounded-2xl hover:bg-emerald-600 dark:hover:bg-emerald-500 hover:text-white transition-all active:scale-95 flex items-center justify-center gap-3 border border-slate-100 dark:border-slate-700 group-hover:border-transparent group-hover:shadow-lg group-hover:shadow-emerald-100"
+          className="relative z-10 w-full py-5 bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 font-bold text-[11px] uppercase tracking-[0.2em] rounded-2xl hover:bg-emerald-600 dark:hover:bg-emerald-500 hover:text-white transition-all active:scale-95 flex items-center justify-center gap-3 border border-slate-100 dark:border-slate-800 group-hover:border-transparent group-hover:shadow-lg group-hover:shadow-emerald-100 dark:group-hover:shadow-emerald-900/40"
         >
           <span>View Resources</span>
           <ChevronRightIcon className="w-4 h-4" />
@@ -375,7 +375,7 @@ const App: React.FC = () => {
   }
 
   return (
-    <div className={`min-h-screen flex flex-col selection:bg-emerald-100 selection:text-emerald-900 overflow-x-hidden ${isDark ? 'dark' : ''}`}>
+    <div className={`min-h-screen flex flex-col selection:bg-emerald-100 selection:text-emerald-900 overflow-x-hidden transition-colors duration-500 ${isDark ? 'dark' : ''}`}>
       <HangingLamp isDark={isDark} onToggle={() => setIsDark(!isDark)} />
       
       <Navbar 
@@ -441,7 +441,7 @@ const App: React.FC = () => {
                 </button>
                 <button 
                   onClick={() => navigateTo('#/about')}
-                  className="px-10 py-5 sm:px-16 sm:py-6 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-800 rounded-full font-bold text-sm sm:text-base hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-700 transition-all duration-300 shadow-sm dark:shadow-none active:scale-95"
+                  className="px-10 py-5 sm:px-16 sm:py-6 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800 rounded-full font-bold text-sm sm:text-base hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-700 transition-all duration-300 shadow-sm dark:shadow-none active:scale-95"
                 >
                   Learn More
                 </button>
@@ -485,7 +485,7 @@ const App: React.FC = () => {
                 { title: 'Exam Preparation', text: 'Extensive archive of verified past examination papers (Gaka) to enhance your revision process.', icon: <FileIcon className="w-6 h-6 sm:w-8 sm:h-8" /> }
               ].map((service, idx) => (
                 <div key={idx} className="bg-white dark:bg-slate-900 p-8 sm:p-10 rounded-[2rem] sm:rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-xl transition-all hover:-translate-y-2 text-left group">
-                  <div className="w-14 h-14 sm:w-16 sm:h-16 bg-slate-50 dark:bg-slate-800 rounded-[1.2rem] flex items-center justify-center text-slate-400 dark:text-slate-500 mb-6 sm:mb-8 group-hover:bg-emerald-600 dark:group-hover:bg-emerald-500 group-hover:text-white transition-all duration-500">
+                  <div className="w-14 h-14 sm:w-16 sm:h-16 bg-slate-50 dark:bg-slate-800 rounded-[1.2rem] flex items-center justify-center text-slate-400 dark:text-slate-500 mb-6 sm:mb-8 group-hover:bg-emerald-600 dark:group-hover:bg-emerald-500 group-hover:text-white transition-all duration-500 shadow-inner">
                     {service.icon}
                   </div>
                   <h3 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mb-3 sm:mb-4 tracking-tight">{service.title}</h3>
@@ -508,7 +508,7 @@ const App: React.FC = () => {
                   <p className="mt-6 sm:mt-8">By providing a unified interface for Mbeya University of Science and Technology (MUST) resources, we ensure that focus remains on learning rather than logistics.</p>
                 </section>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-10">
-                  <div className="bg-slate-50 dark:bg-slate-800 p-8 sm:p-10 rounded-[1.5rem] sm:rounded-[2rem] border border-slate-100 dark:border-slate-700">
+                  <div className="bg-slate-50 dark:bg-slate-950/40 p-8 sm:p-10 rounded-[1.5rem] sm:rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-sm">
                     <h4 className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-3">Development</h4>
                     <p className="text-slate-900 dark:text-white font-bold text-lg sm:text-xl mb-1">Softlink Africa</p>
                     <p className="text-sm sm:text-base font-normal">Modern engineering optimized for MUST mobile environments.</p>
@@ -516,7 +516,7 @@ const App: React.FC = () => {
                   <div className="bg-emerald-600 dark:bg-emerald-500 p-8 sm:p-10 rounded-[1.5rem] sm:rounded-[2rem] text-white shadow-xl shadow-emerald-100 dark:shadow-emerald-900/40 group">
                     <h4 className="text-[10px] font-bold uppercase tracking-widest text-emerald-100/60 mb-3">Lead Developer</h4>
                     <p className="font-bold text-xl sm:text-2xl mb-4">Cleven Sam</p>
-                    <a href="https://wa.me/255685208576" target="_blank" rel="noopener noreferrer" className="inline-block mt-2 text-[10px] font-bold uppercase tracking-widest bg-white/20 px-6 py-2.5 sm:px-8 sm:py-3 rounded-full hover:bg-white/30 transition-all active:scale-95">WhatsApp Connect</a>
+                    <a href="https://wa.me/255685208576" target="_blank" rel="noopener noreferrer" className="inline-block mt-2 text-[10px] font-bold uppercase tracking-widest bg-white/20 px-6 py-2.5 sm:px-8 sm:py-3 rounded-full hover:bg-white/30 transition-all active:scale-95 shadow-sm">WhatsApp Connect</a>
                   </div>
                 </div>
               </div>
@@ -530,7 +530,7 @@ const App: React.FC = () => {
               <div className="space-y-3 sm:space-y-4 px-1">
                 <h2 className="text-4xl sm:text-5xl font-extrabold text-slate-900 dark:text-white tracking-tight">Modules</h2>
                 <div className="flex items-center space-x-3 sm:space-x-4">
-                  <div className="flex bg-emerald-100/50 dark:bg-emerald-500/10 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full border border-emerald-200/30 dark:border-emerald-800/30">
+                  <div className="flex bg-emerald-100/50 dark:bg-emerald-500/10 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full border border-emerald-200/30 dark:border-emerald-800/30 shadow-sm">
                      <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">Live Feed</span>
                   </div>
                   <div className="h-1 w-1 rounded-full bg-slate-300 dark:bg-slate-700"></div>
@@ -543,7 +543,7 @@ const App: React.FC = () => {
                 </div>
                 <input 
                   type="text" placeholder="Search course..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-16 sm:pl-20 pr-6 py-5 sm:py-7 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl sm:rounded-3xl focus:ring-8 focus:ring-emerald-50 dark:focus:ring-emerald-500/5 focus:border-emerald-300 dark:focus:border-emerald-500 outline-none transition-all shadow-sm hover:shadow-md text-lg sm:text-xl font-medium placeholder:text-slate-200 dark:placeholder:text-slate-700 text-slate-900 dark:text-slate-100"
+                  className="w-full pl-16 sm:pl-20 pr-6 py-5 sm:py-7 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800/80 rounded-2xl sm:rounded-3xl focus:ring-8 focus:ring-emerald-50 dark:focus:ring-emerald-500/5 focus:border-emerald-300 dark:focus:border-emerald-500 outline-none transition-all shadow-sm hover:shadow-md text-lg sm:text-xl font-medium placeholder:text-slate-200 dark:placeholder:text-slate-700 text-slate-900 dark:text-white"
                 />
               </div>
             </div>
@@ -586,12 +586,12 @@ const App: React.FC = () => {
               </div>
             </div>
             
-            <div className="bg-white dark:bg-slate-900 rounded-[1.5rem] sm:rounded-[3rem] p-6 sm:p-16 shadow-sm border border-slate-100 dark:border-slate-800">
+            <div className="bg-white dark:bg-slate-900 rounded-[1.5rem] sm:rounded-[3rem] p-6 sm:p-16 shadow-sm border border-slate-100 dark:border-slate-800 transition-colors">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-10 sm:mb-12">
                 <h3 className="text-2xl sm:text-3xl font-bold text-slate-800 dark:text-white">Resources</h3>
-                <div className="flex bg-slate-100/50 dark:bg-slate-800 p-1 rounded-2xl w-full sm:w-fit animate-fade-in">
+                <div className="flex bg-slate-100/50 dark:bg-slate-800/80 p-1.5 rounded-2xl w-full sm:w-fit animate-fade-in shadow-inner">
                   {['All', 'Notes', 'Past Paper'].map((v) => (
-                    <button key={v} onClick={() => setFilterType(v as any)} className={`flex-1 sm:flex-none px-4 sm:px-8 py-2.5 sm:py-3 rounded-xl text-[10px] sm:text-[11px] font-bold uppercase tracking-widest transition-all ${filterType === v ? 'bg-emerald-600 dark:bg-emerald-500 text-white shadow-lg dark:shadow-none' : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300'}`}>{v === 'Past Paper' ? 'Gaka' : v.toUpperCase()}</button>
+                    <button key={v} onClick={() => setFilterType(v as any)} className={`flex-1 sm:flex-none px-4 sm:px-8 py-2.5 sm:py-3 rounded-xl text-[10px] sm:text-[11px] font-bold uppercase tracking-widest transition-all ${filterType === v ? 'bg-emerald-600 dark:bg-emerald-500 text-white shadow-lg dark:shadow-emerald-900/40' : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300'}`}>{v === 'Past Paper' ? 'Gaka' : v.toUpperCase()}</button>
                   ))}
                 </div>
               </div>
