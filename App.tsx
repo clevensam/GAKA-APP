@@ -40,11 +40,11 @@ const HangingLamp: React.FC<{ isDark: boolean; onToggle: () => void }> = ({ isDa
   return (
     <div className="fixed top-0 right-6 sm:right-12 z-[100] pointer-events-none">
       <div className="flex flex-col items-center">
-        <div className="w-0.5 h-6 sm:h-10 bg-slate-400 dark:bg-white/10 transition-colors duration-500"></div>
+        <div className="w-0.5 h-6 sm:h-10 bg-slate-400 dark:bg-white/5 transition-colors duration-500"></div>
         <div className="relative group pointer-events-auto cursor-pointer" onClick={handlePull}>
           <svg width="46" height="46" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg" className="transform hover:scale-105 transition-transform">
-            <path d="M10 42 L50 42 L42 18 L18 18 Z" fill={isDark ? "#242424" : "#334155"} className="transition-colors duration-500" />
-            <circle cx="30" cy="46" r="7" fill={isDark ? "#333333" : "#fbbf24"} className={`transition-all duration-500 ${!isDark ? 'lamp-glow' : 'lamp-off'}`} />
+            <path d="M10 42 L50 42 L42 18 L18 18 Z" fill={isDark ? "#1A1A1A" : "#334155"} className="transition-colors duration-500" />
+            <circle cx="30" cy="46" r="7" fill={isDark ? "#2A2A2A" : "#fbbf24"} className={`transition-all duration-500 ${!isDark ? 'lamp-glow' : 'lamp-off'}`} />
           </svg>
           <div 
             className="absolute left-1/2 -translate-x-1/2 transition-transform duration-200 ease-out"
@@ -225,7 +225,7 @@ const App: React.FC = () => {
 
   const ResourceItem: React.FC<{ file: AcademicFile; moduleCode?: string; delay: number }> = ({ file, moduleCode, delay }) => (
     <div 
-      className="group flex flex-col sm:flex-row sm:items-center justify-between p-5 sm:p-7 bg-white dark:bg-[#1E1E1E] hover:bg-slate-50 dark:hover:bg-[#242424] border border-slate-100 dark:border-white/5 hover:border-emerald-100 dark:hover:border-emerald-500/30 rounded-3xl transition-all duration-500 hover:shadow-xl animate-fade-in"
+      className="group flex flex-col sm:flex-row sm:items-center justify-between p-5 sm:p-7 bg-white dark:bg-[#1E1E1E] hover:bg-slate-50 dark:hover:bg-[#282828] border border-slate-100 dark:border-white/5 hover:border-emerald-100 dark:hover:border-emerald-500/30 rounded-3xl transition-all duration-500 hover:shadow-xl animate-fade-in"
       style={{ animationDelay: `${delay}ms` }}
     >
       <div className="flex items-center space-x-5 mb-5 sm:mb-0">
@@ -237,7 +237,7 @@ const App: React.FC = () => {
         <div className="min-w-0">
           <div className="flex items-center space-x-2 mb-1">
             {moduleCode && (
-              <span className="text-[9px] font-black bg-slate-100 dark:bg-black/60 text-slate-500 dark:text-white/40 px-2 py-0.5 rounded-md uppercase tracking-tighter border dark:border-white/5">
+              <span className="text-[9px] font-black bg-slate-100 dark:bg-black text-slate-500 dark:text-white/40 px-2 py-0.5 rounded-md uppercase tracking-tighter border dark:border-white/5">
                 {moduleCode}
               </span>
             )}
@@ -252,7 +252,7 @@ const App: React.FC = () => {
       </div>
       <div className="flex items-center justify-between sm:justify-end gap-3">
         <div className="flex items-center gap-2">
-          <button onClick={() => handleShare(file.title)} className="w-11 h-11 flex items-center justify-center text-slate-400 dark:text-white/30 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-black/60 rounded-full transition-all active:scale-90 border border-transparent hover:border-emerald-100 dark:hover:border-emerald-500/20">
+          <button onClick={() => handleShare(file.title)} className="w-11 h-11 flex items-center justify-center text-slate-400 dark:text-white/30 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-black rounded-full transition-all active:scale-90 border border-transparent hover:border-emerald-100 dark:hover:border-emerald-500/20">
             <ShareIcon className="w-5 h-5" />
           </button>
           <a href={file.viewUrl} target="_blank" rel="noopener noreferrer" className="w-11 h-11 flex items-center justify-center bg-slate-100 dark:bg-[#282828] text-slate-500 dark:text-white/40 hover:bg-slate-200 dark:hover:bg-[#333333] hover:text-slate-800 dark:hover:text-white/90 rounded-2xl transition-all active:scale-90">
@@ -260,7 +260,7 @@ const App: React.FC = () => {
           </a>
         </div>
         <a href={file.downloadUrl} onClick={(e) => handleDownloadClick(e, file.id, file.downloadUrl)} className={`flex-1 sm:flex-none flex items-center justify-center space-x-3 px-6 py-4 sm:px-8 sm:py-4 font-bold text-xs rounded-2xl transition-all shadow-lg active:scale-95 ${
-          downloadingId === file.id ? 'bg-slate-800 dark:bg-slate-700 text-white shadow-none cursor-default' : 'bg-emerald-600 dark:bg-emerald-500 text-white shadow-emerald-100 dark:shadow-emerald-900/10 hover:bg-emerald-700 dark:hover:bg-emerald-600'
+          downloadingId === file.id ? 'bg-slate-800 dark:bg-black text-white shadow-none cursor-default' : 'bg-emerald-600 dark:bg-emerald-500 text-white shadow-emerald-100 dark:shadow-emerald-900/10 hover:bg-emerald-700 dark:hover:bg-emerald-600'
         }`}>
           {downloadingId === file.id ? <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></div> : <><DownloadIcon className="w-4 h-4" /><span>Download</span></>}
         </a>
@@ -279,7 +279,7 @@ const App: React.FC = () => {
         <div className="flex items-center justify-between mb-6 relative z-10">
           <div className="flex items-center space-x-3">
              <div className={`w-3 h-3 rounded-full animate-pulse ${file.type === 'Notes' ? 'bg-emerald-500' : 'bg-teal-500'}`}></div>
-             <span className="text-[10px] font-black bg-emerald-50 dark:bg-black/60 text-emerald-600 dark:text-emerald-400 px-3 py-1.5 rounded-xl uppercase tracking-tighter border dark:border-white/5">
+             <span className="text-[10px] font-black bg-emerald-50 dark:bg-black text-emerald-600 dark:text-emerald-400 px-3 py-1.5 rounded-xl uppercase tracking-tighter border dark:border-white/5">
               {file.moduleCode}
             </span>
           </div>
@@ -293,7 +293,7 @@ const App: React.FC = () => {
             {file.title}
           </h3>
         </div>
-        <button onClick={() => navigateTo(`#/module/${file.moduleId}`)} className="relative z-10 w-full py-5 bg-slate-50 dark:bg-black/40 text-slate-600 dark:text-white/40 font-bold text-[11px] uppercase tracking-[0.2em] rounded-2xl hover:bg-emerald-600 dark:hover:bg-emerald-500 hover:text-white transition-all active:scale-95 flex items-center justify-center gap-3 border border-slate-100 dark:border-white/5 group-hover:border-transparent group-hover:shadow-lg group-hover:shadow-emerald-100 dark:group-hover:shadow-emerald-900/40">
+        <button onClick={() => navigateTo(`#/module/${file.moduleId}`)} className="relative z-10 w-full py-5 bg-slate-50 dark:bg-black text-slate-600 dark:text-white/40 font-bold text-[11px] uppercase tracking-[0.2em] rounded-2xl hover:bg-emerald-600 dark:hover:bg-emerald-500 hover:text-white transition-all active:scale-95 flex items-center justify-center gap-3 border border-slate-100 dark:border-white/5 group-hover:border-transparent group-hover:shadow-lg group-hover:shadow-emerald-100 dark:group-hover:shadow-emerald-900/40">
           <span>View Resources</span>
           <ChevronRightIcon className="w-4 h-4" />
         </button>
@@ -303,7 +303,7 @@ const App: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-white dark:bg-[#121212] transition-colors duration-500">
+      <div className="min-h-screen flex flex-col items-center justify-center bg-white dark:bg-black transition-colors duration-500">
         <div className="relative">
           <div className="w-20 h-20 sm:w-24 sm:h-24 border-[4px] border-slate-100 dark:border-white/5 border-t-emerald-600 rounded-full animate-spin"></div>
           <div className="absolute inset-0 flex items-center justify-center">
@@ -315,7 +315,7 @@ const App: React.FC = () => {
   }
 
   return (
-    <div className={`min-h-screen flex flex-col selection:bg-emerald-100 selection:text-emerald-900 overflow-x-hidden transition-colors duration-500 ${isDark ? 'dark' : ''}`}>
+    <div className={`min-h-screen flex flex-col selection:bg-emerald-100 selection:text-emerald-900 overflow-x-hidden transition-colors duration-500 ${isDark ? 'dark bg-black' : 'bg-[#fcfdfe]'}`}>
       <HangingLamp isDark={isDark} onToggle={() => setIsDark(!isDark)} />
       <Navbar onLogoClick={() => navigateTo('#/home')} onHomeClick={() => navigateTo('#/home')} onDirectoryClick={() => navigateTo('#/modules')} />
       <main className="flex-grow container mx-auto max-w-7xl px-4 py-8 sm:py-12 sm:px-8 transition-colors duration-500">
@@ -475,7 +475,7 @@ const App: React.FC = () => {
           </div>
         )}
       </main>
-      <footer className="bg-white dark:bg-[#121212] border-t border-slate-50 dark:border-white/5 py-12 transition-colors duration-500">
+      <footer className="bg-white dark:bg-black border-t border-slate-50 dark:border-white/5 py-12 transition-colors duration-500">
         <div className="container mx-auto px-6 sm:px-8 max-w-7xl text-center md:text-left">
           <div className="flex flex-col md:flex-row justify-between items-center md:items-start gap-10">
             <div className="space-y-4">
