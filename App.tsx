@@ -28,6 +28,53 @@ const ensureViewUrl = (url: string): string => {
   return url;
 };
 
+const HangingLamp: React.FC<{ isDark: boolean; onToggle: () => void }> = ({ isDark, onToggle }) => {
+  const [isPulling, setIsPulling] = useState(false);
+
+  const handlePull = () => {
+    setIsPulling(true);
+    onToggle();
+    setTimeout(() => setIsPulling(false), 300);
+  };
+
+  return (
+    <div className="fixed top-0 right-6 sm:right-12 z-[100] pointer-events-none">
+      <div className="flex flex-col items-center">
+        {/* Wire */}
+        <div className="w-0.5 h-12 sm:h-20 bg-slate-400 dark:bg-slate-600 transition-colors duration-500"></div>
+        
+        {/* Lamp Body */}
+        <div className="relative group pointer-events-auto cursor-pointer" onClick={handlePull}>
+          <svg width="60" height="60" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+            {/* Shade */}
+            <path d="M10 45 L50 45 L42 20 L18 20 Z" fill={isDark ? "#1e293b" : "#475569"} className="transition-colors duration-500" />
+            {/* Bulb */}
+            <circle cx="30" cy="48" r="8" fill={isDark ? "#334155" : "#fbbf24"} className={`transition-all duration-500 ${!isDark ? 'lamp-glow' : ''}`} />
+          </svg>
+          
+          {/* Pull String with realistic thread and handle */}
+          <div 
+            className={`absolute left-1/2 -translate-x-1/2 transition-transform duration-300 ease-in-out`}
+            style={{ 
+              top: '45px',
+              transform: `translateX(-50%) translateY(${isPulling ? '25px' : '0px'})`
+            }}
+          >
+            {/* Thread */}
+            <div className="w-[1px] h-32 sm:h-40 bg-slate-400 dark:bg-slate-500 mx-auto"></div>
+            {/* Handle - Realist thread handle (metallic/wooden bead look) */}
+            <div className="w-3 h-6 bg-slate-600 dark:bg-slate-400 rounded-full mx-auto shadow-md border border-white/10 flex flex-col items-center justify-center space-y-1 py-1">
+               <div className="w-1.5 h-px bg-white/20"></div>
+               <div className="w-1.5 h-px bg-white/20"></div>
+               <div className="w-1.5 h-px bg-white/20"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const App: React.FC = () => {
   const [modules, setModules] = useState<Module[]>([]);
   const [recentFiles, setRecentFiles] = useState<(AcademicFile & { moduleCode: string; moduleId: string })[]>([]);
@@ -38,6 +85,15 @@ const App: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<ResourceType | 'All'>('All');
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const [isDark, setIsDark] = useState(false);
+
+  useEffect(() => {
+    if (isDark) {
+      document.body.classList.add('dark');
+    } else {
+      document.body.classList.remove('dark');
+    }
+  }, [isDark]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -131,7 +187,7 @@ const App: React.FC = () => {
     };
 
     fetchData();
-  }, [modules.length]);
+  }, []);
 
   useEffect(() => {
     const handleHashChange = () => {
@@ -199,19 +255,19 @@ const App: React.FC = () => {
 
   const ResourceItem: React.FC<{ file: AcademicFile; moduleCode?: string; delay: number }> = ({ file, moduleCode, delay }) => (
     <div 
-      className="group flex flex-col sm:flex-row sm:items-center justify-between p-5 sm:p-7 bg-white hover:bg-slate-50/50 border border-slate-100 hover:border-emerald-100 rounded-3xl transition-all duration-500 hover:shadow-xl hover:shadow-emerald-500/5 animate-fade-in"
+      className="group flex flex-col sm:flex-row sm:items-center justify-between p-5 sm:p-7 bg-white dark:bg-slate-900/40 hover:bg-slate-50/50 dark:hover:bg-slate-900/60 border border-slate-100 dark:border-slate-800 hover:border-emerald-100 dark:hover:border-emerald-900 rounded-3xl transition-all duration-500 hover:shadow-xl hover:shadow-emerald-500/5 animate-fade-in"
       style={{ animationDelay: `${delay}ms` }}
     >
       <div className="flex items-center space-x-5 mb-5 sm:mb-0">
         <div className={`w-12 h-12 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center flex-shrink-0 transition-all duration-500 group-hover:scale-105 ${
-          file.type === 'Notes' ? 'bg-emerald-50 text-emerald-600' : 'bg-teal-50 text-teal-600'
+          file.type === 'Notes' ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400' : 'bg-teal-50 dark:bg-teal-900/20 text-teal-600 dark:text-teal-400'
         }`}>
           <FileIcon className="w-6 h-6 sm:w-8 sm:h-8" />
         </div>
         <div className="min-w-0">
           <div className="flex items-center space-x-2 mb-1">
             {moduleCode && (
-              <span className="text-[9px] font-black bg-slate-100 text-slate-500 px-2 py-0.5 rounded-md uppercase tracking-tighter">
+              <span className="text-[9px] font-black bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 px-2 py-0.5 rounded-md uppercase tracking-tighter">
                 {moduleCode}
               </span>
             )}
@@ -219,7 +275,7 @@ const App: React.FC = () => {
               {file.type === 'Notes' ? 'Note' : 'Gaka'}
             </span>
           </div>
-          <h4 className="font-bold text-slate-800 text-base sm:text-lg leading-tight break-words pr-4 group-hover:text-emerald-900 transition-colors">
+          <h4 className="font-bold text-slate-800 dark:text-slate-100 text-base sm:text-lg leading-tight break-words pr-4 group-hover:text-emerald-900 dark:group-hover:text-emerald-300 transition-colors">
             {file.title}
           </h4>
         </div>
@@ -229,7 +285,7 @@ const App: React.FC = () => {
         <div className="flex items-center gap-2">
           <button 
             onClick={() => handleShare(file.title)}
-            className="w-11 h-11 flex items-center justify-center text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-full transition-all active:scale-90 border border-transparent hover:border-emerald-100"
+            className="w-11 h-11 flex items-center justify-center text-slate-400 dark:text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-full transition-all active:scale-90 border border-transparent hover:border-emerald-100 dark:hover:border-emerald-900"
           >
             <ShareIcon className="w-5 h-5" />
           </button>
@@ -237,7 +293,7 @@ const App: React.FC = () => {
             href={file.viewUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="w-11 h-11 flex items-center justify-center bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-800 rounded-2xl transition-all active:scale-90"
+            className="w-11 h-11 flex items-center justify-center bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-slate-800 dark:hover:text-slate-100 rounded-2xl transition-all active:scale-90"
           >
             <ViewIcon className="w-5 h-5" />
           </a>
@@ -249,7 +305,7 @@ const App: React.FC = () => {
           className={`flex-1 sm:flex-none flex items-center justify-center space-x-3 px-6 py-4 sm:px-8 sm:py-4 font-bold text-xs rounded-2xl transition-all shadow-lg active:scale-95 ${
             downloadingId === file.id 
             ? 'bg-slate-800 text-white shadow-none cursor-default' 
-            : 'bg-emerald-600 text-white shadow-emerald-100 hover:bg-emerald-700'
+            : 'bg-emerald-600 text-white shadow-emerald-100 dark:shadow-emerald-900/20 hover:bg-emerald-700'
           }`}
         >
           {downloadingId === file.id ? (
@@ -271,13 +327,13 @@ const App: React.FC = () => {
 
     return (
       <div 
-        className="group bg-white p-8 sm:p-10 rounded-[2.5rem] border border-slate-100 hover:border-emerald-100 transition-all duration-500 hover:shadow-2xl hover:shadow-emerald-500/5 flex flex-col h-full animate-fade-in relative overflow-hidden"
+        className="group bg-white dark:bg-slate-900/50 p-8 sm:p-10 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 hover:border-emerald-100 dark:hover:border-emerald-900 transition-all duration-500 hover:shadow-2xl hover:shadow-emerald-500/5 flex flex-col h-full animate-fade-in relative overflow-hidden"
         style={{ animationDelay: `${delay}ms` }}
       >
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center space-x-3">
              <div className={`w-3 h-3 rounded-full animate-pulse ${file.type === 'Notes' ? 'bg-emerald-500' : 'bg-teal-500'}`}></div>
-             <span className="text-[10px] font-black bg-emerald-50 text-emerald-600 px-3 py-1.5 rounded-xl uppercase tracking-tighter">
+             <span className="text-[10px] font-black bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 px-3 py-1.5 rounded-xl uppercase tracking-tighter">
               {file.moduleCode}
             </span>
           </div>
@@ -287,15 +343,15 @@ const App: React.FC = () => {
         </div>
         
         <div className="flex-grow">
-          <h4 className="text-[12px] font-bold text-slate-400 uppercase tracking-[0.1em] mb-3 line-clamp-1">{moduleName}</h4>
-          <h3 className="text-xl sm:text-2xl font-black text-slate-800 leading-[1.25] mb-8 line-clamp-2 group-hover:text-emerald-700 transition-colors tracking-tight">
+          <h4 className="text-[12px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.1em] mb-3 line-clamp-1">{moduleName}</h4>
+          <h3 className="text-xl sm:text-2xl font-black text-slate-800 dark:text-slate-100 leading-[1.25] mb-8 line-clamp-2 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors tracking-tight">
             {file.title}
           </h3>
         </div>
 
         <button 
           onClick={() => navigateTo(`#/module/${file.moduleId}`)}
-          className="w-full py-5 bg-slate-50 text-slate-600 font-bold text-[11px] uppercase tracking-[0.2em] rounded-2xl hover:bg-emerald-600 hover:text-white transition-all active:scale-95 flex items-center justify-center gap-3 border border-slate-100 group-hover:border-transparent group-hover:shadow-lg group-hover:shadow-emerald-100"
+          className="w-full py-5 bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 font-bold text-[11px] uppercase tracking-[0.2em] rounded-2xl hover:bg-emerald-600 hover:text-white transition-all active:scale-95 flex items-center justify-center gap-3 border border-slate-100 dark:border-slate-700 group-hover:border-transparent group-hover:shadow-lg group-hover:shadow-emerald-100"
         >
           <span>View Resources</span>
           <ChevronRightIcon className="w-4 h-4" />
@@ -306,11 +362,11 @@ const App: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-white">
+      <div className="min-h-screen flex flex-col items-center justify-center bg-white dark:bg-slate-950 transition-colors duration-500">
         <div className="relative">
-          <div className="w-20 h-20 sm:w-24 sm:h-24 border-[4px] border-slate-100 border-t-emerald-600 rounded-full animate-spin"></div>
+          <div className="w-20 h-20 sm:w-24 sm:h-24 border-[4px] border-slate-100 dark:border-slate-900 border-t-emerald-600 rounded-full animate-spin"></div>
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-10 h-10 sm:w-12 h-12 bg-emerald-600 rounded-2xl flex items-center justify-center text-white font-black text-lg sm:text-xl shadow-lg shadow-emerald-100 animate-pulse">G</div>
+            <div className="w-10 h-10 sm:w-12 h-12 bg-emerald-600 rounded-2xl flex items-center justify-center text-white font-black text-lg sm:text-xl shadow-lg shadow-emerald-100 dark:shadow-emerald-900/20 animate-pulse">G</div>
           </div>
         </div>
       </div>
@@ -318,7 +374,9 @@ const App: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col selection:bg-emerald-100 selection:text-emerald-900 overflow-x-hidden">
+    <div className={`min-h-screen flex flex-col selection:bg-emerald-100 selection:text-emerald-900 overflow-x-hidden ${isDark ? 'dark' : ''}`}>
+      <HangingLamp isDark={isDark} onToggle={() => setIsDark(!isDark)} />
+      
       <Navbar 
         onLogoClick={() => navigateTo('#/home')} 
         onHomeClick={() => navigateTo('#/home')}
@@ -327,23 +385,23 @@ const App: React.FC = () => {
 
       <main className="flex-grow container mx-auto max-w-7xl px-4 py-8 sm:py-12 sm:px-8">
         {currentView !== 'home' && (
-          <nav className="flex items-center space-x-2 text-[12px] sm:text-[14px] font-semibold uppercase tracking-wider text-slate-400 mb-6 sm:mb-8 overflow-x-auto whitespace-nowrap pb-2 scrollbar-hide animate-fade-in px-1">
+          <nav className="flex items-center space-x-2 text-[12px] sm:text-[14px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-6 sm:mb-8 overflow-x-auto whitespace-nowrap pb-2 scrollbar-hide animate-fade-in px-1">
             <button onClick={() => navigateTo('#/home')} className="hover:text-emerald-600 transition-colors">Home</button>
-            <ChevronRightIcon className="w-3.5 h-3.5 text-slate-300 flex-shrink-0" />
-            {currentView === 'modules' && <span className="text-slate-900 font-bold">Modules</span>}
-            {currentView === 'about' && <span className="text-slate-900 font-bold">About</span>}
+            <ChevronRightIcon className="w-3.5 h-3.5 text-slate-300 dark:text-slate-700 flex-shrink-0" />
+            {currentView === 'modules' && <span className="text-slate-900 dark:text-slate-200 font-bold">Modules</span>}
+            {currentView === 'about' && <span className="text-slate-900 dark:text-slate-200 font-bold">About</span>}
             {currentView === 'detail' && (
               <>
                 <button onClick={() => navigateTo('#/modules')} className="hover:text-emerald-600 transition-colors">Modules</button>
-                <ChevronRightIcon className="w-3.5 h-3.5 text-slate-300 flex-shrink-0" />
-                <span className="text-slate-900 font-bold">{selectedModule?.code}</span>
+                <ChevronRightIcon className="w-3.5 h-3.5 text-slate-300 dark:text-slate-700 flex-shrink-0" />
+                <span className="text-slate-900 dark:text-slate-200 font-bold">{selectedModule?.code}</span>
               </>
             )}
           </nav>
         )}
 
         {error && (
-          <div className="mb-12 p-6 bg-amber-50/50 border border-amber-100 rounded-3xl text-amber-800 text-sm font-medium flex flex-col sm:flex-row items-center justify-between animate-fade-in gap-4 shadow-sm">
+          <div className="mb-12 p-6 bg-amber-50/50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/20 rounded-3xl text-amber-800 dark:text-amber-300 text-sm font-medium flex flex-col sm:flex-row items-center justify-between animate-fade-in gap-4 shadow-sm">
             <div className="flex items-center">
               <span className="relative flex h-3 w-3 mr-4">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
@@ -351,7 +409,7 @@ const App: React.FC = () => {
               </span>
               <p>{error}</p>
             </div>
-            <button onClick={() => window.location.reload()} className="bg-white px-6 py-2.5 rounded-full shadow-sm hover:shadow-md transition-all active:scale-95 text-amber-600 border border-amber-100 font-semibold">Try Again</button>
+            <button onClick={() => window.location.reload()} className="bg-white dark:bg-slate-900 px-6 py-2.5 rounded-full shadow-sm hover:shadow-md transition-all active:scale-95 text-amber-600 border border-amber-100 dark:border-amber-900/30 font-semibold">Try Again</button>
           </div>
         )}
 
@@ -359,30 +417,30 @@ const App: React.FC = () => {
           <div className="animate-fade-in flex flex-col items-center">
             {/* Hero Section */}
             <div className="text-center pt-4 pb-16 lg:pt-32">
-              <div className="inline-flex items-center space-x-2 bg-emerald-50 px-4 py-2 rounded-full mb-8 border border-emerald-100/50 animate-slide-in">
+              <div className="inline-flex items-center space-x-2 bg-emerald-50 dark:bg-emerald-900/10 px-4 py-2 rounded-full mb-8 border border-emerald-100/50 dark:border-emerald-900/20 animate-slide-in">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-700">MUST CS Portal</span>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-700 dark:text-emerald-400">MUST CS Portal</span>
               </div>
               
-              <h2 className="text-4xl sm:text-[90px] font-extrabold text-slate-900 mb-8 max-w-6xl mx-auto leading-[1.1] sm:leading-[1.05] tracking-tight break-words px-2 text-center">
+              <h2 className="text-4xl sm:text-[90px] font-extrabold text-slate-900 dark:text-slate-100 mb-8 max-w-6xl mx-auto leading-[1.1] sm:leading-[1.05] tracking-tight break-words px-2 text-center">
                 Centralized <span className="gradient-text">Academic</span> <br className="hidden sm:block"/> Repository.
               </h2>
               
-              <p className="text-base sm:text-2xl text-slate-500 max-w-3xl mx-auto mb-12 font-normal leading-relaxed px-4 text-center">
+              <p className="text-base sm:text-2xl text-slate-500 dark:text-slate-400 max-w-3xl mx-auto mb-12 font-normal leading-relaxed px-4 text-center">
                 Verified lecture materials, modules, and past examination papers for Computer Science students.
               </p>
               
               <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto px-6 justify-center">
                 <button 
                   onClick={() => navigateTo('#/modules')}
-                  className="group flex items-center justify-center px-10 py-5 sm:px-16 sm:py-6 bg-emerald-600 text-white rounded-full font-bold text-sm sm:text-base shadow-2xl shadow-emerald-200 hover:bg-emerald-700 hover:scale-[1.03] transition-all duration-300 active:scale-95"
+                  className="group flex items-center justify-center px-10 py-5 sm:px-16 sm:py-6 bg-emerald-600 text-white rounded-full font-bold text-sm sm:text-base shadow-2xl shadow-emerald-200 dark:shadow-emerald-900/20 hover:bg-emerald-700 hover:scale-[1.03] transition-all duration-300 active:scale-95"
                 >
                   Access Modules
                   <SearchIcon className="ml-3 w-5 h-5 group-hover:rotate-12 transition-transform" />
                 </button>
                 <button 
                   onClick={() => navigateTo('#/about')}
-                  className="px-10 py-5 sm:px-16 sm:py-6 bg-white text-slate-700 border border-slate-200 rounded-full font-bold text-sm sm:text-base hover:bg-slate-50 hover:border-slate-300 transition-all duration-300 shadow-sm active:scale-95"
+                  className="px-10 py-5 sm:px-16 sm:py-6 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800 rounded-full font-bold text-sm sm:text-base hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-700 transition-all duration-300 shadow-sm active:scale-95"
                 >
                   Learn More
                 </button>
@@ -397,11 +455,11 @@ const App: React.FC = () => {
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                       <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
                     </div>
-                    <h3 className="text-xl sm:text-3xl font-black text-slate-900 tracking-tight">Recently Uploaded</h3>
+                    <h3 className="text-xl sm:text-3xl font-black text-slate-900 dark:text-slate-100 tracking-tight">Recently Uploaded</h3>
                   </div>
                   <button 
                     onClick={() => navigateTo('#/modules')}
-                    className="text-[10px] font-bold uppercase tracking-widest text-emerald-600 hover:text-emerald-700 transition-colors"
+                    className="text-[10px] font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 transition-colors"
                   >
                     View All
                   </button>
@@ -416,7 +474,7 @@ const App: React.FC = () => {
             )}
             
             <div className="w-full max-w-5xl mb-12 px-4 text-left sm:text-center mt-6 sm:mt-8">
-              <h2 className="text-3xl sm:text-5xl font-black text-slate-900 tracking-tight">Our Services</h2>
+              <h2 className="text-3xl sm:text-5xl font-black text-slate-900 dark:text-slate-100 tracking-tight">Our Services</h2>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-10 w-full max-w-6xl px-4 pb-20">
@@ -425,12 +483,12 @@ const App: React.FC = () => {
                 { title: 'One-Tap Downloads', text: 'Accelerated file retrieval engine that bypasses secondary login prompts and redirects.', icon: <DownloadIcon className="w-6 h-6 sm:w-8 sm:h-8" /> },
                 { title: 'Exam Preparation', text: 'Extensive archive of verified past examination papers (Gaka) to enhance your revision process.', icon: <FileIcon className="w-6 h-6 sm:w-8 sm:h-8" /> }
               ].map((service, idx) => (
-                <div key={idx} className="bg-white p-8 sm:p-10 rounded-[2rem] sm:rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-xl transition-all hover:-translate-y-2 text-left group">
-                  <div className="w-14 h-14 sm:w-16 sm:h-16 bg-slate-50 rounded-[1.2rem] flex items-center justify-center text-slate-400 mb-6 sm:mb-8 group-hover:bg-emerald-600 group-hover:text-white transition-all duration-500">
+                <div key={idx} className="bg-white dark:bg-slate-900/50 p-8 sm:p-10 rounded-[2rem] sm:rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-xl transition-all hover:-translate-y-2 text-left group">
+                  <div className="w-14 h-14 sm:w-16 sm:h-16 bg-slate-50 dark:bg-slate-800 rounded-[1.2rem] flex items-center justify-center text-slate-400 dark:text-slate-500 mb-6 sm:mb-8 group-hover:bg-emerald-600 group-hover:text-white transition-all duration-500">
                     {service.icon}
                   </div>
-                  <h3 className="text-xl sm:text-2xl font-bold text-slate-900 mb-3 sm:mb-4 tracking-tight">{service.title}</h3>
-                  <p className="text-slate-500 text-sm sm:text-base font-normal leading-relaxed">{service.text}</p>
+                  <h3 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-slate-100 mb-3 sm:mb-4 tracking-tight">{service.title}</h3>
+                  <p className="text-slate-500 dark:text-slate-400 text-sm sm:text-base font-normal leading-relaxed">{service.text}</p>
                 </div>
               ))}
             </div>
@@ -439,22 +497,22 @@ const App: React.FC = () => {
 
         {currentView === 'about' && (
           <div className="animate-fade-in max-w-5xl mx-auto py-4 sm:py-12">
-            <div className="bg-white rounded-[2rem] sm:rounded-[3.5rem] p-8 sm:p-24 shadow-sm border border-slate-100 relative overflow-hidden">
-               <div className="absolute top-0 right-0 w-48 h-48 sm:w-64 sm:h-64 bg-emerald-50 rounded-full -mr-24 -mt-24 sm:-mr-32 sm:-mt-32 opacity-50"></div>
-               <h2 className="text-3xl sm:text-7xl font-extrabold text-slate-900 mb-8 sm:mb-12 leading-tight tracking-tight relative break-words">Academic <span className="gradient-text">Efficiency.</span></h2>
-               <div className="space-y-10 sm:space-y-16 text-slate-600 leading-relaxed text-base sm:text-lg font-normal relative">
+            <div className="bg-white dark:bg-slate-900/50 rounded-[2rem] sm:rounded-[3.5rem] p-8 sm:p-24 shadow-sm border border-slate-100 dark:border-slate-800 relative overflow-hidden">
+               <div className="absolute top-0 right-0 w-48 h-48 sm:w-64 sm:h-64 bg-emerald-50 dark:bg-emerald-900/10 rounded-full -mr-24 -mt-24 sm:-mr-32 sm:-mt-32 opacity-50 transition-colors"></div>
+               <h2 className="text-3xl sm:text-7xl font-extrabold text-slate-900 dark:text-slate-100 mb-8 sm:mb-12 leading-tight tracking-tight relative break-words">Academic <span className="gradient-text">Efficiency.</span></h2>
+               <div className="space-y-10 sm:space-y-16 text-slate-600 dark:text-slate-400 leading-relaxed text-base sm:text-lg font-normal relative">
                 <section>
-                  <h3 className="text-[10px] font-bold text-emerald-600 uppercase tracking-[0.3em] mb-4 sm:mb-6">Our Objective</h3>
-                  <p className="text-xl sm:text-3xl font-semibold text-slate-800 tracking-tight leading-snug">GAKA bridges the gap between students and their course materials.</p>
+                  <h3 className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-[0.3em] mb-4 sm:mb-6">Our Objective</h3>
+                  <p className="text-xl sm:text-3xl font-semibold text-slate-800 dark:text-slate-200 tracking-tight leading-snug">GAKA bridges the gap between students and their course materials.</p>
                   <p className="mt-6 sm:mt-8">By providing a unified interface for Mbeya University of Science and Technology (MUST) resources, we ensure that focus remains on learning rather than logistics.</p>
                 </section>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-10">
-                  <div className="bg-slate-50 p-8 sm:p-10 rounded-[1.5rem] sm:rounded-[2rem] border border-slate-100">
-                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-3">Development</h4>
-                    <p className="text-slate-900 font-bold text-lg sm:text-xl mb-1">Softlink Africa</p>
+                  <div className="bg-slate-50 dark:bg-slate-800/50 p-8 sm:p-10 rounded-[1.5rem] sm:rounded-[2rem] border border-slate-100 dark:border-slate-800">
+                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-3">Development</h4>
+                    <p className="text-slate-900 dark:text-slate-100 font-bold text-lg sm:text-xl mb-1">Softlink Africa</p>
                     <p className="text-sm sm:text-base font-normal">Modern engineering optimized for MUST mobile environments.</p>
                   </div>
-                  <div className="bg-emerald-600 p-8 sm:p-10 rounded-[1.5rem] sm:rounded-[2rem] text-white shadow-xl shadow-emerald-100 group">
+                  <div className="bg-emerald-600 p-8 sm:p-10 rounded-[1.5rem] sm:rounded-[2rem] text-white shadow-xl shadow-emerald-100 dark:shadow-emerald-900/20 group">
                     <h4 className="text-[10px] font-bold uppercase tracking-widest text-emerald-200 mb-3">Lead Developer</h4>
                     <p className="font-bold text-xl sm:text-2xl mb-4">Cleven Sam</p>
                     <a href="https://wa.me/255685208576" target="_blank" rel="noopener noreferrer" className="inline-block mt-2 text-[10px] font-bold uppercase tracking-widest bg-white/20 px-6 py-2.5 sm:px-8 sm:py-3 rounded-full hover:bg-white/30 transition-all active:scale-95">WhatsApp Connect</a>
@@ -469,22 +527,22 @@ const App: React.FC = () => {
           <div className="animate-fade-in">
             <div className="flex flex-col lg:flex-row lg:items-end justify-between mb-10 sm:mb-16 gap-8 sm:gap-10">
               <div className="space-y-3 sm:space-y-4 px-1">
-                <h2 className="text-4xl sm:text-5xl font-extrabold text-slate-900 tracking-tight">Modules</h2>
+                <h2 className="text-4xl sm:text-5xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">Modules</h2>
                 <div className="flex items-center space-x-3 sm:space-x-4">
-                  <div className="flex bg-emerald-100/50 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full border border-emerald-200/30">
-                     <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700">Live Feed</span>
+                  <div className="flex bg-emerald-100/50 dark:bg-emerald-900/20 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full border border-emerald-200/30 dark:border-emerald-800/30">
+                     <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">Live Feed</span>
                   </div>
-                  <div className="h-1 w-1 rounded-full bg-slate-300"></div>
-                  <span className="text-slate-400 font-semibold text-sm sm:text-base tracking-tight">{filteredModules.length} Modules Found</span>
+                  <div className="h-1 w-1 rounded-full bg-slate-300 dark:bg-slate-700"></div>
+                  <span className="text-slate-400 dark:text-slate-500 font-semibold text-sm sm:text-base tracking-tight">{filteredModules.length} Modules Found</span>
                 </div>
               </div>
               <div className="relative w-full lg:w-[480px] group px-1">
                 <div className="absolute inset-y-0 left-6 sm:left-8 flex items-center pointer-events-none">
-                  <SearchIcon className="w-5 h-5 sm:w-6 h-6 text-slate-300 group-focus-within:text-emerald-500 transition-colors" />
+                  <SearchIcon className="w-5 h-5 sm:w-6 h-6 text-slate-300 dark:text-slate-700 group-focus-within:text-emerald-500 transition-colors" />
                 </div>
                 <input 
                   type="text" placeholder="Search course..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-16 sm:pl-20 pr-6 py-5 sm:py-7 bg-white border border-slate-100 rounded-2xl sm:rounded-3xl focus:ring-8 focus:ring-emerald-50 focus:border-emerald-300 outline-none transition-all shadow-sm hover:shadow-md text-lg sm:text-xl font-medium placeholder:text-slate-200"
+                  className="w-full pl-16 sm:pl-20 pr-6 py-5 sm:py-7 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl sm:rounded-3xl focus:ring-8 focus:ring-emerald-50 dark:focus:ring-emerald-900/20 focus:border-emerald-300 dark:focus:border-emerald-800 outline-none transition-all shadow-sm hover:shadow-md text-lg sm:text-xl font-medium placeholder:text-slate-200 dark:placeholder:text-slate-700 text-slate-900 dark:text-slate-100"
                 />
               </div>
             </div>
@@ -496,7 +554,7 @@ const App: React.FC = () => {
               ))}
               {filteredModules.length === 0 && (
                 <div className="col-span-full py-16 sm:py-24 text-center">
-                  <p className="text-slate-400 font-medium text-base sm:text-lg italic px-4">
+                  <p className="text-slate-400 dark:text-slate-600 font-medium text-base sm:text-lg italic px-4">
                     {modules.length === 0 ? "Synchronizing with cloud registry..." : "No matching modules found."}
                   </p>
                 </div>
@@ -510,14 +568,14 @@ const App: React.FC = () => {
             <div className="mb-8 px-1">
               <button 
                 onClick={() => navigateTo('#/modules')} 
-                className="flex items-center text-slate-800 font-bold text-[13px] sm:text-[14px] uppercase tracking-widest hover:text-emerald-600 transition-all group"
+                className="flex items-center text-slate-800 dark:text-slate-200 font-bold text-[13px] sm:text-[14px] uppercase tracking-widest hover:text-emerald-600 dark:hover:text-emerald-400 transition-all group"
               >
                 <BackIcon className="mr-3 w-6 h-6 sm:w-7 sm:h-7 group-hover:-translate-x-2 transition-transform" />
                 Back to Modules
               </button>
             </div>
             
-            <div className="bg-gradient-to-br from-emerald-600 via-emerald-700 to-teal-900 p-8 sm:p-24 rounded-[2rem] sm:rounded-[3.5rem] text-white shadow-2xl shadow-emerald-100 mb-8 sm:mb-12 relative overflow-hidden">
+            <div className="bg-gradient-to-br from-emerald-600 via-emerald-700 to-teal-900 p-8 sm:p-24 rounded-[2rem] sm:rounded-[3.5rem] text-white shadow-2xl shadow-emerald-100 dark:shadow-emerald-900/20 mb-8 sm:mb-12 relative overflow-hidden">
               <div className="relative z-10">
                 <div className="flex flex-wrap items-center gap-2 sm:gap-4 mb-8 sm:mb-10">
                   <span className="bg-white/15 backdrop-blur-md px-4 py-1.5 sm:px-6 sm:py-2 rounded-full text-[10px] font-bold tracking-widest uppercase border border-white/10">{selectedModule.code}</span>
@@ -527,12 +585,12 @@ const App: React.FC = () => {
               </div>
             </div>
             
-            <div className="bg-white rounded-[1.5rem] sm:rounded-[3rem] p-6 sm:p-16 shadow-sm border border-slate-100">
+            <div className="bg-white dark:bg-slate-900/50 rounded-[1.5rem] sm:rounded-[3rem] p-6 sm:p-16 shadow-sm border border-slate-100 dark:border-slate-800">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-10 sm:mb-12">
-                <h3 className="text-2xl sm:text-3xl font-bold text-slate-800">Resources</h3>
-                <div className="flex bg-slate-100/50 p-1 rounded-2xl w-full sm:w-fit animate-fade-in shadow-inner">
+                <h3 className="text-2xl sm:text-3xl font-bold text-slate-800 dark:text-slate-100">Resources</h3>
+                <div className="flex bg-slate-100/50 dark:bg-slate-800/50 p-1 rounded-2xl w-full sm:w-fit animate-fade-in shadow-inner">
                   {['All', 'Notes', 'Past Paper'].map((v) => (
-                    <button key={v} onClick={() => setFilterType(v as any)} className={`flex-1 sm:flex-none px-4 sm:px-8 py-2.5 sm:py-3 rounded-xl text-[10px] sm:text-[11px] font-bold uppercase tracking-widest transition-all ${filterType === v ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-100' : 'text-slate-400 hover:text-slate-600'}`}>{v === 'Past Paper' ? 'Gaka' : v.toUpperCase()}</button>
+                    <button key={v} onClick={() => setFilterType(v as any)} className={`flex-1 sm:flex-none px-4 sm:px-8 py-2.5 sm:py-3 rounded-xl text-[10px] sm:text-[11px] font-bold uppercase tracking-widest transition-all ${filterType === v ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-100' : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300'}`}>{v === 'Past Paper' ? 'Gaka' : v.toUpperCase()}</button>
                   ))}
                 </div>
               </div>
@@ -541,8 +599,8 @@ const App: React.FC = () => {
                   <ResourceItem key={file.id} file={file} delay={i * 80} />
                 ))}
                 {filteredResources.length === 0 && (
-                  <div className="text-center py-16 sm:py-24 bg-slate-50/50 rounded-3xl border border-dashed border-slate-200 px-4">
-                     <p className="text-slate-400 font-medium text-base italic">No resources matched your filter criteria.</p>
+                  <div className="text-center py-16 sm:py-24 bg-slate-50/50 dark:bg-slate-800/20 rounded-3xl border border-dashed border-slate-200 dark:border-slate-800 px-4">
+                     <p className="text-slate-400 dark:text-slate-600 font-medium text-base italic">No resources matched your filter criteria.</p>
                   </div>
                 )}
               </div>
@@ -551,29 +609,29 @@ const App: React.FC = () => {
         )}
       </main>
 
-      <footer className="bg-white border-t border-slate-50 py-12">
+      <footer className="bg-white dark:bg-slate-950 border-t border-slate-50 dark:border-slate-900 py-12 transition-colors duration-500">
         <div className="container mx-auto px-6 sm:px-8 max-w-7xl text-center md:text-left">
           <div className="flex flex-col md:flex-row justify-between items-center md:items-start gap-10">
             <div className="space-y-4">
               <div className="flex items-center justify-center md:justify-start space-x-3">
                 <div className="w-9 h-9 bg-emerald-600 rounded-xl flex items-center justify-center text-white font-black text-lg">G</div>
-                <span className="text-lg font-extrabold tracking-tight text-slate-900 uppercase">GAKA Portal</span>
+                <span className="text-lg font-extrabold tracking-tight text-slate-900 dark:text-slate-100 uppercase">GAKA Portal</span>
               </div>
-              <p className="text-slate-400 text-xs sm:text-sm font-medium max-w-sm leading-relaxed mx-auto md:mx-0">Centralized academic hub for MUST Computer Science students.</p>
+              <p className="text-slate-400 dark:text-slate-500 text-xs sm:text-sm font-medium max-w-sm leading-relaxed mx-auto md:mx-0">Centralized academic hub for MUST Computer Science students.</p>
             </div>
             <div className="flex flex-col sm:flex-row gap-8 sm:gap-12 text-sm">
               <div className="space-y-2">
-                <h4 className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">Connect</h4>
-                <a href="https://wa.me/255685208576" className="block text-slate-600 hover:text-emerald-600 transition-colors font-medium">+255 685 208 576</a>
+                <h4 className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest">Connect</h4>
+                <a href="https://wa.me/255685208576" className="block text-slate-600 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors font-medium">+255 685 208 576</a>
               </div>
               <div className="space-y-2">
-                <h4 className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">Developer</h4>
-                <p className="text-slate-900 font-bold">Cleven Sam</p>
+                <h4 className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest">Developer</h4>
+                <p className="text-slate-900 dark:text-slate-100 font-bold">Cleven Sam</p>
               </div>
             </div>
           </div>
-          <div className="mt-12 pt-8 border-t border-slate-50 text-center">
-            <p className="text-slate-300 text-[9px] font-bold uppercase tracking-[0.3em]">&copy; {new Date().getFullYear()} Softlink Africa | MUST ICT</p>
+          <div className="mt-12 pt-8 border-t border-slate-50 dark:border-slate-900 text-center">
+            <p className="text-slate-300 dark:text-slate-700 text-[9px] font-bold uppercase tracking-[0.3em]">&copy; {new Date().getFullYear()} Softlink Africa | MUST ICT</p>
           </div>
         </div>
       </footer>

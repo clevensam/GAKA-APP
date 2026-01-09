@@ -12,6 +12,12 @@ body {
   background-color: #fcfdfe;
   color: #1e293b;
   overflow-x: hidden;
+  transition: background-color 0.5s ease, color 0.5s ease;
+}
+
+body.dark {
+  background-color: #020617;
+  color: #f1f5f9;
 }
 
 .glass {
@@ -19,6 +25,12 @@ body {
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border-bottom: 1px solid rgba(241, 245, 249, 0.8);
+  transition: background 0.5s ease, border-color 0.5s ease;
+}
+
+.dark .glass {
+  background: rgba(15, 23, 42, 0.8);
+  border-bottom: 1px solid rgba(30, 41, 59, 0.5);
 }
 
 .gradient-text {
@@ -30,6 +42,12 @@ body {
 .hero-gradient {
   background: radial-gradient(circle at top right, rgba(16, 185, 129, 0.05), transparent),
               radial-gradient(circle at bottom left, rgba(13, 148, 136, 0.05), transparent);
+  transition: background 0.5s ease;
+}
+
+.dark .hero-gradient {
+  background: radial-gradient(circle at top right, rgba(5, 150, 105, 0.15), transparent),
+              radial-gradient(circle at bottom left, rgba(13, 148, 136, 0.1), transparent);
 }
 
 @keyframes fadeIn {
@@ -61,4 +79,9 @@ body {
 
 h1, h2, h3, h4 {
   letter-spacing: -0.02em;
+}
+
+/* Specific lamp glow effect */
+.lamp-glow {
+  filter: drop-shadow(0 0 15px rgba(251, 191, 36, 0.8));
 }
