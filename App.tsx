@@ -56,11 +56,11 @@ const App: React.FC = () => {
       setError(null);
       
       const response = await fetch(LIVE_CSV_URL);
-      if (!response.ok) throw new Error('Cloud registry unreachable.');
+      if (!response.ok) throw new Error('Cloud registry server returned an error (4xx/5xx).');
       
       const csvText = await response.text();
       const allRows = csvText.split(/\r?\n/).filter(row => row.trim() !== "");
-      if (allRows.length < 2) throw new Error('Cloud registry is currently empty.');
+      if (allRows.length < 2) throw new Error('The cloud registry is currently empty.');
       
       const headers = allRows[0].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(h => h.trim().replace(/^"|"$/g, '').toLowerCase());
       const colIdx = {
@@ -71,7 +71,7 @@ const App: React.FC = () => {
         view: headers.findIndex(h => h === 'view url' || h === 'preview url' || h === 'view link')
       };
       
-      if (colIdx.code === -1 || colIdx.title === -1) throw new Error('Invalid cloud registry format.');
+      if (colIdx.code === -1 || colIdx.title === -1) throw new Error('The registry server is providing data in an invalid format.');
       
       const moduleMap = new Map<string, Module>();
       MODULES_DATA.forEach(m => {
@@ -122,14 +122,15 @@ const App: React.FC = () => {
       setError(null);
     } catch (err: any) {
       console.warn("Registry Sync Error:", err);
-      setError(err.message || "Running in offline mode.");
-      // If we already have modules, we don't clear them, just show a minor error
+      const userFriendlyMessage = err.message || "The server is unreachable at the moment.";
+      setError(userFriendlyMessage);
+      
       if (modules.length === 0) {
         setModules(MODULES_DATA.filter(m => m.resources.length > 0));
       }
     } finally {
       const elapsedTime = Date.now() - startTime;
-      const minDelay = 800;
+      const minDelay = 1000;
       const remainingTime = Math.max(0, minDelay - elapsedTime);
       setTimeout(() => {
         setIsLoading(false);
@@ -210,7 +211,7 @@ const App: React.FC = () => {
   }
 
   // Determine if we should show a full error page
-  // We show full error if we have no modules and there's an error message
+  // Show full error if we have no valid synced modules and an error is present
   const isFatalError = error && modules.every(m => m.resources.length === 0);
 
   return (
@@ -241,27 +242,27 @@ const App: React.FC = () => {
           </nav>
         )}
 
-        {/* Fatal Error State */}
+        {/* Views Rendering */}
         {isFatalError ? (
           <ErrorPage 
             message={error} 
             onRetry={fetchData} 
             isRetrying={isSyncing} 
+            onGoHome={() => navigateTo('/')}
           />
         ) : (
           <>
-            {/* Minor Notification for Non-Fatal Sync Errors */}
+            {/* Non-Fatal Error Alert */}
             {error && (
               <div className="mb-12 p-6 bg-amber-50/50 dark:bg-[#1E1E1E] border border-amber-100 dark:border-amber-900/30 rounded-3xl text-amber-800 dark:text-amber-400 text-sm font-medium flex flex-col sm:flex-row items-center justify-between animate-fade-in gap-4 shadow-sm">
                 <div className="flex items-center">
                   <span className="w-3 h-3 rounded-full bg-amber-500 mr-4"></span>
-                  <div className="flex flex-col"><p className="font-bold">Registry Sync Info</p><p className="opacity-80">{error}</p></div>
+                  <div className="flex flex-col"><p className="font-bold">Sync Info</p><p className="opacity-80">{error}</p></div>
                 </div>
                 <button onClick={() => fetchData()} className="bg-white dark:bg-[#282828] px-6 py-2.5 rounded-full shadow-sm hover:shadow-md transition-all active:scale-95 text-amber-600 dark:text-amber-300 border border-amber-100 dark:border-white/5 font-semibold">Retry Sync</button>
               </div>
             )}
 
-            {/* Views Rendering */}
             {currentView === 'home' && (
               <Home 
                 recentFiles={recentFiles} 
