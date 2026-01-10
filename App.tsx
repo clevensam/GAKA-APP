@@ -38,100 +38,114 @@ const App: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<ResourceType | 'All'>('All');
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
-  const [isDark, setIsDark] = useState(false);
+  
+  // Theme state initialized from localStorage
+  const [isDark, setIsDark] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('gaka-theme');
+      if (saved) return saved === 'dark';
+      return window.matchMedia('(prefers-color-scheme: dark)').matches;
+    }
+    return false;
+  });
 
+  // Persist theme changes
   useEffect(() => {
     if (isDark) {
       document.documentElement.classList.add('dark');
-      document.body.classList.add('dark');
+      localStorage.setItem('gaka-theme', 'dark');
     } else {
       document.documentElement.classList.remove('dark');
-      document.body.classList.remove('dark');
+      localStorage.setItem('gaka-theme', 'light');
     }
   }, [isDark]);
 
-  const fetchDataWithRetry = async (url: string, retries = 3): Promise<Response> => {
-    for (let i = 0; i < retries; i++) {
-      try {
-        const cacheBuster = `&t=${Date.now()}`;
-        const response = await fetch(`${url}${cacheBuster}`);
-        if (response.ok) return response;
-      } catch (e) {
-        if (i === retries - 1) throw e;
-      }
-      await new Promise(res => setTimeout(res, 1000 * (i + 1)));
+  const fetchData = async () => {
+    const startTime = Date.now();
+    try {
+      setIsLoading(true);
+      setError(null);
+      
+      const response = await fetch(LIVE_CSV_URL);
+      if (!response.ok) throw new Error('Registry unreachable.');
+      
+      const csvText = await response.text();
+      const allRows = csvText.split(/\r?\n/).filter(row => row.trim() !== "");
+      if (allRows.length < 2) throw new Error('Cloud registry is currently empty.');
+      
+      const headers = allRows[0].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(h => h.trim().replace(/^"|"$/g, '').toLowerCase());
+      const colIdx = {
+        code: headers.findIndex(h => h === 'module code' || h === 'code' || h.includes('module')),
+        type: headers.findIndex(h => h === 'type'),
+        title: headers.findIndex(h => h === 'title'),
+        download: headers.findIndex(h => h === 'download url' || h === 'download link' || h === 'url'),
+        view: headers.findIndex(h => h === 'view url' || h === 'preview url' || h === 'view link')
+      };
+      
+      if (colIdx.code === -1 || colIdx.title === -1) throw new Error('Invalid cloud registry format.');
+      
+      const moduleMap = new Map<string, Module>();
+      MODULES_DATA.forEach(m => {
+        moduleMap.set(m.code.replace(/\s+/g, '').toLowerCase(), { ...m, resources: [] });
+      });
+      
+      const allExtractedFiles: (AcademicFile & { moduleCode: string; moduleId: string; rowIndex: number })[] = [];
+      allRows.slice(1).forEach((row, index) => {
+        const parts = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(val => val?.trim().replace(/^"|"$/g, ''));
+        const moduleCode = parts[colIdx.code] || "";
+        const typeStr = parts[colIdx.type] || "";
+        const title = parts[colIdx.title] || "";
+        const rawDownloadUrl = parts[colIdx.download] || "#";
+        const rawViewUrl = colIdx.view !== -1 ? parts[colIdx.view] : rawDownloadUrl;
+        
+        if (!moduleCode || !title) return;
+        
+        const downloadUrl = transformToDirectDownload(rawDownloadUrl);
+        const viewUrl = ensureViewUrl(rawViewUrl);
+        const normalizedCode = moduleCode.replace(/\s+/g, '').toLowerCase();
+        
+        if (!moduleMap.has(normalizedCode)) {
+          moduleMap.set(normalizedCode, {
+            id: `dynamic-${normalizedCode}`,
+            code: moduleCode.toUpperCase(),
+            name: `Module ${moduleCode.toUpperCase()}`,
+            description: 'Resource repository.',
+            resources: []
+          });
+        }
+        
+        const targetModule = moduleMap.get(normalizedCode)!;
+        const resource: AcademicFile = {
+          id: `res-${index}`,
+          title: title || 'Resource',
+          type: (typeStr.toLowerCase().includes('note')) ? 'Notes' : 'Past Paper',
+          downloadUrl: downloadUrl.startsWith('http') ? downloadUrl : '#',
+          viewUrl: viewUrl.startsWith('http') ? viewUrl : '#',
+          size: '---' 
+        };
+        targetModule.resources.unshift(resource);
+        allExtractedFiles.push({ ...resource, moduleCode: targetModule.code, moduleId: targetModule.id, rowIndex: index });
+      });
+      
+      const finalModules = Array.from(moduleMap.values()).filter(m => m.resources.length > 0);
+      setModules(finalModules);
+      setRecentFiles(allExtractedFiles.sort((a, b) => b.rowIndex - a.rowIndex).slice(0, 3));
+      setError(null);
+    } catch (err: any) {
+      console.warn("Registry Sync Error:", err);
+      setError("Running in offline mode. Updates unavailable.");
+      // Fallback to constants
+      setModules(MODULES_DATA.filter(m => m.resources.length > 0));
+    } finally {
+      // Small Loading Time threshold for smooth transition (800ms)
+      const elapsedTime = Date.now() - startTime;
+      const minDelay = 800;
+      const remainingTime = Math.max(0, minDelay - elapsedTime);
+      setTimeout(() => setIsLoading(false), remainingTime);
     }
-    throw new Error('Sync failed after multiple attempts');
   };
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setIsLoading(true);
-        const response = await fetchDataWithRetry(LIVE_CSV_URL);
-        const csvText = await response.text();
-        const allRows = csvText.split(/\r?\n/).filter(row => row.trim() !== "");
-        if (allRows.length < 2) throw new Error('Cloud registry is currently empty.');
-        const headers = allRows[0].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(h => h.trim().replace(/^"|"$/g, '').toLowerCase());
-        const colIdx = {
-          code: headers.findIndex(h => h === 'module code' || h === 'code' || h.includes('module')),
-          type: headers.findIndex(h => h === 'type'),
-          title: headers.findIndex(h => h === 'title'),
-          download: headers.findIndex(h => h === 'download url' || h === 'download link' || h === 'url'),
-          view: headers.findIndex(h => h === 'view url' || h === 'preview url' || h === 'view link')
-        };
-        if (colIdx.code === -1 || colIdx.title === -1) throw new Error('Invalid cloud registry format. Contact support.');
-        const rows = allRows.slice(1); 
-        const moduleMap = new Map<string, Module>();
-        MODULES_DATA.forEach(m => {
-          moduleMap.set(m.code.replace(/\s+/g, '').toLowerCase(), { ...m, resources: [] });
-        });
-        const allExtractedFiles: (AcademicFile & { moduleCode: string; moduleId: string; rowIndex: number })[] = [];
-        rows.forEach((row, index) => {
-          const parts = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(val => val?.trim().replace(/^"|"$/g, ''));
-          const moduleCode = parts[colIdx.code] || "";
-          const typeStr = parts[colIdx.type] || "";
-          const title = parts[colIdx.title] || "";
-          const rawDownloadUrl = parts[colIdx.download] || "#";
-          const rawViewUrl = colIdx.view !== -1 ? parts[colIdx.view] : rawDownloadUrl;
-          if (!moduleCode || !title) return;
-          const downloadUrl = transformToDirectDownload(rawDownloadUrl);
-          const viewUrl = ensureViewUrl(rawViewUrl);
-          const normalizedSheetCode = moduleCode.replace(/\s+/g, '').toLowerCase();
-          if (!moduleMap.has(normalizedSheetCode)) {
-            moduleMap.set(normalizedSheetCode, {
-              id: `dynamic-mod-${normalizedSheetCode}`,
-              code: moduleCode.toUpperCase(),
-              name: `Module ${moduleCode.toUpperCase()}`,
-              description: 'Automatically discovered academic resource module.',
-              resources: []
-            });
-          }
-          const targetModule = moduleMap.get(normalizedSheetCode)!;
-          const resource: AcademicFile = {
-            id: `dynamic-res-${index}`,
-            title: title || 'Academic Resource',
-            type: (typeStr.toLowerCase().includes('note')) ? 'Notes' : 'Past Paper',
-            downloadUrl: downloadUrl.startsWith('http') ? downloadUrl : '#',
-            viewUrl: viewUrl.startsWith('http') ? viewUrl : '#',
-            size: '---' 
-          };
-          targetModule.resources.unshift(resource);
-          allExtractedFiles.push({ ...resource, moduleCode: targetModule.code, moduleId: targetModule.id, rowIndex: index });
-        });
-        const finalModules = Array.from(moduleMap.values()).filter(m => m.resources.length > 0);
-        setModules(finalModules);
-        const topRecent = allExtractedFiles.sort((a, b) => b.rowIndex - a.rowIndex).slice(0, 3);
-        setRecentFiles(topRecent);
-        setError(null);
-      } catch (err: any) {
-        console.error("Fetch Error:", err);
-        setError(err.message || "Failed to sync with cloud registry. Check connection.");
-        setModules([]); 
-      } finally {
-        setIsLoading(false);
-      }
-    };
     fetchData();
   }, []);
 
@@ -268,9 +282,9 @@ const App: React.FC = () => {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-white dark:bg-black transition-colors duration-500">
         <div className="relative">
-          <div className="w-20 h-20 sm:w-24 sm:h-24 border-[4px] border-slate-100 dark:border-white/5 border-t-emerald-600 rounded-full animate-spin"></div>
+          <div className="w-16 h-16 sm:w-20 sm:h-20 border-[3px] border-slate-100 dark:border-white/5 border-t-emerald-600 rounded-full animate-spin"></div>
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-10 h-10 sm:w-12 h-12 bg-emerald-600 rounded-2xl flex items-center justify-center text-white font-black text-lg sm:text-xl shadow-lg shadow-emerald-100 dark:shadow-emerald-900/40 animate-pulse">G</div>
+            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-emerald-600 rounded-xl flex items-center justify-center text-white font-black text-sm shadow-lg shadow-emerald-100 dark:shadow-emerald-900/40 animate-pulse">G</div>
           </div>
         </div>
       </div>
@@ -305,13 +319,10 @@ const App: React.FC = () => {
         {error && (
           <div className="mb-12 p-6 bg-amber-50/50 dark:bg-[#1E1E1E] border border-amber-100 dark:border-amber-900/30 rounded-3xl text-amber-800 dark:text-amber-400 text-sm font-medium flex flex-col sm:flex-row items-center justify-between animate-fade-in gap-4 shadow-sm">
             <div className="flex items-center">
-              <span className="relative flex h-3 w-3 mr-4">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-3 w-3 bg-amber-500"></span>
-              </span>
-              <div className="flex flex-col"><p className="font-bold">Sync Error</p><p className="opacity-80">{error}</p></div>
+              <span className="w-3 h-3 rounded-full bg-amber-500 mr-4"></span>
+              <div className="flex flex-col"><p className="font-bold">Registry Sync Info</p><p className="opacity-80">{error}</p></div>
             </div>
-            <button onClick={() => window.location.reload()} className="bg-white dark:bg-[#282828] px-6 py-2.5 rounded-full shadow-sm hover:shadow-md transition-all active:scale-95 text-amber-600 dark:text-amber-300 border border-amber-100 dark:border-white/5 font-semibold">Retry Connection</button>
+            <button onClick={() => fetchData()} className="bg-white dark:bg-[#282828] px-6 py-2.5 rounded-full shadow-sm hover:shadow-md transition-all active:scale-95 text-amber-600 dark:text-amber-300 border border-amber-100 dark:border-white/5 font-semibold">Retry Sync</button>
           </div>
         )}
         {currentView === 'home' && (
