@@ -11,7 +11,7 @@ interface RecentCardProps {
 export const RecentFileCard: React.FC<RecentCardProps> = ({ file, delay, onNavigate }) => {
   return (
     <div 
-      className="group bg-white dark:bg-[#111111] p-8 sm:p-10 rounded-[2.5rem] border border-slate-100 dark:border-white/[0.03] hover:border-emerald-200 dark:hover:border-emerald-500/20 transition-all duration-500 hover:shadow-2xl flex flex-col h-full animate-fade-in relative overflow-hidden"
+      className="group bg-white dark:bg-[#111111] p-8 sm:p-10 rounded-[2.5rem] border border-slate-100 dark:border-white/[0.03] hover:border-emerald-200 dark:hover:border-emerald-500/20 transition-all duration-500 hover:shadow-2xl flex flex-col h-full animate-fade-in relative overflow-hidden active:scale-[0.98]"
       style={{ animationDelay: `${delay}ms` }}
     >
       <div className="flex items-center justify-between mb-8 relative z-10">
@@ -35,6 +35,8 @@ export const RecentFileCard: React.FC<RecentCardProps> = ({ file, delay, onNavig
         <span>View Details</span>
         <ChevronRightIcon className="w-4 h-4" />
       </button>
+
+      <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 dark:bg-emerald-400/5 blur-[60px] pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
     </div>
   );
 };

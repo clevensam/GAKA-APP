@@ -17,8 +17,11 @@ export const ResourceItem: React.FC<ResourceItemProps> = ({ file, moduleCode, de
     window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
   };
 
-  const onDownload = () => {
-    if (file.downloadUrl === '#') return;
+  const onDownload = (e: React.MouseEvent) => {
+    if (file.downloadUrl === '#') {
+        e.preventDefault();
+        return;
+    }
     setIsDownloading(true);
     setTimeout(() => setIsDownloading(false), 3000);
   };
