@@ -1,15 +1,16 @@
 import React, { useState, useMemo } from 'react';
-import { BackIcon } from '../components/Icons';
+import { useParams, useNavigate } from 'react-router-dom';
+import { BackIcon, ChevronRightIcon } from '../components/Icons';
 import { Module, ResourceType } from '../types';
 import { ResourceItem } from '../components/ResourceItem';
 
 interface DetailProps {
   modules: Module[];
-  moduleId: string;
-  onNavigate: (page: string, params?: any) => void;
 }
 
-const ModuleDetailPage: React.FC<DetailProps> = ({ modules, moduleId, onNavigate }) => {
+const ModuleDetailPage: React.FC<DetailProps> = ({ modules }) => {
+  const { moduleId } = useParams();
+  const navigate = useNavigate();
   const [filterType, setFilterType] = useState<ResourceType | 'All'>('All');
 
   const selectedModule = useMemo(() => modules.find(m => m.id === moduleId), [modules, moduleId]);
@@ -20,13 +21,13 @@ const ModuleDetailPage: React.FC<DetailProps> = ({ modules, moduleId, onNavigate
   }, [selectedModule, filterType]);
 
   if (!selectedModule) {
-    return <div className="text-center py-20 text-slate-400">Module not found. <button onClick={() => onNavigate('modules')} className="text-emerald-500 font-bold">Go back</button></div>;
+    return <div className="text-center py-20 text-slate-400">Module not found. <button onClick={() => navigate('/modules')} className="text-emerald-500 font-bold">Go back</button></div>;
   }
 
   return (
     <div className="animate-fade-in max-w-5xl mx-auto pb-20">
       <div className="mb-8 px-1">
-        <button onClick={() => onNavigate('modules')} className="flex items-center text-slate-800 dark:text-white/60 font-bold text-[13px] uppercase tracking-widest hover:text-emerald-600 dark:hover:text-emerald-400 transition-all group">
+        <button onClick={() => navigate('/modules')} className="flex items-center text-slate-800 dark:text-white/60 font-bold text-[13px] uppercase tracking-widest hover:text-emerald-600 dark:hover:text-emerald-400 transition-all group">
           <BackIcon className="mr-3 w-6 h-6 group-hover:-translate-x-2 transition-transform" />Back to Modules
         </button>
       </div>

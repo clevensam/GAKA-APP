@@ -1,10 +1,6 @@
 import React from 'react';
 
-interface AboutProps {
-  onNavigate: (page: string, params?: any) => void;
-}
-
-const AboutPage: React.FC<AboutProps> = ({ onNavigate }) => {
+const AboutPage: React.FC = () => {
   return (
     <div className="animate-fade-in max-w-5xl mx-auto py-4 sm:py-12">
       <div className="bg-white dark:bg-[#1E1E1E] rounded-[2rem] sm:rounded-[3.5rem] p-8 sm:p-24 shadow-sm border border-slate-100 dark:border-white/5 relative overflow-hidden">

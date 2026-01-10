@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Navbar } from './components/Navbar';
 import { Module, AcademicFile } from './types';
 import { MODULES_DATA } from './constants';
@@ -33,24 +34,15 @@ const App: React.FC = () => {
   const [recentFiles, setRecentFiles] = useState<(AcademicFile & { moduleCode: string; moduleId: string })[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isDark, setIsDark] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('theme');
-      return saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches);
-    }
-    return false;
-  });
-  
-  const [currentPage, setCurrentPage] = useState('home');
-  const [selectedModuleId, setSelectedModuleId] = useState<string | null>(null);
+  const [isDark, setIsDark] = useState(false);
 
   useEffect(() => {
     if (isDark) {
       document.documentElement.classList.add('dark');
-      localStorage.setItem('theme', 'dark');
+      document.body.classList.add('dark');
     } else {
       document.documentElement.classList.remove('dark');
-      localStorage.setItem('theme', 'light');
+      document.body.classList.remove('dark');
     }
   }, [isDark]);
 
@@ -110,88 +102,51 @@ const App: React.FC = () => {
     fetchData();
   }, []);
 
-  const handleNavigate = (page: string, params?: any) => {
-    setCurrentPage(page);
-    if (params?.moduleId) {
-      setSelectedModuleId(params.moduleId);
-    }
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  const renderContent = () => {
-    switch (currentPage) {
-      case 'home':
-        return <HomePage recentFiles={recentFiles} onNavigate={handleNavigate} />;
-      case 'modules':
-        return <ModulesPage modules={modules} onNavigate={handleNavigate} />;
-      case 'module-detail':
-        return <ModuleDetailPage modules={modules} moduleId={selectedModuleId || ''} onNavigate={handleNavigate} />;
-      case 'about':
-        return <AboutPage onNavigate={handleNavigate} />;
-      default:
-        return <HomePage recentFiles={recentFiles} onNavigate={handleNavigate} />;
-    }
-  };
-
   if (isLoading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-white dark:bg-black transition-colors duration-700">
+      <div className="min-h-screen flex flex-col items-center justify-center bg-white dark:bg-black transition-colors duration-500">
         <div className="relative">
-          <div className="w-20 h-20 border-[4px] border-slate-100 dark:border-white/5 border-t-emerald-600 rounded-full animate-spin"></div>
+          <div className="w-16 h-16 border-[3px] border-slate-100 dark:border-white/5 border-t-emerald-600 rounded-full animate-spin"></div>
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-10 h-10 bg-emerald-600 rounded-2xl flex items-center justify-center text-white font-black text-xl animate-pulse shadow-xl shadow-emerald-500/30">G</div>
+            <div className="w-8 h-8 bg-emerald-600 rounded-xl flex items-center justify-center text-white font-black text-sm animate-pulse">G</div>
           </div>
         </div>
-        <p className="mt-8 text-slate-400 dark:text-white/20 font-black uppercase tracking-[0.4em] text-[10px] animate-pulse">Syncing Hub</p>
       </div>
     );
   }
 
   return (
-    <div className={`min-h-screen flex flex-col selection:bg-emerald-100 selection:text-emerald-900 overflow-x-hidden transition-colors duration-700 ${isDark ? 'dark bg-black' : 'bg-[#fcfdfe]'}`}>
-      <Navbar currentPage={currentPage} onNavigate={handleNavigate} isDark={isDark} onToggleDark={() => setIsDark(!isDark)} />
-      
-      <main className="flex-grow container mx-auto max-w-7xl px-4 py-8 sm:py-16 sm:px-12">
-        {error && (
-          <div className="mb-16 p-8 bg-amber-50/50 dark:bg-white/[0.02] border border-amber-100 dark:border-amber-900/20 rounded-[2rem] text-amber-800 dark:text-amber-400 text-sm font-bold flex flex-col sm:flex-row items-center justify-between gap-6 animate-fade-in shadow-sm backdrop-blur-md">
-            <div className="flex items-center gap-4 text-center sm:text-left">
-              <span className="text-2xl">⚠️</span>
-              <p><strong>Database Sync Warning:</strong> {error}</p>
+    <BrowserRouter>
+      <div className={`min-h-screen flex flex-col selection:bg-emerald-100 selection:text-emerald-900 overflow-x-hidden transition-colors duration-500 ${isDark ? 'dark bg-black' : 'bg-[#fcfdfe]'}`}>
+        <Navbar isDark={isDark} onToggleDark={() => setIsDark(!isDark)} />
+        <main className="flex-grow container mx-auto max-w-7xl px-4 py-8 sm:py-12 sm:px-8">
+          {error && (
+            <div className="mb-12 p-6 bg-amber-50/50 dark:bg-[#1E1E1E] border border-amber-100 dark:border-amber-900/30 rounded-3xl text-amber-800 dark:text-amber-400 text-sm font-medium flex items-center justify-between animate-fade-in shadow-sm">
+              <p><strong>Sync Error:</strong> {error}</p>
+              <button onClick={() => window.location.reload()} className="bg-white dark:bg-[#282828] px-4 py-2 rounded-full shadow-sm text-xs font-bold">Retry</button>
             </div>
-            <button 
-              onClick={() => window.location.reload()} 
-              className="bg-white dark:bg-white/[0.05] border dark:border-white/10 px-8 py-3 rounded-2xl shadow-sm text-xs font-black uppercase tracking-widest hover:scale-105 transition-transform active:scale-95"
-            >
-              Retry Sync
-            </button>
-          </div>
-        )}
-        <div key={currentPage} className="animate-fade-in">
-          {renderContent()}
-        </div>
-      </main>
-
-      <footer className="bg-white dark:bg-black border-t border-slate-50 dark:border-white/[0.05] py-20 transition-colors duration-500">
-        <div className="container mx-auto px-8 max-w-7xl text-center md:text-left">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-12">
-            <div className="space-y-4">
-              <div className="flex items-center justify-center md:justify-start space-x-4">
-                <div className="w-10 h-10 bg-emerald-600 rounded-xl flex items-center justify-center text-white font-black text-xl">G</div>
-                <span className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">GAKA Portal</span>
+          )}
+          <Routes>
+            <Route path="/" element={<HomePage recentFiles={recentFiles} modules={modules} />} />
+            <Route path="/modules" element={<ModulesPage modules={modules} />} />
+            <Route path="/module/:moduleId" element={<ModuleDetailPage modules={modules} />} />
+            <Route path="/about" element={<AboutPage />} />
+          </Routes>
+        </main>
+        <footer className="bg-white dark:bg-black border-t border-slate-50 dark:border-white/5 py-12">
+          <div className="container mx-auto px-6 max-w-7xl text-center md:text-left">
+            <div className="flex flex-col md:flex-row justify-between items-center gap-10">
+              <div className="space-y-2">
+                <div className="flex items-center space-x-3"><div className="w-8 h-8 bg-emerald-600 rounded-lg flex items-center justify-center text-white font-black">G</div><span className="text-lg font-extrabold text-slate-900 dark:text-white uppercase tracking-tight">GAKA Portal</span></div>
+                <p className="text-slate-400 dark:text-white/30 text-xs">MUST Computer Science Academic Hub.</p>
               </div>
-              <p className="text-slate-400 dark:text-white/30 text-xs font-medium max-w-sm mx-auto md:mx-0">
-                The centralized high-performance academic repository for MUST Computer Science students. Built for speed and accessibility.
-              </p>
-            </div>
-            <div className="text-center md:text-right space-y-2">
-              <p className="text-slate-300 dark:text-white/10 text-[10px] font-black uppercase tracking-[0.4em] mb-2">Developed by Softlink Africa</p>
-              <p className="text-slate-200 dark:text-white/5 text-[10px] font-black tracking-widest">&copy; {new Date().getFullYear()} ALL RIGHTS RESERVED</p>
+              <div className="text-center md:text-right"><p className="text-slate-300 dark:text-white/10 text-[9px] font-bold uppercase tracking-[0.3em]">&copy; {new Date().getFullYear()} Softlink Africa</p></div>
             </div>
           </div>
-        </div>
-      </footer>
-      <Analytics />
-    </div>
+        </footer>
+        <Analytics />
+      </div>
+    </BrowserRouter>
   );
 };
 

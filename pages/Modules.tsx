@@ -1,15 +1,16 @@
 import React, { useState, useMemo } from 'react';
 import { ModuleCard } from '../components/ModuleCard';
-import { SearchIcon } from '../components/Icons';
+import { SearchIcon, ChevronRightIcon } from '../components/Icons';
 import { Module } from '../types';
+import { useNavigate } from 'react-router-dom';
 
 interface ModulesProps {
   modules: Module[];
-  onNavigate: (page: string, params?: any) => void;
 }
 
-const ModulesPage: React.FC<ModulesProps> = ({ modules, onNavigate }) => {
+const ModulesPage: React.FC<ModulesProps> = ({ modules }) => {
   const [searchQuery, setSearchQuery] = useState('');
+  const navigate = useNavigate();
 
   const filteredModules = useMemo(() => {
     return modules.filter(m => 
@@ -44,7 +45,7 @@ const ModulesPage: React.FC<ModulesProps> = ({ modules, onNavigate }) => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-8">
         {filteredModules.map((module, i) => (
           <div key={module.id} className="animate-fade-in" style={{ animationDelay: `${i * 30}ms` }}>
-            <ModuleCard module={module} onClick={() => onNavigate('module-detail', { moduleId: module.id })} />
+            <ModuleCard module={module} onClick={() => navigate(`/module/${module.id}`)} />
           </div>
         ))}
         {filteredModules.length === 0 && (
