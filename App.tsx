@@ -28,7 +28,7 @@ const App: React.FC = () => {
   const [filterType, setFilterType] = useState<ResourceType | 'All'>('All');
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
   
-  // Theme state initialized from localStorage
+  // Theme state
   const [isDark, setIsDark] = useState(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('gaka-theme');
@@ -38,7 +38,6 @@ const App: React.FC = () => {
     return false;
   });
 
-  // Persist theme changes
   useEffect(() => {
     if (isDark) {
       document.documentElement.classList.add('dark');
@@ -49,6 +48,31 @@ const App: React.FC = () => {
     }
   }, [isDark]);
 
+  // Dynamic SEO Metadata Handler
+  useEffect(() => {
+    let title = "GAKA | MUST CS Academic Resource Hub";
+    let description = "Access Mbeya University of Science and Technology (MUST) Computer Science lecture notes and past papers.";
+
+    if (currentView === 'modules') {
+      title = "Browse Modules | GAKA Portal";
+      description = "Explore all available Computer Science modules and academic resources at MUST.";
+    } else if (currentView === 'detail' && selectedModule) {
+      title = `${selectedModule.code} - ${selectedModule.name} | GAKA`;
+      description = `Download notes and past papers for ${selectedModule.name} (${selectedModule.code}) at MUST.`;
+    } else if (currentView === 'about') {
+      title = "About GAKA | Academic Efficiency";
+      description = "Learn about the mission of GAKA Portal and the team behind MUST's academic resource hub.";
+    }
+
+    document.title = title;
+    const metaDesc = document.querySelector('meta[name="description"]');
+    if (metaDesc) metaDesc.setAttribute('content', description);
+    
+    // Update Open Graph tags dynamically (primarily for browser/search history)
+    const ogTitle = document.querySelector('meta[property="og:title"]');
+    if (ogTitle) ogTitle.setAttribute('content', title);
+  }, [currentView, selectedModule]);
+
   const fetchData = async () => {
     const startTime = Date.now();
     try {
@@ -56,11 +80,11 @@ const App: React.FC = () => {
       setError(null);
       
       const response = await fetch(LIVE_CSV_URL);
-      if (!response.ok) throw new Error('Cloud registry server returned an error (4xx/5xx).');
+      if (!response.ok) throw new Error('Cloud registry server unreachable.');
       
       const csvText = await response.text();
       const allRows = csvText.split(/\r?\n/).filter(row => row.trim() !== "");
-      if (allRows.length < 2) throw new Error('The cloud registry is currently empty.');
+      if (allRows.length < 2) throw new Error('Cloud registry is currently empty.');
       
       const headers = allRows[0].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(h => h.trim().replace(/^"|"$/g, '').toLowerCase());
       const colIdx = {
@@ -71,7 +95,7 @@ const App: React.FC = () => {
         view: headers.findIndex(h => h === 'view url' || h === 'preview url' || h === 'view link')
       };
       
-      if (colIdx.code === -1 || colIdx.title === -1) throw new Error('The registry server is providing data in an invalid format.');
+      if (colIdx.code === -1 || colIdx.title === -1) throw new Error('Invalid registry format.');
       
       const moduleMap = new Map<string, Module>();
       MODULES_DATA.forEach(m => {
@@ -122,16 +146,12 @@ const App: React.FC = () => {
       setError(null);
     } catch (err: any) {
       console.warn("Registry Sync Error:", err);
-      const userFriendlyMessage = err.message || "The server is unreachable at the moment.";
-      setError(userFriendlyMessage);
-      
+      setError(err.message || "Offline Mode Active.");
       if (modules.length === 0) {
         setModules(MODULES_DATA.filter(m => m.resources.length > 0));
       }
     } finally {
-      const elapsedTime = Date.now() - startTime;
-      const minDelay = 1000;
-      const remainingTime = Math.max(0, minDelay - elapsedTime);
+      const remainingTime = Math.max(0, 1000 - (Date.now() - startTime));
       setTimeout(() => {
         setIsLoading(false);
         setIsSyncing(false);
@@ -199,23 +219,21 @@ const App: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-white dark:bg-black transition-colors duration-500">
+      <div className="min-h-screen flex flex-col items-center justify-center bg-white dark:bg-black">
         <div className="relative">
           <div className="w-16 h-16 sm:w-20 sm:h-20 border-[3px] border-slate-100 dark:border-white/5 border-t-emerald-600 rounded-full animate-spin"></div>
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-emerald-600 rounded-xl flex items-center justify-center text-white font-black text-sm shadow-lg shadow-emerald-100 dark:shadow-emerald-900/40 animate-pulse">G</div>
+            <div className="w-8 h-8 bg-emerald-600 rounded-xl flex items-center justify-center text-white font-black text-sm shadow-lg animate-pulse">G</div>
           </div>
         </div>
       </div>
     );
   }
 
-  // Determine if we should show a full error page
-  // Show full error if we have no valid synced modules and an error is present
   const isFatalError = error && modules.every(m => m.resources.length === 0);
 
   return (
-    <div className={`min-h-screen flex flex-col selection:bg-emerald-100 selection:text-emerald-900 overflow-x-hidden transition-colors duration-500 ${isDark ? 'dark bg-black' : 'bg-[#fcfdfe]'}`}>
+    <div className={`min-h-screen flex flex-col selection:bg-emerald-100 selection:text-emerald-900 transition-colors duration-500 ${isDark ? 'dark bg-black' : 'bg-[#fcfdfe]'}`}>
       <Navbar 
         onLogoClick={() => navigateTo('/')} 
         onHomeClick={() => navigateTo('/')} 
@@ -224,78 +242,31 @@ const App: React.FC = () => {
         onToggleDark={() => setIsDark(!isDark)}
       />
       
-      <main className="flex-grow container mx-auto max-w-7xl px-4 py-8 sm:py-12 sm:px-8 transition-colors duration-500">
-        {/* Breadcrumbs */}
+      <main className="flex-grow container mx-auto max-w-7xl px-4 py-8 sm:py-12">
         {!isFatalError && currentView !== 'home' && (
-          <nav className="flex items-center space-x-2 text-[12px] sm:text-[14px] font-semibold uppercase tracking-wider text-slate-400 dark:text-white/30 mb-6 sm:mb-8 overflow-x-auto whitespace-nowrap pb-2 scrollbar-hide animate-fade-in px-1">
-            <button onClick={() => navigateTo('/')} className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">Home</button>
-            <ChevronRightIcon className="w-3.5 h-3.5 text-slate-300 dark:text-white/10 flex-shrink-0" />
-            {currentView === 'modules' && <span className="text-slate-900 dark:text-white/90 font-bold">Modules</span>}
-            {currentView === 'about' && <span className="text-slate-900 dark:text-white/90 font-bold">About</span>}
+          <nav className="flex items-center space-x-2 text-[12px] font-semibold uppercase tracking-wider text-slate-400 dark:text-white/30 mb-8 overflow-x-auto whitespace-nowrap pb-2 scrollbar-hide">
+            <button onClick={() => navigateTo('/')} className="hover:text-emerald-600 transition-colors">Home</button>
+            <ChevronRightIcon className="w-3 h-3 opacity-30" />
+            {currentView === 'modules' && <span className="text-slate-900 dark:text-white/90">Modules</span>}
+            {currentView === 'about' && <span className="text-slate-900 dark:text-white/90">About</span>}
             {currentView === 'detail' && (
               <>
-                <button onClick={() => navigateTo('/modules')} className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">Modules</button>
-                <ChevronRightIcon className="w-3.5 h-3.5 text-slate-300 dark:text-white/10 flex-shrink-0" />
-                <span className="text-slate-900 dark:text-white/90 font-bold">{selectedModule?.code}</span>
+                <button onClick={() => navigateTo('/modules')} className="hover:text-emerald-600 transition-colors">Modules</button>
+                <ChevronRightIcon className="w-3 h-3 opacity-30" />
+                <span className="text-slate-900 dark:text-white/90">{selectedModule?.code}</span>
               </>
             )}
           </nav>
         )}
 
-        {/* Views Rendering */}
         {isFatalError ? (
-          <ErrorPage 
-            message={error} 
-            onRetry={fetchData} 
-            isRetrying={isSyncing} 
-            onGoHome={() => navigateTo('/')}
-          />
+          <ErrorPage message={error} onRetry={fetchData} isRetrying={isSyncing} onGoHome={() => navigateTo('/')} />
         ) : (
           <>
-            {/* Non-Fatal Error Alert */}
-            {error && (
-              <div className="mb-12 p-6 bg-amber-50/50 dark:bg-[#1E1E1E] border border-amber-100 dark:border-amber-900/30 rounded-3xl text-amber-800 dark:text-amber-400 text-sm font-medium flex flex-col sm:flex-row items-center justify-between animate-fade-in gap-4 shadow-sm">
-                <div className="flex items-center">
-                  <span className="w-3 h-3 rounded-full bg-amber-500 mr-4"></span>
-                  <div className="flex flex-col"><p className="font-bold">Sync Info</p><p className="opacity-80">{error}</p></div>
-                </div>
-                <button onClick={() => fetchData()} className="bg-white dark:bg-[#282828] px-6 py-2.5 rounded-full shadow-sm hover:shadow-md transition-all active:scale-95 text-amber-600 dark:text-amber-300 border border-amber-100 dark:border-white/5 font-semibold">Retry Sync</button>
-              </div>
-            )}
-
-            {currentView === 'home' && (
-              <Home 
-                recentFiles={recentFiles} 
-                modules={modules} 
-                onNavigate={navigateTo} 
-              />
-            )}
-
-            {currentView === 'modules' && (
-              <Modules 
-                filteredModules={filteredModules}
-                searchQuery={searchQuery}
-                setSearchQuery={setSearchQuery}
-                onNavigate={navigateTo}
-                isLoadingData={modules.length === 0}
-              />
-            )}
-
-            {currentView === 'detail' && selectedModule && (
-              <ModuleDetail 
-                module={selectedModule}
-                filterType={filterType}
-                setFilterType={setFilterType}
-                downloadingId={downloadingId}
-                onDownload={handleDownloadClick}
-                onShare={handleShare}
-                onNavigate={navigateTo}
-              />
-            )}
-
-            {currentView === 'about' && (
-              <About />
-            )}
+            {currentView === 'home' && <Home recentFiles={recentFiles} modules={modules} onNavigate={navigateTo} />}
+            {currentView === 'modules' && <Modules filteredModules={filteredModules} searchQuery={searchQuery} setSearchQuery={setSearchQuery} onNavigate={navigateTo} isLoadingData={modules.length === 0} />}
+            {currentView === 'detail' && selectedModule && <ModuleDetail module={selectedModule} filterType={filterType} setFilterType={setFilterType} downloadingId={downloadingId} onDownload={handleDownloadClick} onShare={handleShare} onNavigate={navigateTo} />}
+            {currentView === 'about' && <About />}
           </>
         )}
       </main>
