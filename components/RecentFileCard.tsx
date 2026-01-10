@@ -34,7 +34,7 @@ export const RecentFileCard: React.FC<RecentFileCardProps> = ({ file, delay, mod
         </h3>
       </div>
       <button 
-        onClick={() => onNavigate(`#/module/${file.moduleId}`)} 
+        onClick={() => onNavigate(`/module/${file.moduleId}`)} 
         className="relative z-10 w-full py-5 bg-slate-50 dark:bg-black text-slate-600 dark:text-white/40 font-bold text-[11px] uppercase tracking-[0.2em] rounded-2xl hover:bg-emerald-600 dark:hover:bg-emerald-500 hover:text-white transition-all active:scale-95 flex items-center justify-center gap-3 border border-slate-100 dark:border-white/5 group-hover:border-transparent group-hover:shadow-lg group-hover:shadow-emerald-100 dark:group-hover:shadow-emerald-900/40"
       >
         <span>View Resources</span>

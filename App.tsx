@@ -131,31 +131,39 @@ const App: React.FC = () => {
     fetchData();
   }, []);
 
+  const navigateTo = (path: string) => {
+    window.history.pushState({}, '', path);
+    window.dispatchEvent(new PopStateEvent('popstate'));
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   useEffect(() => {
-    const handleHashChange = () => {
-      const hash = window.location.hash;
-      if (hash === '#/modules') setCurrentView('modules');
-      else if (hash === '#/about') setCurrentView('about');
-      else if (hash.startsWith('#/module/')) {
-        const moduleId = hash.split('/').pop();
+    const handleLocationChange = () => {
+      const path = window.location.pathname;
+      if (path === '/modules') {
+        setCurrentView('modules');
+      } else if (path === '/about') {
+        setCurrentView('about');
+      } else if (path.startsWith('/module/')) {
+        const moduleId = path.split('/').pop();
         const module = modules.find(m => m.id === moduleId);
         if (module) {
           setSelectedModule(module);
           setCurrentView('detail');
           setFilterType('All'); 
-        } else if (modules.length > 0) setCurrentView('modules');
-        else setCurrentView('home');
-      } else setCurrentView('home');
+        } else if (modules.length > 0) {
+          setCurrentView('modules');
+        } else {
+          setCurrentView('home');
+        }
+      } else {
+        setCurrentView('home');
+      }
     };
-    window.addEventListener('hashchange', handleHashChange);
-    handleHashChange();
-    return () => window.removeEventListener('hashchange', handleHashChange);
+    window.addEventListener('popstate', handleLocationChange);
+    handleLocationChange();
+    return () => window.removeEventListener('popstate', handleLocationChange);
   }, [modules]);
-
-  const navigateTo = (path: string) => {
-    window.location.hash = path;
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
 
   const filteredModules = useMemo(() => {
     return modules.filter(m => {
@@ -198,9 +206,9 @@ const App: React.FC = () => {
   return (
     <div className={`min-h-screen flex flex-col selection:bg-emerald-100 selection:text-emerald-900 overflow-x-hidden transition-colors duration-500 ${isDark ? 'dark bg-black' : 'bg-[#fcfdfe]'}`}>
       <Navbar 
-        onLogoClick={() => navigateTo('#/home')} 
-        onHomeClick={() => navigateTo('#/home')} 
-        onDirectoryClick={() => navigateTo('#/modules')}
+        onLogoClick={() => navigateTo('/')} 
+        onHomeClick={() => navigateTo('/')} 
+        onDirectoryClick={() => navigateTo('/modules')}
         isDark={isDark}
         onToggleDark={() => setIsDark(!isDark)}
       />
@@ -209,13 +217,13 @@ const App: React.FC = () => {
         {/* Breadcrumbs */}
         {currentView !== 'home' && (
           <nav className="flex items-center space-x-2 text-[12px] sm:text-[14px] font-semibold uppercase tracking-wider text-slate-400 dark:text-white/30 mb-6 sm:mb-8 overflow-x-auto whitespace-nowrap pb-2 scrollbar-hide animate-fade-in px-1">
-            <button onClick={() => navigateTo('#/home')} className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">Home</button>
+            <button onClick={() => navigateTo('/')} className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">Home</button>
             <ChevronRightIcon className="w-3.5 h-3.5 text-slate-300 dark:text-white/10 flex-shrink-0" />
             {currentView === 'modules' && <span className="text-slate-900 dark:text-white/90 font-bold">Modules</span>}
             {currentView === 'about' && <span className="text-slate-900 dark:text-white/90 font-bold">About</span>}
             {currentView === 'detail' && (
               <>
-                <button onClick={() => navigateTo('#/modules')} className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">Modules</button>
+                <button onClick={() => navigateTo('/modules')} className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">Modules</button>
                 <ChevronRightIcon className="w-3.5 h-3.5 text-slate-300 dark:text-white/10 flex-shrink-0" />
                 <span className="text-slate-900 dark:text-white/90 font-bold">{selectedModule?.code}</span>
               </>
@@ -249,10 +257,10 @@ const App: React.FC = () => {
                 Verified lecture materials, modules, and past examination papers for Computer Science students.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto px-6 justify-center">
-                <button onClick={() => navigateTo('#/modules')} className="group flex items-center justify-center px-10 py-5 sm:px-16 sm:py-6 bg-emerald-600 dark:bg-emerald-500 text-white rounded-full font-bold text-sm sm:text-base shadow-2xl shadow-emerald-200 dark:shadow-emerald-900/10 hover:bg-emerald-700 dark:hover:bg-emerald-600 hover:scale-[1.03] transition-all duration-300 active:scale-95">
+                <button onClick={() => navigateTo('/modules')} className="group flex items-center justify-center px-10 py-5 sm:px-16 sm:py-6 bg-emerald-600 dark:bg-emerald-500 text-white rounded-full font-bold text-sm sm:text-base shadow-2xl shadow-emerald-200 dark:shadow-emerald-900/10 hover:bg-emerald-700 dark:hover:bg-emerald-600 hover:scale-[1.03] transition-all duration-300 active:scale-95">
                   Access Modules <SearchIcon className="ml-3 w-5 h-5 group-hover:rotate-12 transition-transform" />
                 </button>
-                <button onClick={() => navigateTo('#/about')} className="px-10 py-5 sm:px-16 sm:py-6 bg-white dark:bg-[#1E1E1E] text-slate-700 dark:text-white/80 border border-slate-200 dark:border-white/5 rounded-full font-bold text-sm sm:text-base hover:bg-slate-50 dark:hover:bg-[#282828] hover:border-slate-300 dark:hover:border-white/10 transition-all duration-300 shadow-sm active:scale-95">
+                <button onClick={() => navigateTo('/about')} className="px-10 py-5 sm:px-16 sm:py-6 bg-white dark:bg-[#1E1E1E] text-slate-700 dark:text-white/80 border border-slate-200 dark:border-white/5 rounded-full font-bold text-sm sm:text-base hover:bg-slate-50 dark:hover:bg-[#282828] hover:border-slate-300 dark:hover:border-white/10 transition-all duration-300 shadow-sm active:scale-95">
                   Learn More
                 </button>
               </div>
@@ -264,7 +272,7 @@ const App: React.FC = () => {
                     <div className="relative flex h-3 w-3"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span><span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span></div>
                     <h3 className="text-xl sm:text-3xl font-black text-slate-900 dark:text-white/90 tracking-tight">Recently Uploaded</h3>
                   </div>
-                  <button onClick={() => navigateTo('#/modules')} className="text-[10px] font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 transition-colors">View All</button>
+                  <button onClick={() => navigateTo('/modules')} className="text-[10px] font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 transition-colors">View All</button>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-10">
                   {recentFiles.map((file, idx) => (
@@ -318,7 +326,7 @@ const App: React.FC = () => {
               </div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-8">
-              {filteredModules.map((module, i) => <div key={module.id} className="animate-fade-in" style={{ animationDelay: `${i * 50}ms` }}><ModuleCard module={module} onClick={() => navigateTo(`#/module/${module.id}`)} /></div>)}
+              {filteredModules.map((module, i) => <div key={module.id} className="animate-fade-in" style={{ animationDelay: `${i * 50}ms` }}><ModuleCard module={module} onClick={() => navigateTo(`/module/${module.id}`)} /></div>)}
               {filteredModules.length === 0 && <div className="col-span-full py-16 sm:py-24 text-center"><p className="text-slate-400 dark:text-white/20 font-medium text-base sm:text-lg italic px-4">{modules.length === 0 ? "Synchronizing with cloud registry..." : "No matching modules found."}</p></div>}
             </div>
           </div>
@@ -327,7 +335,7 @@ const App: React.FC = () => {
         {/* Module Detail View */}
         {currentView === 'detail' && selectedModule && (
           <div className="animate-fade-in max-w-5xl mx-auto pb-20 sm:pb-32">
-            <div className="mb-8 px-1"><button onClick={() => navigateTo('#/modules')} className="flex items-center text-slate-800 dark:text-white/60 font-bold text-[13px] sm:text-[14px] uppercase tracking-widest hover:text-emerald-600 dark:hover:text-emerald-400 transition-all group"><BackIcon className="mr-3 w-6 h-6 sm:w-7 sm:h-7 group-hover:-translate-x-2 transition-transform" />Back to Modules</button></div>
+            <div className="mb-8 px-1"><button onClick={() => navigateTo('/modules')} className="flex items-center text-slate-800 dark:text-white/60 font-bold text-[13px] sm:text-[14px] uppercase tracking-widest hover:text-emerald-600 dark:hover:text-emerald-400 transition-all group"><BackIcon className="mr-3 w-6 h-6 sm:w-7 sm:h-7 group-hover:-translate-x-2 transition-transform" />Back to Modules</button></div>
             <div className="bg-gradient-to-br from-emerald-600 via-emerald-700 to-teal-900 dark:from-emerald-700 dark:via-emerald-800 dark:to-teal-950 p-8 sm:p-24 rounded-[2rem] sm:rounded-[3.5rem] text-white shadow-2xl shadow-emerald-100 dark:shadow-none mb-8 sm:mb-12 relative overflow-hidden">
               <div className="relative z-10">
                 <div className="flex flex-wrap items-center gap-2 sm:gap-4 mb-8 sm:mb-10">
