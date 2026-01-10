@@ -38,15 +38,27 @@ const App: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<ResourceType | 'All'>('All');
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
-  const [isDark, setIsDark] = useState(false);
+  
+  // Theme state initialized from localStorage or system preference
+  const [isDark, setIsDark] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('gaka-theme');
+      if (saved) return saved === 'dark';
+      return window.matchMedia('(prefers-color-scheme: dark)').matches;
+    }
+    return false;
+  });
 
+  // Effect to synchronize classList and localStorage whenever isDark changes
   useEffect(() => {
     if (isDark) {
       document.documentElement.classList.add('dark');
       document.body.classList.add('dark');
+      localStorage.setItem('gaka-theme', 'dark');
     } else {
       document.documentElement.classList.remove('dark');
       document.body.classList.remove('dark');
+      localStorage.setItem('gaka-theme', 'light');
     }
   }, [isDark]);
 
