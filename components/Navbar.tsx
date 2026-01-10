@@ -1,7 +1,8 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
 
 interface NavbarProps {
+  currentPage: string;
+  onNavigate: (page: string) => void;
   isDark: boolean;
   onToggleDark: () => void;
 }
@@ -22,7 +23,6 @@ const HangingLamp: React.FC<{ isDark: boolean; onToggle: () => void }> = ({ isDa
     if (!isDragging) return;
     const deltaY = clientY - startY.current;
     if (deltaY > 0) {
-      // Logarithmic resistance feel
       const constrainedY = Math.min(deltaY * 0.65, maxPull);
       setDragY(constrainedY);
     }
@@ -41,9 +41,9 @@ const HangingLamp: React.FC<{ isDark: boolean; onToggle: () => void }> = ({ isDa
     const onMouseMove = (e: MouseEvent) => handleMove(e.clientY);
     const onMouseUp = () => handleEnd();
     
-    // Crucial for mobile: prevents pull-to-refresh while interacting
     const onTouchMove = (e: TouchEvent) => {
       if (isDragging) {
+        // Prevent browsers from handling pull-to-refresh
         if (e.cancelable) e.preventDefault();
         handleMove(e.touches[0].clientY);
       }
@@ -67,13 +67,9 @@ const HangingLamp: React.FC<{ isDark: boolean; onToggle: () => void }> = ({ isDa
 
   return (
     <div className="absolute top-full right-6 sm:right-12 z-[100] pointer-events-none flex flex-col items-center">
-      {/* Connector from Navbar */}
       <div className="w-4 h-1 bg-slate-200 dark:bg-slate-800 rounded-b-md mb-[-1px] transition-colors"></div>
-      
-      {/* Rigid cord segment */}
       <div className="w-0.5 h-3 bg-slate-300 dark:bg-slate-700 transition-colors duration-500"></div>
       
-      {/* Lamp Head */}
       <div className="relative pointer-events-auto">
         <svg width="42" height="34" viewBox="0 0 50 40" fill="none" xmlns="http://www.w3.org/2000/svg" className="drop-shadow-md transform scale-90 sm:scale-100">
           <path d="M5 35 L45 35 L38 5 L12 5 Z" fill={isDark ? "#1A1A1A" : "#334155"} className="transition-colors duration-500" />
@@ -81,7 +77,6 @@ const HangingLamp: React.FC<{ isDark: boolean; onToggle: () => void }> = ({ isDa
           <circle cx="25" cy="36" r="6" fill={isDark ? "#333333" : "#FCD34D"} className={`transition-all duration-500 ${!isDark ? 'lamp-glow' : ''}`} />
         </svg>
 
-        {/* Pull String Interaction Area */}
         <div 
           onMouseDown={(e) => handleStart(e.clientY)}
           onTouchStart={(e) => handleStart(e.touches[0].clientY)}
@@ -92,15 +87,12 @@ const HangingLamp: React.FC<{ isDark: boolean; onToggle: () => void }> = ({ isDa
             cursor: isDragging ? 'grabbing' : 'grab' 
           }}
         >
-          {/* Visual Elastic Cord */}
           <div className="w-[1.5px] bg-slate-400 dark:bg-slate-600 group-hover:bg-emerald-500 transition-colors flex-grow"></div>
           
-          {/* Trigger Alert Ping */}
           {isDragging && dragY > 20 && dragY < threshold && (
              <div className="absolute top-[40%] w-1.5 h-1.5 bg-emerald-500/40 rounded-full animate-ping"></div>
           )}
 
-          {/* Grip Knob */}
           <div 
             className={`w-4 h-8 bg-slate-800 dark:bg-emerald-600 rounded-full shadow-lg border border-white/10 dark:border-emerald-400/20 flex flex-col items-center justify-center space-y-1.5 py-1.5 -mt-1 transform transition-transform ${isDragging ? 'scale-110 shadow-emerald-500/40 rotate-2' : 'hover:scale-110'}`}
           >
@@ -114,28 +106,26 @@ const HangingLamp: React.FC<{ isDark: boolean; onToggle: () => void }> = ({ isDa
   );
 };
 
-export const Navbar: React.FC<NavbarProps> = ({ isDark, onToggleDark }) => {
-  const location = useLocation();
-
+export const Navbar: React.FC<NavbarProps> = ({ currentPage, onNavigate, isDark, onToggleDark }) => {
   return (
     <nav className="sticky top-0 z-50 glass px-4 py-3 sm:py-4 sm:px-8 transition-colors duration-500">
       <div className="max-w-7xl mx-auto flex justify-between items-center relative">
-        <Link to="/" className="flex items-center space-x-2 sm:space-x-3 hover:opacity-80 transition-all active:scale-95 text-left group">
+        <button onClick={() => onNavigate('home')} className="flex items-center space-x-2 sm:space-x-3 hover:opacity-80 transition-all active:scale-95 text-left group">
           <div className="w-9 h-9 sm:w-11 sm:h-11 bg-emerald-600 dark:bg-emerald-500 rounded-xl sm:rounded-2xl flex items-center justify-center text-white font-extrabold text-lg sm:text-xl shadow-xl shadow-emerald-100 dark:shadow-emerald-900/40 transform group-hover:rotate-6 transition-transform">
             G
           </div>
           <div><h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-none">GAKA</h1></div>
-        </Link>
+        </button>
         <div className="flex items-center space-x-4 sm:space-x-8">
           <div className="flex items-center space-x-4 sm:space-x-8 text-[11px] sm:text-[12px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
-            <Link to="/" className={`transition-colors py-2 relative group ${location.pathname === '/' ? 'text-emerald-600 dark:text-emerald-400' : 'hover:text-emerald-600 dark:hover:text-emerald-400'}`}>
+            <button onClick={() => onNavigate('home')} className={`transition-colors py-2 relative group ${currentPage === 'home' ? 'text-emerald-600 dark:text-emerald-400' : 'hover:text-emerald-600 dark:hover:text-emerald-400'}`}>
               Home
-              <span className={`absolute bottom-0 left-0 h-0.5 bg-emerald-500 transition-all ${location.pathname === '/' ? 'w-full' : 'w-0 group-hover:w-full'}`}></span>
-            </Link>
-            <Link to="/modules" className={`transition-colors py-2 relative group ${location.pathname === '/modules' ? 'text-emerald-600 dark:text-emerald-400' : 'hover:text-emerald-600 dark:hover:text-emerald-400'}`}>
+              <span className={`absolute bottom-0 left-0 h-0.5 bg-emerald-500 transition-all ${currentPage === 'home' ? 'w-full' : 'w-0 group-hover:w-full'}`}></span>
+            </button>
+            <button onClick={() => onNavigate('modules')} className={`transition-colors py-2 relative group ${currentPage === 'modules' ? 'text-emerald-600 dark:text-emerald-400' : 'hover:text-emerald-600 dark:hover:text-emerald-400'}`}>
               Directory
-              <span className={`absolute bottom-0 left-0 h-0.5 bg-emerald-500 transition-all ${location.pathname === '/modules' ? 'w-full' : 'w-0 group-hover:w-full'}`}></span>
-            </Link>
+              <span className={`absolute bottom-0 left-0 h-0.5 bg-emerald-500 transition-all ${currentPage === 'modules' ? 'w-full' : 'w-0 group-hover:w-full'}`}></span>
+            </button>
           </div>
         </div>
         <HangingLamp isDark={isDark} onToggle={onToggleDark} />

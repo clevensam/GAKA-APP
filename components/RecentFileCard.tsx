@@ -1,14 +1,14 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
 import { ChevronRightIcon } from './Icons';
 import { AcademicFile } from '../types';
 
 interface RecentCardProps {
   file: AcademicFile & { moduleCode: string; moduleId: string };
   delay: number;
+  onNavigate: (page: string, params?: any) => void;
 }
 
-export const RecentFileCard: React.FC<RecentCardProps> = ({ file, delay }) => {
+export const RecentFileCard: React.FC<RecentCardProps> = ({ file, delay, onNavigate }) => {
   return (
     <div 
       className="group bg-white dark:bg-[#1E1E1E] p-8 rounded-[2.5rem] border border-slate-100 dark:border-white/5 hover:border-emerald-100 dark:hover:border-emerald-500/30 transition-all duration-500 hover:shadow-2xl flex flex-col h-full animate-fade-in relative overflow-hidden"
@@ -24,10 +24,13 @@ export const RecentFileCard: React.FC<RecentCardProps> = ({ file, delay }) => {
       <div className="flex-grow relative z-10">
         <h3 className="text-xl font-black text-slate-800 dark:text-white/90 leading-tight mb-8 line-clamp-2 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors tracking-tight">{file.title}</h3>
       </div>
-      <Link to={`/module/${file.moduleId}`} className="relative z-10 w-full py-5 bg-slate-50 dark:bg-black text-slate-600 dark:text-white/40 font-bold text-[11px] uppercase tracking-[0.2em] rounded-2xl hover:bg-emerald-600 dark:hover:bg-emerald-500 hover:text-white transition-all active:scale-95 flex items-center justify-center gap-3 border border-slate-100 dark:border-white/5">
+      <button 
+        onClick={() => onNavigate('module-detail', { moduleId: file.moduleId })}
+        className="relative z-10 w-full py-5 bg-slate-50 dark:bg-black text-slate-600 dark:text-white/40 font-bold text-[11px] uppercase tracking-[0.2em] rounded-2xl hover:bg-emerald-600 dark:hover:bg-emerald-500 hover:text-white transition-all active:scale-95 flex items-center justify-center gap-3 border border-slate-100 dark:border-white/5"
+      >
         <span>View Resources</span>
         <ChevronRightIcon className="w-4 h-4" />
-      </Link>
+      </button>
     </div>
   );
 };
