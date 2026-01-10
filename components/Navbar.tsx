@@ -10,8 +10,8 @@ const HangingLamp: React.FC<{ isDark: boolean; onToggle: () => void }> = ({ isDa
   const [dragY, setDragY] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const startY = useRef(0);
-  const threshold = 60;
-  const maxPull = 100;
+  const threshold = 70;
+  const maxPull = 120;
 
   const handleStart = (clientY: number) => {
     setIsDragging(true);
@@ -22,7 +22,8 @@ const HangingLamp: React.FC<{ isDark: boolean; onToggle: () => void }> = ({ isDa
     if (!isDragging) return;
     const deltaY = clientY - startY.current;
     if (deltaY > 0) {
-      const constrainedY = Math.min(deltaY * 0.7, maxPull);
+      // Logarithmic resistance feel
+      const constrainedY = Math.min(deltaY * 0.65, maxPull);
       setDragY(constrainedY);
     }
   }, [isDragging]);
@@ -39,6 +40,8 @@ const HangingLamp: React.FC<{ isDark: boolean; onToggle: () => void }> = ({ isDa
   useEffect(() => {
     const onMouseMove = (e: MouseEvent) => handleMove(e.clientY);
     const onMouseUp = () => handleEnd();
+    
+    // Crucial for mobile: prevents pull-to-refresh while interacting
     const onTouchMove = (e: TouchEvent) => {
       if (isDragging) {
         if (e.cancelable) e.preventDefault();
@@ -64,27 +67,46 @@ const HangingLamp: React.FC<{ isDark: boolean; onToggle: () => void }> = ({ isDa
 
   return (
     <div className="absolute top-full right-6 sm:right-12 z-[100] pointer-events-none flex flex-col items-center">
+      {/* Connector from Navbar */}
       <div className="w-4 h-1 bg-slate-200 dark:bg-slate-800 rounded-b-md mb-[-1px] transition-colors"></div>
+      
+      {/* Rigid cord segment */}
       <div className="w-0.5 h-3 bg-slate-300 dark:bg-slate-700 transition-colors duration-500"></div>
+      
+      {/* Lamp Head */}
       <div className="relative pointer-events-auto">
         <svg width="42" height="34" viewBox="0 0 50 40" fill="none" xmlns="http://www.w3.org/2000/svg" className="drop-shadow-md transform scale-90 sm:scale-100">
           <path d="M5 35 L45 35 L38 5 L12 5 Z" fill={isDark ? "#1A1A1A" : "#334155"} className="transition-colors duration-500" />
           <path d="M5 35 L45 35 L43 32 L7 32 Z" fill={isDark ? "#000000" : "#FBBF24"} fillOpacity={isDark ? "0.2" : "0.3"} className="transition-colors duration-500" />
           <circle cx="25" cy="36" r="6" fill={isDark ? "#333333" : "#FCD34D"} className={`transition-all duration-500 ${!isDark ? 'lamp-glow' : ''}`} />
         </svg>
+
+        {/* Pull String Interaction Area */}
         <div 
           onMouseDown={(e) => handleStart(e.clientY)}
           onTouchStart={(e) => handleStart(e.touches[0].clientY)}
-          className={`absolute left-1/2 -translate-x-1/2 select-none flex flex-col items-center pointer-events-auto touch-none w-10 transition-all ${isDragging ? '' : 'duration-500 ease-[cubic-bezier(0.175,0.885,0.32,1.275)]'}`}
-          style={{ top: '28px', height: `${56 + dragY}px`, cursor: isDragging ? 'grabbing' : 'grab' }}
+          className={`absolute left-1/2 -translate-x-1/2 select-none flex flex-col items-center pointer-events-auto touch-none w-14 transition-all ${isDragging ? '' : 'duration-500 ease-[cubic-bezier(0.175,0.885,0.32,1.275)]'}`}
+          style={{ 
+            top: '28px', 
+            height: `${60 + dragY}px`, 
+            cursor: isDragging ? 'grabbing' : 'grab' 
+          }}
         >
-          <div className="w-[1.5px] bg-slate-400 dark:bg-slate-600 transition-colors flex-grow"></div>
-          {isDragging && dragY < threshold && (
-             <div className="absolute top-[40px] w-1.5 h-1.5 bg-emerald-500/40 rounded-full animate-ping"></div>
+          {/* Visual Elastic Cord */}
+          <div className="w-[1.5px] bg-slate-400 dark:bg-slate-600 group-hover:bg-emerald-500 transition-colors flex-grow"></div>
+          
+          {/* Trigger Alert Ping */}
+          {isDragging && dragY > 20 && dragY < threshold && (
+             <div className="absolute top-[40%] w-1.5 h-1.5 bg-emerald-500/40 rounded-full animate-ping"></div>
           )}
-          <div className={`w-3.5 h-7 bg-slate-800 dark:bg-emerald-600 rounded-full shadow-lg border border-white/10 dark:border-emerald-400/20 flex flex-col items-center justify-center space-y-1 py-1 -mt-0.5 transform transition-transform ${isDragging ? 'scale-110 shadow-emerald-500/20' : 'hover:scale-110'}`}>
-             <div className={`w-1.5 h-px transition-colors ${dragY >= threshold ? 'bg-white' : 'bg-white/30'}`}></div>
-             <div className={`w-1.5 h-px transition-colors ${dragY >= threshold ? 'bg-white' : 'bg-white/30'}`}></div>
+
+          {/* Grip Knob */}
+          <div 
+            className={`w-4 h-8 bg-slate-800 dark:bg-emerald-600 rounded-full shadow-lg border border-white/10 dark:border-emerald-400/20 flex flex-col items-center justify-center space-y-1.5 py-1.5 -mt-1 transform transition-transform ${isDragging ? 'scale-110 shadow-emerald-500/40 rotate-2' : 'hover:scale-110'}`}
+          >
+             <div className={`w-2 h-px transition-colors ${dragY >= threshold ? 'bg-white' : 'bg-white/30'}`}></div>
+             <div className={`w-2 h-px transition-colors ${dragY >= threshold ? 'bg-white' : 'bg-white/30'}`}></div>
+             <div className={`w-2 h-px transition-colors ${dragY >= threshold ? 'bg-white' : 'bg-white/30'}`}></div>
           </div>
         </div>
       </div>
