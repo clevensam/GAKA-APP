@@ -12,6 +12,7 @@ import { Home } from './pages/Home';
 import { Modules } from './pages/Modules';
 import { ModuleDetail } from './pages/ModuleDetail';
 import { About } from './pages/About';
+import { ErrorPage } from './pages/Error';
 
 const LIVE_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRn-pw2j_BMf_v--CHjpGLos3oFFAyOjrlZ8vsM0uFs4E23GPcGZ2F0tdBvRZGeg7VwZ-ZkIOpHU8zm/pub?output=csv";
 
@@ -19,6 +20,7 @@ const App: React.FC = () => {
   const [modules, setModules] = useState<Module[]>([]);
   const [recentFiles, setRecentFiles] = useState<(AcademicFile & { moduleCode: string; moduleId: string })[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSyncing, setIsSyncing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentView, setCurrentView] = useState<'home' | 'modules' | 'detail' | 'about'>('home');
   const [selectedModule, setSelectedModule] = useState<Module | null>(null);
@@ -50,11 +52,11 @@ const App: React.FC = () => {
   const fetchData = async () => {
     const startTime = Date.now();
     try {
-      setIsLoading(true);
+      setIsSyncing(true);
       setError(null);
       
       const response = await fetch(LIVE_CSV_URL);
-      if (!response.ok) throw new Error('Registry unreachable.');
+      if (!response.ok) throw new Error('Cloud registry unreachable.');
       
       const csvText = await response.text();
       const allRows = csvText.split(/\r?\n/).filter(row => row.trim() !== "");
@@ -120,13 +122,19 @@ const App: React.FC = () => {
       setError(null);
     } catch (err: any) {
       console.warn("Registry Sync Error:", err);
-      setError("Running in offline mode. Updates unavailable.");
-      setModules(MODULES_DATA.filter(m => m.resources.length > 0));
+      setError(err.message || "Running in offline mode.");
+      // If we already have modules, we don't clear them, just show a minor error
+      if (modules.length === 0) {
+        setModules(MODULES_DATA.filter(m => m.resources.length > 0));
+      }
     } finally {
       const elapsedTime = Date.now() - startTime;
       const minDelay = 800;
       const remainingTime = Math.max(0, minDelay - elapsedTime);
-      setTimeout(() => setIsLoading(false), remainingTime);
+      setTimeout(() => {
+        setIsLoading(false);
+        setIsSyncing(false);
+      }, remainingTime);
     }
   };
 
@@ -201,6 +209,10 @@ const App: React.FC = () => {
     );
   }
 
+  // Determine if we should show a full error page
+  // We show full error if we have no modules and there's an error message
+  const isFatalError = error && modules.every(m => m.resources.length === 0);
+
   return (
     <div className={`min-h-screen flex flex-col selection:bg-emerald-100 selection:text-emerald-900 overflow-x-hidden transition-colors duration-500 ${isDark ? 'dark bg-black' : 'bg-[#fcfdfe]'}`}>
       <Navbar 
@@ -213,7 +225,7 @@ const App: React.FC = () => {
       
       <main className="flex-grow container mx-auto max-w-7xl px-4 py-8 sm:py-12 sm:px-8 transition-colors duration-500">
         {/* Breadcrumbs */}
-        {currentView !== 'home' && (
+        {!isFatalError && currentView !== 'home' && (
           <nav className="flex items-center space-x-2 text-[12px] sm:text-[14px] font-semibold uppercase tracking-wider text-slate-400 dark:text-white/30 mb-6 sm:mb-8 overflow-x-auto whitespace-nowrap pb-2 scrollbar-hide animate-fade-in px-1">
             <button onClick={() => navigateTo('/')} className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">Home</button>
             <ChevronRightIcon className="w-3.5 h-3.5 text-slate-300 dark:text-white/10 flex-shrink-0" />
@@ -229,50 +241,61 @@ const App: React.FC = () => {
           </nav>
         )}
 
-        {/* Error Notification */}
-        {error && (
-          <div className="mb-12 p-6 bg-amber-50/50 dark:bg-[#1E1E1E] border border-amber-100 dark:border-amber-900/30 rounded-3xl text-amber-800 dark:text-amber-400 text-sm font-medium flex flex-col sm:flex-row items-center justify-between animate-fade-in gap-4 shadow-sm">
-            <div className="flex items-center">
-              <span className="w-3 h-3 rounded-full bg-amber-500 mr-4"></span>
-              <div className="flex flex-col"><p className="font-bold">Registry Sync Info</p><p className="opacity-80">{error}</p></div>
-            </div>
-            <button onClick={() => fetchData()} className="bg-white dark:bg-[#282828] px-6 py-2.5 rounded-full shadow-sm hover:shadow-md transition-all active:scale-95 text-amber-600 dark:text-amber-300 border border-amber-100 dark:border-white/5 font-semibold">Retry Sync</button>
-          </div>
-        )}
-
-        {/* Views Rendering */}
-        {currentView === 'home' && (
-          <Home 
-            recentFiles={recentFiles} 
-            modules={modules} 
-            onNavigate={navigateTo} 
+        {/* Fatal Error State */}
+        {isFatalError ? (
+          <ErrorPage 
+            message={error} 
+            onRetry={fetchData} 
+            isRetrying={isSyncing} 
           />
-        )}
+        ) : (
+          <>
+            {/* Minor Notification for Non-Fatal Sync Errors */}
+            {error && (
+              <div className="mb-12 p-6 bg-amber-50/50 dark:bg-[#1E1E1E] border border-amber-100 dark:border-amber-900/30 rounded-3xl text-amber-800 dark:text-amber-400 text-sm font-medium flex flex-col sm:flex-row items-center justify-between animate-fade-in gap-4 shadow-sm">
+                <div className="flex items-center">
+                  <span className="w-3 h-3 rounded-full bg-amber-500 mr-4"></span>
+                  <div className="flex flex-col"><p className="font-bold">Registry Sync Info</p><p className="opacity-80">{error}</p></div>
+                </div>
+                <button onClick={() => fetchData()} className="bg-white dark:bg-[#282828] px-6 py-2.5 rounded-full shadow-sm hover:shadow-md transition-all active:scale-95 text-amber-600 dark:text-amber-300 border border-amber-100 dark:border-white/5 font-semibold">Retry Sync</button>
+              </div>
+            )}
 
-        {currentView === 'modules' && (
-          <Modules 
-            filteredModules={filteredModules}
-            searchQuery={searchQuery}
-            setSearchQuery={setSearchQuery}
-            onNavigate={navigateTo}
-            isLoadingData={modules.length === 0}
-          />
-        )}
+            {/* Views Rendering */}
+            {currentView === 'home' && (
+              <Home 
+                recentFiles={recentFiles} 
+                modules={modules} 
+                onNavigate={navigateTo} 
+              />
+            )}
 
-        {currentView === 'detail' && selectedModule && (
-          <ModuleDetail 
-            module={selectedModule}
-            filterType={filterType}
-            setFilterType={setFilterType}
-            downloadingId={downloadingId}
-            onDownload={handleDownloadClick}
-            onShare={handleShare}
-            onNavigate={navigateTo}
-          />
-        )}
+            {currentView === 'modules' && (
+              <Modules 
+                filteredModules={filteredModules}
+                searchQuery={searchQuery}
+                setSearchQuery={setSearchQuery}
+                onNavigate={navigateTo}
+                isLoadingData={modules.length === 0}
+              />
+            )}
 
-        {currentView === 'about' && (
-          <About />
+            {currentView === 'detail' && selectedModule && (
+              <ModuleDetail 
+                module={selectedModule}
+                filterType={filterType}
+                setFilterType={setFilterType}
+                downloadingId={downloadingId}
+                onDownload={handleDownloadClick}
+                onShare={handleShare}
+                onNavigate={navigateTo}
+              />
+            )}
+
+            {currentView === 'about' && (
+              <About />
+            )}
+          </>
         )}
       </main>
 
