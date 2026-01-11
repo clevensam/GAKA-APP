@@ -12,10 +12,11 @@ const HangingLamp: React.FC<{ isDark: boolean; onToggle: () => void }> = ({ isDa
   const [dragY, setDragY] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const startY = useRef(0);
-  const threshold = 70; 
-  const maxPull = 120;
+  const threshold = 60; 
+  const maxPull = 100;
 
-  const handleStart = (clientY: number) => {
+  const handleStart = (clientY: number, e: React.MouseEvent | React.TouchEvent) => {
+    // Prevent touch defaults only on the puller to avoid browser reload
     setIsDragging(true);
     startY.current = clientY;
   };
@@ -24,14 +25,8 @@ const HangingLamp: React.FC<{ isDark: boolean; onToggle: () => void }> = ({ isDa
     if (!isDragging) return;
     const deltaY = clientY - startY.current;
     if (deltaY > 0) {
-      // Elastic resistance math
-      const resistance = 0.6;
-      const pull = deltaY * resistance;
-      // Logarithmic-like feel for the end of the pull
-      const dampenedPull = Math.min(pull, maxPull);
-      setDragY(dampenedPull);
-    } else {
-      setDragY(0);
+      const constrainedY = Math.min(deltaY * 0.7, maxPull);
+      setDragY(constrainedY);
     }
   }, [isDragging]);
 
@@ -39,7 +34,8 @@ const HangingLamp: React.FC<{ isDark: boolean; onToggle: () => void }> = ({ isDa
     if (!isDragging) return;
     if (dragY >= threshold) {
       onToggle();
-      if ('vibrate' in navigator) navigator.vibrate(12);
+      // Provide Haptic Feedback if supported
+      if ('vibrate' in navigator) navigator.vibrate(10);
     }
     setIsDragging(false);
     setDragY(0);
@@ -51,6 +47,7 @@ const HangingLamp: React.FC<{ isDark: boolean; onToggle: () => void }> = ({ isDa
     
     const onTouchMove = (e: TouchEvent) => {
       if (isDragging) {
+        // Critical: Prevent default only when dragging to block pull-to-refresh
         if (e.cancelable) e.preventDefault();
         handleMove(e.touches[0].clientY);
       }
@@ -85,17 +82,17 @@ const HangingLamp: React.FC<{ isDark: boolean; onToggle: () => void }> = ({ isDa
         </svg>
 
         <div 
-          onMouseDown={(e) => handleStart(e.clientY)}
-          onTouchStart={(e) => handleStart(e.touches[0].clientY)}
-          className={`absolute left-1/2 -translate-x-1/2 select-none flex flex-col items-center pointer-events-auto touch-none w-10 ${isDragging ? '' : 'transition-all duration-500 ease-[cubic-bezier(0.175,0.885,0.32,1.275)]'}`}
+          onMouseDown={(e) => handleStart(e.clientY, e)}
+          onTouchStart={(e) => handleStart(e.touches[0].clientY, e)}
+          className={`absolute left-1/2 -translate-x-1/2 select-none flex flex-col items-center pointer-events-auto touch-none ${isDragging ? '' : 'duration-500 ease-[cubic-bezier(0.175,0.885,0.32,1.275)]'}`}
           style={{ 
             top: '28px',
-            height: `${60 + dragY}px`, 
+            height: `${56 + dragY}px`,
             cursor: isDragging ? 'grabbing' : 'grab',
-            touchAction: 'none'
+            touchAction: 'none' // Prevents browser scroll/refresh
           }}
         >
-          <div className="w-[1.5px] bg-slate-400 dark:bg-slate-600 transition-colors flex-grow"></div>
+          <div className="w-[1.5px] bg-slate-400 dark:bg-slate-600 group-hover:bg-emerald-500 transition-colors flex-grow"></div>
           
           <div 
             className={`w-3.5 h-7 bg-slate-800 dark:bg-emerald-600 rounded-full shadow-lg border border-white/10 dark:border-emerald-400/20 flex flex-col items-center justify-center space-y-1 py-1 -mt-0.5 transform transition-transform ${isDragging ? 'scale-110' : 'hover:scale-110'}`}

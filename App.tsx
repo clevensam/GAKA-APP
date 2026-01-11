@@ -7,6 +7,7 @@ import { MODULES_DATA } from './constants';
 import { Analytics } from '@vercel/analytics/react';
 
 const LIVE_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRn-pw2j_BMf_v--CHjpGLos3oFFAyOjrlZ8vsM0uFs4E23GPcGZ2F0tdBvRZGeg7VwZ-ZkIOpHU8zm/pub?output=csv";
+const CACHE_KEY = 'gaka_theme_preference';
 
 const transformToDirectDownload = (url: string): string => {
   if (!url || url === '#') return '#';
@@ -37,8 +38,9 @@ const App: React.FC = () => {
   const [selectedModule, setSelectedModule] = useState<Module | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<ResourceType | 'All'>('All');
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
   
-  // Persist dark mode state
+  // Theme state initialized from localStorage or system preference
   const [isDark, setIsDark] = useState(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('gaka-theme');
@@ -51,11 +53,9 @@ const App: React.FC = () => {
   useEffect(() => {
     if (isDark) {
       document.documentElement.classList.add('dark');
-      document.body.classList.add('dark');
       localStorage.setItem('gaka-theme', 'dark');
     } else {
       document.documentElement.classList.remove('dark');
-      document.body.classList.remove('dark');
       localStorage.setItem('gaka-theme', 'light');
     }
   }, [isDark]);
@@ -64,7 +64,11 @@ const App: React.FC = () => {
     for (let i = 0; i < retries; i++) {
       try {
         const cacheBuster = `&t=${Date.now()}`;
-        const response = await fetch(`${url}${cacheBuster}`);
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+        
+        const response = await fetch(`${url}${cacheBuster}`, { signal: controller.signal });
+        clearTimeout(timeoutId);
         if (response.ok) return response;
       } catch (e) {
         if (i === retries - 1) throw e;
@@ -92,6 +96,8 @@ const App: React.FC = () => {
           view: headers.findIndex(h => h === 'view url' || h === 'preview url' || h === 'view link')
         };
         
+        if (colIdx.code === -1 || colIdx.title === -1) throw new Error('Invalid cloud registry format.');
+        
         const rows = allRows.slice(1); 
         const moduleMap = new Map<string, Module>();
         MODULES_DATA.forEach(m => {
@@ -118,7 +124,7 @@ const App: React.FC = () => {
               id: `dynamic-mod-${normalizedSheetCode}`,
               code: moduleCode.toUpperCase(),
               name: `Module ${moduleCode.toUpperCase()}`,
-              description: 'Automatically discovered academic resource module.',
+              description: 'Registry discovered academic resource module.',
               resources: []
             });
           }
@@ -153,7 +159,8 @@ const App: React.FC = () => {
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash;
-      if (hash === '#/modules') setCurrentView('modules');
+      if (hash === '#/home' || hash === '') setCurrentView('home');
+      else if (hash === '#/modules') setCurrentView('modules');
       else if (hash === '#/about') setCurrentView('about');
       else if (hash.startsWith('#/module/')) {
         const moduleId = hash.split('/').pop();
@@ -163,8 +170,7 @@ const App: React.FC = () => {
           setCurrentView('detail');
           setFilterType('All'); 
         } else if (modules.length > 0) setCurrentView('modules');
-        else setCurrentView('home');
-      } else setCurrentView('home');
+      }
     };
     window.addEventListener('hashchange', handleHashChange);
     handleHashChange();
@@ -193,25 +199,6 @@ const App: React.FC = () => {
     const shareMessage = `Academic Resource from *GAKA Portal*: \n\n*${resourceTitle}*\n ${url}`;
     const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareMessage)}`;
     window.open(whatsappUrl, '_blank');
-  };
-
-  const Breadcrumbs: React.FC = () => {
-    if (currentView === 'home') return null;
-    return (
-      <nav className="flex items-center space-x-2 text-[10px] sm:text-[11px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-white/20 mb-8 sm:mb-12 overflow-x-auto whitespace-nowrap pb-2 scrollbar-hide px-1">
-        <button onClick={() => navigateTo('#/home')} className="hover:text-emerald-600 transition-colors">Home</button>
-        <ChevronRightIcon className="w-3 h-3 opacity-30 flex-shrink-0" />
-        {currentView === 'modules' && <span className="text-slate-900 dark:text-white/80">Directory</span>}
-        {currentView === 'about' && <span className="text-slate-900 dark:text-white/80">About Project</span>}
-        {currentView === 'detail' && selectedModule && (
-          <>
-            <button onClick={() => navigateTo('#/modules')} className="hover:text-emerald-600 transition-colors">Directory</button>
-            <ChevronRightIcon className="w-3 h-3 opacity-30 flex-shrink-0" />
-            <span className="text-slate-900 dark:text-white/80">{selectedModule.code}</span>
-          </>
-        )}
-      </nav>
-    );
   };
 
   const ResourceItem: React.FC<{ file: AcademicFile; moduleCode?: string; delay: number }> = ({ file, moduleCode, delay }) => (
@@ -265,40 +252,6 @@ const App: React.FC = () => {
     </div>
   );
 
-  const AboutView = () => (
-    <div className="animate-fade-in max-w-4xl mx-auto py-12 px-4 sm:px-0">
-      <div className="text-center mb-16">
-        <h2 className="text-4xl sm:text-7xl font-black text-slate-900 dark:text-white mb-6 tracking-tight">Academic <span className="gradient-text">Freedom.</span></h2>
-        <p className="text-slate-500 dark:text-white/40 text-lg sm:text-xl font-medium max-w-2xl mx-auto">GAKA is an open-access repository for MUST Computer Science students, designed to remove the friction between seeking knowledge and finding it.</p>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16">
-        <div className="bg-white dark:bg-[#1E1E1E] p-10 rounded-[2.5rem] border border-slate-100 dark:border-white/5 shadow-sm">
-          <div className="w-12 h-12 bg-emerald-50 dark:bg-emerald-500/10 rounded-2xl flex items-center justify-center text-emerald-600 dark:text-emerald-400 mb-8">
-            <BookOpenIcon className="w-6 h-6" />
-          </div>
-          <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">The Mission</h3>
-          <p className="text-slate-500 dark:text-white/50 leading-relaxed font-medium">To provide a reliable, lightning-fast "Single Source of Truth" for lecture notes and past papers, ensuring no student is left behind due to fragmented resource availability.</p>
-        </div>
-        <div className="bg-white dark:bg-[#1E1E1E] p-10 rounded-[2.5rem] border border-slate-100 dark:border-white/5 shadow-sm">
-          <div className="w-12 h-12 bg-teal-50 dark:bg-teal-500/10 rounded-2xl flex items-center justify-center text-teal-600 dark:text-teal-400 mb-8">
-            <SearchIcon className="w-6 h-6" />
-          </div>
-          <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">Privacy First</h3>
-          <p className="text-slate-500 dark:text-white/50 leading-relaxed font-medium">No accounts. No registration. No tracking. GAKA respects your time by serving as a pure utility for academic success.</p>
-        </div>
-      </div>
-
-      <div className="bg-emerald-600 dark:bg-emerald-500 p-8 sm:p-12 rounded-[2.5rem] text-white flex flex-col sm:flex-row items-center justify-between gap-8">
-        <div>
-          <h3 className="text-2xl font-black mb-2">Developed by Softlink Africa</h3>
-          <p className="text-white/70 font-bold uppercase text-[10px] tracking-widest">Bridging the technology gap in MUST ICT</p>
-        </div>
-        <a href="https://wa.me/255685208576" target="_blank" className="px-10 py-5 bg-white text-emerald-600 rounded-full font-black text-xs uppercase tracking-widest shadow-xl hover:scale-105 transition-all">Support Channel</a>
-      </div>
-    </div>
-  );
-
   if (isLoading && modules.length === 0) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-white dark:bg-black transition-colors duration-500">
@@ -321,10 +274,7 @@ const App: React.FC = () => {
         isDark={isDark}
         onToggleDark={() => setIsDark(!isDark)}
       />
-      
       <main className="flex-grow container mx-auto max-w-7xl px-4 py-8 sm:py-12 sm:px-8">
-        <Breadcrumbs />
-
         {error && (
           <div className="mb-12 p-6 bg-amber-50/50 dark:bg-[#1E1E1E] border border-amber-100 dark:border-amber-900/30 rounded-3xl text-amber-800 dark:text-amber-400 text-sm font-medium flex flex-col sm:flex-row items-center justify-between animate-fade-in gap-4 shadow-sm">
             <div className="flex items-center">
@@ -332,7 +282,7 @@ const App: React.FC = () => {
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-3 w-3 bg-amber-500"></span>
               </span>
-              <div className="flex flex-col"><p className="font-bold">Sync Issue</p><p className="opacity-80">{error}</p></div>
+              <div className="flex flex-col"><p className="font-bold">Registry Sync Issue</p><p className="opacity-80">{error}</p></div>
             </div>
             <button onClick={() => window.location.reload()} className="bg-white dark:bg-[#282828] px-6 py-2.5 rounded-full shadow-sm hover:shadow-md transition-all active:scale-95 text-amber-600 dark:text-amber-300 border border-amber-100 dark:border-white/5 font-semibold">Retry</button>
           </div>
@@ -359,7 +309,7 @@ const App: React.FC = () => {
                 <div className="flex items-center justify-between mb-10">
                   <div className="flex items-center space-x-3">
                     <div className="relative flex h-3 w-3"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span><span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span></div>
-                    <h3 className="text-xl sm:text-3xl font-black text-slate-900 dark:text-white/90 tracking-tight">Recent resources</h3>
+                    <h3 className="text-xl sm:text-3xl font-black text-slate-900 dark:text-white/90 tracking-tight">Recent Resources</h3>
                   </div>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-10">{recentFiles.map((file, idx) => <RecentFileCard key={file.id} file={file} delay={idx * 100} />)}</div>
@@ -410,44 +360,19 @@ const App: React.FC = () => {
             </div>
           </div>
         )}
-
-        {currentView === 'about' && <AboutView />}
       </main>
-
       <footer className="bg-white dark:bg-black border-t border-slate-50 dark:border-white/5 py-12">
-        <div className="container mx-auto px-6 max-w-7xl">
-          <div className="flex flex-col md:flex-row justify-between items-start gap-12">
-            <div className="space-y-6">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-emerald-600 dark:bg-emerald-500 rounded-xl flex items-center justify-center text-white font-black text-xl">G</div>
-                <span className="text-xl font-extrabold text-slate-900 dark:text-white/90 uppercase tracking-tight">GAKA Portal</span>
-              </div>
-              <p className="text-slate-400 dark:text-white/30 text-sm font-medium max-w-xs leading-relaxed">Centralized academic repository for MUST Computer Science students.</p>
+        <div className="container mx-auto px-6 max-w-7xl text-center md:text-left">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-10">
+            <div className="space-y-4">
+              <div className="flex items-center justify-center md:justify-start space-x-3"><div className="w-9 h-9 bg-emerald-600 dark:bg-emerald-500 rounded-xl flex items-center justify-center text-white font-black text-lg">G</div><span className="text-lg font-extrabold text-slate-900 dark:text-white/90 uppercase">GAKA Portal</span></div>
+              <p className="text-slate-400 dark:text-white/30 text-xs font-medium max-w-sm">Academic efficiency for Computer Science students.</p>
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-12">
-              <div className="space-y-4">
-                <h4 className="text-[10px] font-black text-emerald-600 uppercase tracking-[0.2em]">Platform</h4>
-                <div className="flex flex-col space-y-2 text-sm font-bold text-slate-500 dark:text-white/40">
-                  <button onClick={() => navigateTo('#/home')} className="hover:text-emerald-500 text-left transition-colors">Home</button>
-                  <button onClick={() => navigateTo('#/modules')} className="hover:text-emerald-500 text-left transition-colors">Directory</button>
-                  <button onClick={() => navigateTo('#/about')} className="hover:text-emerald-500 text-left transition-colors">About Project</button>
-                </div>
-              </div>
-              <div className="space-y-4">
-                <h4 className="text-[10px] font-black text-emerald-600 uppercase tracking-[0.2em]">Connect</h4>
-                <div className="flex flex-col space-y-2 text-sm font-bold text-slate-500 dark:text-white/40">
-                  <a href="https://wa.me/255685208576" className="hover:text-emerald-500 transition-colors">WhatsApp</a>
-                  <span className="opacity-50">Support</span>
-                </div>
-              </div>
+            <div className="flex gap-12 text-sm">
+              <div className="space-y-2"><h4 className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">Connect</h4><a href="https://wa.me/255685208576" className="block text-slate-600 dark:text-white/40 hover:text-emerald-600 font-medium">+255 685 208 576</a></div>
             </div>
           </div>
-          <div className="mt-16 pt-8 border-t border-slate-50 dark:border-white/5 text-center flex flex-col sm:flex-row items-center justify-between gap-4">
-            <p className="text-slate-300 dark:text-white/10 text-[9px] font-black uppercase tracking-[0.3em]">&copy; {new Date().getFullYear()} Softlink Africa | MUST CS</p>
-            <div className="flex items-center space-x-6">
-              <span className="text-slate-300 dark:text-white/10 text-[9px] font-black uppercase tracking-[0.2em]">Developed by Cleven Sam</span>
-            </div>
-          </div>
+          <div className="mt-12 pt-8 border-t border-slate-50 dark:border-white/5 text-center"><p className="text-slate-300 dark:text-white/10 text-[9px] font-bold uppercase tracking-[0.3em]">&copy; {new Date().getFullYear()} Softlink Africa | MUST ICT</p></div>
         </div>
       </footer>
       <Analytics />
