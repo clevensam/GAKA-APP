@@ -42,19 +42,13 @@ const HangingLamp: React.FC<{ isDark: boolean; onToggle: () => void }> = ({ isDa
   useEffect(() => {
     const onMouseMove = (e: MouseEvent) => handleMove(e.clientY);
     const onMouseUp = () => handleEnd();
-    const onTouchMove = (e: TouchEvent) => {
-      // Prevent default to stop pull-to-refresh and scrolling while dragging the lamp
-      if (isDragging) {
-        if (e.cancelable) e.preventDefault();
-        handleMove(e.touches[0].clientY);
-      }
-    };
+    const onTouchMove = (e: TouchEvent) => handleMove(e.touches[0].clientY);
     const onTouchEnd = () => handleEnd();
 
     if (isDragging) {
       window.addEventListener('mousemove', onMouseMove);
       window.addEventListener('mouseup', onMouseUp);
-      window.addEventListener('touchmove', onTouchMove, { passive: false });
+      window.addEventListener('touchmove', onTouchMove);
       window.addEventListener('touchend', onTouchEnd);
     }
 
@@ -86,28 +80,27 @@ const HangingLamp: React.FC<{ isDark: boolean; onToggle: () => void }> = ({ isDa
         </svg>
 
         {/* Elastic Pull String */}
-        {/* Increased width to 40px for a better touch target (hit area) */}
         <div 
           onMouseDown={(e) => handleStart(e.clientY)}
           onTouchStart={(e) => handleStart(e.touches[0].clientY)}
-          className={`absolute left-1/2 -translate-x-1/2 select-none flex flex-col items-center pointer-events-auto touch-none w-10 transition-all ${isDragging ? '' : 'duration-500 ease-[cubic-bezier(0.175,0.885,0.32,1.275)]'}`}
+          className={`absolute left-1/2 -translate-x-1/2 select-none flex flex-col items-center pointer-events-auto transition-all ${isDragging ? '' : 'duration-500 ease-[cubic-bezier(0.175,0.885,0.32,1.275)]'}`}
           style={{ 
             top: '28px',
-            height: `${56 + dragY}px`, 
+            height: `${56 + dragY}px`, // Dynamic height for cord stretch
             cursor: isDragging ? 'grabbing' : 'grab'
           }}
         >
-          {/* Visual Cord */}
+          {/* Visual Cord - stretched via container height or scale */}
           <div className="w-[1.5px] bg-slate-400 dark:bg-slate-600 group-hover:bg-emerald-500 transition-colors flex-grow"></div>
           
-          {/* Trigger Indicator */}
+          {/* Pull Trigger Threshold Visual Indicator (Subtle) */}
           {isDragging && dragY < threshold && (
-             <div className="absolute top-[40px] w-1.5 h-1.5 bg-emerald-500/40 rounded-full animate-ping"></div>
+             <div className="absolute top-[60px] w-1 h-1 bg-emerald-500/20 rounded-full animate-ping"></div>
           )}
 
           {/* Decorative Bead/Puller */}
           <div 
-            className={`w-3.5 h-7 bg-slate-800 dark:bg-emerald-600 rounded-full shadow-lg border border-white/10 dark:border-emerald-400/20 flex flex-col items-center justify-center space-y-1 py-1 -mt-0.5 transform transition-transform ${isDragging ? 'scale-110 shadow-emerald-500/20' : 'hover:scale-110'}`}
+            className={`w-3.5 h-7 bg-slate-800 dark:bg-emerald-600 rounded-full shadow-lg border border-white/10 dark:border-emerald-400/20 flex flex-col items-center justify-center space-y-1 py-1 -mt-0.5 transform transition-transform ${isDragging ? 'scale-110' : 'hover:scale-110'}`}
           >
              <div className={`w-1.5 h-px transition-colors ${dragY >= threshold ? 'bg-white' : 'bg-white/30'}`}></div>
              <div className={`w-1.5 h-px transition-colors ${dragY >= threshold ? 'bg-white' : 'bg-white/30'}`}></div>
