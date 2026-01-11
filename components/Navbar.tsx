@@ -12,10 +12,11 @@ const HangingLamp: React.FC<{ isDark: boolean; onToggle: () => void }> = ({ isDa
   const [dragY, setDragY] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const startY = useRef(0);
-  const threshold = 60; // Distance to pull before triggering
-  const maxPull = 100; // Maximum visual stretch
+  const threshold = 60; 
+  const maxPull = 100;
 
-  const handleStart = (clientY: number) => {
+  const handleStart = (clientY: number, e: React.MouseEvent | React.TouchEvent) => {
+    // Prevent touch defaults only on the puller to avoid browser reload
     setIsDragging(true);
     startY.current = clientY;
   };
@@ -24,7 +25,6 @@ const HangingLamp: React.FC<{ isDark: boolean; onToggle: () => void }> = ({ isDa
     if (!isDragging) return;
     const deltaY = clientY - startY.current;
     if (deltaY > 0) {
-      // Apply some resistance (logarithmic-like feel)
       const constrainedY = Math.min(deltaY * 0.7, maxPull);
       setDragY(constrainedY);
     }
@@ -34,6 +34,8 @@ const HangingLamp: React.FC<{ isDark: boolean; onToggle: () => void }> = ({ isDa
     if (!isDragging) return;
     if (dragY >= threshold) {
       onToggle();
+      // Provide Haptic Feedback if supported
+      if ('vibrate' in navigator) navigator.vibrate(10);
     }
     setIsDragging(false);
     setDragY(0);
@@ -42,13 +44,20 @@ const HangingLamp: React.FC<{ isDark: boolean; onToggle: () => void }> = ({ isDa
   useEffect(() => {
     const onMouseMove = (e: MouseEvent) => handleMove(e.clientY);
     const onMouseUp = () => handleEnd();
-    const onTouchMove = (e: TouchEvent) => handleMove(e.touches[0].clientY);
+    
+    const onTouchMove = (e: TouchEvent) => {
+      if (isDragging) {
+        // Critical: Prevent default only when dragging to block pull-to-refresh
+        if (e.cancelable) e.preventDefault();
+        handleMove(e.touches[0].clientY);
+      }
+    };
     const onTouchEnd = () => handleEnd();
 
     if (isDragging) {
       window.addEventListener('mousemove', onMouseMove);
       window.addEventListener('mouseup', onMouseUp);
-      window.addEventListener('touchmove', onTouchMove);
+      window.addEventListener('touchmove', onTouchMove, { passive: false });
       window.addEventListener('touchend', onTouchEnd);
     }
 
@@ -62,43 +71,29 @@ const HangingLamp: React.FC<{ isDark: boolean; onToggle: () => void }> = ({ isDa
 
   return (
     <div className="absolute top-full right-6 sm:right-12 z-[100] pointer-events-none flex flex-col items-center">
-      {/* Connector base from Navbar bottom */}
       <div className="w-4 h-1 bg-slate-200 dark:bg-slate-800 rounded-b-md mb-[-1px] transition-colors"></div>
-      
-      {/* Short Static Cord */}
       <div className="w-0.5 h-3 bg-slate-300 dark:bg-slate-700 transition-colors duration-500"></div>
       
-      {/* Lamp Head */}
       <div className="relative pointer-events-auto">
         <svg width="42" height="34" viewBox="0 0 50 40" fill="none" xmlns="http://www.w3.org/2000/svg" className="drop-shadow-md transform scale-90 sm:scale-100">
-          {/* Main Shade */}
           <path d="M5 35 L45 35 L38 5 L12 5 Z" fill={isDark ? "#1A1A1A" : "#334155"} className="transition-colors duration-500" />
-          {/* Inner Glow Rim */}
           <path d="M5 35 L45 35 L43 32 L7 32 Z" fill={isDark ? "#000000" : "#FBBF24"} fillOpacity={isDark ? "0.2" : "0.3"} className="transition-colors duration-500" />
-          {/* Light Bulb */}
           <circle cx="25" cy="36" r="6" fill={isDark ? "#333333" : "#FCD34D"} className={`transition-all duration-500 ${!isDark ? 'lamp-glow' : ''}`} />
         </svg>
 
-        {/* Elastic Pull String */}
         <div 
-          onMouseDown={(e) => handleStart(e.clientY)}
-          onTouchStart={(e) => handleStart(e.touches[0].clientY)}
-          className={`absolute left-1/2 -translate-x-1/2 select-none flex flex-col items-center pointer-events-auto transition-all ${isDragging ? '' : 'duration-500 ease-[cubic-bezier(0.175,0.885,0.32,1.275)]'}`}
+          onMouseDown={(e) => handleStart(e.clientY, e)}
+          onTouchStart={(e) => handleStart(e.touches[0].clientY, e)}
+          className={`absolute left-1/2 -translate-x-1/2 select-none flex flex-col items-center pointer-events-auto touch-none ${isDragging ? '' : 'duration-500 ease-[cubic-bezier(0.175,0.885,0.32,1.275)]'}`}
           style={{ 
             top: '28px',
-            height: `${56 + dragY}px`, // Dynamic height for cord stretch
-            cursor: isDragging ? 'grabbing' : 'grab'
+            height: `${56 + dragY}px`,
+            cursor: isDragging ? 'grabbing' : 'grab',
+            touchAction: 'none' // Prevents browser scroll/refresh
           }}
         >
-          {/* Visual Cord - stretched via container height or scale */}
           <div className="w-[1.5px] bg-slate-400 dark:bg-slate-600 group-hover:bg-emerald-500 transition-colors flex-grow"></div>
           
-          {/* Pull Trigger Threshold Visual Indicator (Subtle) */}
-          {isDragging && dragY < threshold && (
-             <div className="absolute top-[60px] w-1 h-1 bg-emerald-500/20 rounded-full animate-ping"></div>
-          )}
-
-          {/* Decorative Bead/Puller */}
           <div 
             className={`w-3.5 h-7 bg-slate-800 dark:bg-emerald-600 rounded-full shadow-lg border border-white/10 dark:border-emerald-400/20 flex flex-col items-center justify-center space-y-1 py-1 -mt-0.5 transform transition-transform ${isDragging ? 'scale-110' : 'hover:scale-110'}`}
           >
@@ -151,8 +146,6 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
           </div>
         </div>
-
-        {/* Hanging Lamp integrated into the Navbar bottom edge */}
         <HangingLamp isDark={isDark} onToggle={onToggleDark} />
       </div>
     </nav>
