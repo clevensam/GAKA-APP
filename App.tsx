@@ -38,15 +38,23 @@ const App: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<ResourceType | 'All'>('All');
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
-  const [isDark, setIsDark] = useState(false);
+  
+  // Persistence logic for theme
+  const [isDark, setIsDark] = useState(() => {
+    const saved = localStorage.getItem('gaka-theme');
+    if (saved) return saved === 'dark';
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  });
 
   useEffect(() => {
     if (isDark) {
       document.documentElement.classList.add('dark');
       document.body.classList.add('dark');
+      localStorage.setItem('gaka-theme', 'dark');
     } else {
       document.documentElement.classList.remove('dark');
       document.body.classList.remove('dark');
+      localStorage.setItem('gaka-theme', 'light');
     }
   }, [isDark]);
 
@@ -348,20 +356,6 @@ const App: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-10">{recentFiles.map((file, idx) => <RecentFileCard key={file.id} file={file} delay={idx * 100} />)}</div>
               </div>
             )}
-            <div className="w-full max-w-5xl mb-12 px-4 text-left sm:text-center mt-6 sm:mt-8"><h2 className="text-3xl sm:text-5xl font-black text-slate-900 dark:text-white/90 tracking-tight">Our Services</h2></div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-10 w-full max-w-6xl px-4 pb-20">
-              {[
-                { title: 'Material Distribution', text: 'Seamless delivery of lecture notes and academic modules directly to your device.', icon: <BookOpenIcon className="w-6 h-6 sm:w-8 sm:h-8" /> },
-                { title: 'One-Tap Downloads', text: 'Accelerated file retrieval engine that bypasses secondary login prompts and redirects.', icon: <DownloadIcon className="w-6 h-6 sm:w-8 sm:h-8" /> },
-                { title: 'Exam Preparation', text: 'Extensive archive of verified past examination papers (Gaka) to enhance your revision process.', icon: <FileIcon className="w-6 h-6 sm:w-8 sm:h-8" /> }
-              ].map((service, idx) => (
-                <div key={idx} className="bg-white dark:bg-[#1E1E1E] p-8 sm:p-10 rounded-[2rem] sm:rounded-[2.5rem] border border-slate-100 dark:border-white/5 shadow-sm hover:shadow-xl transition-all hover:-translate-y-2 text-left group">
-                  <div className="w-14 h-14 sm:w-16 sm:h-16 bg-slate-50 dark:bg-[#282828] rounded-[1.2rem] flex items-center justify-center text-slate-400 dark:text-white/40 mb-6 sm:mb-8 group-hover:bg-emerald-600 dark:group-hover:bg-emerald-500 group-hover:text-white transition-all duration-500 shadow-inner">{service.icon}</div>
-                  <h3 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white/90 mb-3 sm:mb-4 tracking-tight">{service.title}</h3>
-                  <p className="text-slate-500 dark:text-white/60 text-sm sm:text-base font-normal leading-relaxed">{service.text}</p>
-                </div>
-              ))}
-            </div>
           </div>
         )}
         {currentView === 'about' && (
