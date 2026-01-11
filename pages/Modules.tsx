@@ -1,23 +1,23 @@
-import React from 'react';
-import { SearchIcon } from '../components/Icons';
+import React, { useState, useMemo } from 'react';
 import { ModuleCard } from '../components/ModuleCard';
+import { SearchIcon } from '../components/Icons';
 import { Module } from '../types';
 
 interface ModulesProps {
-  filteredModules: Module[];
-  searchQuery: string;
-  setSearchQuery: (query: string) => void;
-  onNavigate: (path: string) => void;
-  isLoadingData: boolean;
+  modules: Module[];
+  onNavigate: (page: string, params?: any) => void;
 }
 
-export const Modules: React.FC<ModulesProps> = ({ 
-  filteredModules, 
-  searchQuery, 
-  setSearchQuery, 
-  onNavigate,
-  isLoadingData 
-}) => {
+const ModulesPage: React.FC<ModulesProps> = ({ modules, onNavigate }) => {
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const filteredModules = useMemo(() => {
+    return modules.filter(m => 
+      m.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+      m.code.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [modules, searchQuery]);
+
   return (
     <div className="animate-fade-in">
       <div className="flex flex-col lg:flex-row lg:items-end justify-between mb-10 sm:mb-16 gap-8 sm:gap-10">
@@ -48,13 +48,13 @@ export const Modules: React.FC<ModulesProps> = ({
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-8">
         {filteredModules.map((module, i) => (
           <div key={module.id} className="animate-fade-in" style={{ animationDelay: `${i * 50}ms` }}>
-            <ModuleCard module={module} onClick={() => onNavigate(`/module/${module.id}`)} />
+            <ModuleCard module={module} onClick={() => onNavigate('module-detail', { moduleId: module.id })} />
           </div>
         ))}
         {filteredModules.length === 0 && (
           <div className="col-span-full py-16 sm:py-24 text-center">
             <p className="text-slate-400 dark:text-white/20 font-medium text-base sm:text-lg italic px-4">
-              {isLoadingData ? "Synchronizing with cloud registry..." : "No matching modules found."}
+              {modules.length === 0 ? "Synchronizing with cloud registry..." : "No matching modules found."}
             </p>
           </div>
         )}
@@ -62,3 +62,5 @@ export const Modules: React.FC<ModulesProps> = ({
     </div>
   );
 };
+
+export default ModulesPage;

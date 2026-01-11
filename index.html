@@ -3,78 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
-    <!-- Primary Meta Tags -->
-    <title>GAKA | MUST CS Academic Resource Hub - Notes & Past Papers</title>
-    <meta name="title" content="GAKA | MUST CS Academic Resource Hub - Notes & Past Papers">
-    <meta name="description" content="Access Mbeya University of Science and Technology (MUST) Computer Science lecture notes and past papers. GAKA is a lightweight, zero-login repository for students.">
-    <meta name="keywords" content="MUST CS, Mbeya University of Science and Technology, Computer Science Resources, MUST Past Papers, MUST Lecture Notes, GAKA Portal, MUST Engineering, Academic Repository Tanzania, Cleven Samwel">
-    <meta name="author" content="Cleven Samwel (Softlink Africa)">
-    <meta name="robots" content="index, follow">
-    
-    <!-- Open Graph / Facebook -->
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://gaka.portal/">
-    <meta property="og:title" content="GAKA | MUST Computer Science Resource Hub">
-    <meta property="og:description" content="Centralized access to lecture materials and past exam papers for MUST CS students. Developed by Cleven Samwel.">
-    <meta property="og:image" content="https://gaka.portal/og-image.png">
-
-    <!-- Twitter -->
-    <meta property="twitter:card" content="summary_large_image">
-    <meta property="twitter:url" content="https://gaka.portal/">
-    <meta property="twitter:title" content="GAKA | MUST CS Resource Hub">
-    <meta property="twitter:description" content="The fastest way for MUST CS students to access academic resources. Developed by Cleven Samwel.">
-    <meta property="twitter:image" content="https://gaka.portal/og-image.png">
-
-    <!-- Canonical Link -->
-    <link rel="canonical" href="https://gaka.portal/">
-
+    <title>GAKA | MUST CS Resources</title>
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='25' fill='%23059669'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='central' text-anchor='middle' font-family='sans-serif' font-weight='900' font-size='60' fill='white'%3EG%3C/text%3E%3C/svg%3E">
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-
-    <!-- Structured Data (JSON-LD) for Search Engines -->
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "WebSite",
-      "name": "GAKA Portal",
-      "url": "https://gaka.portal/",
-      "description": "Academic resource hub for Computer Science students at MUST.",
-      "author": {
-        "@type": "Person",
-        "name": "Cleven Samwel",
-        "url": "https://wa.me/255685208576"
-      },
-      "publisher": {
-        "@type": "Organization",
-        "name": "Softlink Africa"
-      },
-      "potentialAction": {
-        "@type": "SearchAction",
-        "target": "https://gaka.portal/modules?q={search_term_string}",
-        "query-input": "required name=search_term_string"
-      }
-    }
-    </script>
-
-    <!-- Persistent Theme Logic -->
-    <script>
-      (function() {
-        const savedTheme = localStorage.getItem('gaka-theme');
-        const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        const isDark = savedTheme === 'dark' || (!savedTheme && systemDark);
-        if (isDark) {
-          document.documentElement.classList.add('dark');
-        } else {
-          document.documentElement.classList.remove('dark');
-        }
-      })();
-    </script>
-
 <script type="importmap">
 {
   "imports": {
@@ -83,11 +18,11 @@
     "react-dom/client": "https://esm.sh/react-dom@19.0.0/client",
     "react/jsx-runtime": "https://esm.sh/react@19.0.0/jsx-runtime",
     "@vercel/analytics/react": "https://esm.sh/@vercel/analytics@1.6.1/react?external=react",
-    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
-    "react/": "https://esm.sh/react@^19.2.3/",
     "@vercel/analytics/": "https://esm.sh/@vercel/analytics@^1.6.1/",
     "vite": "https://esm.sh/vite@^7.3.1",
-    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.2"
+    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.2",
+    "react/": "https://esm.sh/react@^19.2.3/",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/"
   }
 }
 </script>

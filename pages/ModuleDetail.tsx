@@ -1,48 +1,54 @@
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import { BackIcon } from '../components/Icons';
-import { ResourceItem } from '../components/ResourceItem';
 import { Module, ResourceType } from '../types';
+import { ResourceItem } from '../components/ResourceItem';
 
-interface ModuleDetailProps {
-  module: Module;
-  filterType: ResourceType | 'All';
-  setFilterType: (type: ResourceType | 'All') => void;
-  downloadingId: string | null;
-  onDownload: (e: React.MouseEvent<HTMLAnchorElement>, id: string, url: string) => void;
-  onShare: (title: string) => void;
-  onNavigate: (path: string) => void;
+interface DetailProps {
+  modules: Module[];
+  moduleId: string;
+  onNavigate: (page: string, params?: any) => void;
 }
 
-export const ModuleDetail: React.FC<ModuleDetailProps> = ({ 
-  module, 
-  filterType, 
-  setFilterType, 
-  downloadingId, 
-  onDownload, 
-  onShare, 
-  onNavigate 
-}) => {
-  const filteredResources = module.resources.filter(r => filterType === 'All' || r.type === filterType);
+const ModuleHero: React.FC<{ code: string; name: string; resourceCount: number }> = ({ code, name, resourceCount }) => (
+  <div className="bg-gradient-to-br from-emerald-600 via-emerald-700 to-teal-900 dark:from-emerald-700 dark:via-emerald-800 dark:to-teal-950 p-8 sm:p-24 rounded-[2rem] sm:rounded-[3.5rem] text-white shadow-2xl shadow-emerald-100 dark:shadow-none mb-8 sm:mb-12 relative overflow-hidden">
+    <div className="relative z-10">
+      <div className="flex flex-wrap items-center gap-2 sm:gap-4 mb-8 sm:mb-10">
+        <span className="bg-white/15 backdrop-blur-md px-4 py-1.5 sm:px-6 sm:py-2 rounded-full text-[10px] font-bold tracking-widest uppercase border border-white/10">{code}</span>
+        <span className="bg-black/10 backdrop-blur-md px-4 py-1.5 sm:px-6 sm:py-2 rounded-full text-[10px] font-bold tracking-widest uppercase border border-white/10">{resourceCount} Files</span>
+      </div>
+      <h2 className="text-3xl sm:text-7xl font-extrabold mb-6 sm:mb-8 leading-tight sm:leading-[1.05] tracking-tight max-w-4xl break-words">{name}</h2>
+    </div>
+  </div>
+);
+
+const ModuleDetailPage: React.FC<DetailProps> = ({ modules, moduleId, onNavigate }) => {
+  const [filterType, setFilterType] = useState<ResourceType | 'All'>('All');
+
+  const selectedModule = useMemo(() => modules.find(m => m.id === moduleId), [modules, moduleId]);
+
+  const filteredResources = useMemo(() => {
+    if (!selectedModule) return [];
+    return selectedModule.resources.filter(r => filterType === 'All' || r.type === filterType);
+  }, [selectedModule, filterType]);
+
+  if (!selectedModule) {
+    return (
+      <div className="text-center py-20 text-slate-400">
+        Module not found. <button onClick={() => onNavigate('modules')} className="text-emerald-500 font-bold">Go back</button>
+      </div>
+    );
+  }
 
   return (
     <div className="animate-fade-in max-w-5xl mx-auto pb-20 sm:pb-32">
       <div className="mb-8 px-1">
-        <button onClick={() => onNavigate('/modules')} className="flex items-center text-slate-800 dark:text-white/60 font-bold text-[13px] sm:text-[14px] uppercase tracking-widest hover:text-emerald-600 dark:hover:text-emerald-400 transition-all group">
-          <BackIcon className="mr-3 w-6 h-6 sm:w-7 sm:h-7 group-hover:-translate-x-2 transition-transform" />
-          Back to Modules
+        <button onClick={() => onNavigate('modules')} className="flex items-center text-slate-800 dark:text-white/60 font-bold text-[13px] sm:text-[14px] uppercase tracking-widest hover:text-emerald-600 dark:hover:text-emerald-400 transition-all group">
+          <BackIcon className="mr-3 w-6 h-6 sm:w-7 sm:h-7 group-hover:-translate-x-2 transition-transform" />Back to Modules
         </button>
       </div>
-      
-      <div className="bg-gradient-to-br from-emerald-600 via-emerald-700 to-teal-900 dark:from-emerald-700 dark:via-emerald-800 dark:to-teal-950 p-8 sm:p-24 rounded-[2rem] sm:rounded-[3.5rem] text-white shadow-2xl shadow-emerald-100 dark:shadow-none mb-8 sm:mb-12 relative overflow-hidden">
-        <div className="relative z-10">
-          <div className="flex flex-wrap items-center gap-2 sm:gap-4 mb-8 sm:mb-10">
-            <span className="bg-white/15 backdrop-blur-md px-4 py-1.5 sm:px-6 sm:py-2 rounded-full text-[10px] font-bold tracking-widest uppercase border border-white/10">{module.code}</span>
-            <span className="bg-black/10 backdrop-blur-md px-4 py-1.5 sm:px-6 sm:py-2 rounded-full text-[10px] font-bold tracking-widest uppercase border border-white/10">{module.resources.length} Files</span>
-          </div>
-          <h2 className="text-3xl sm:text-7xl font-extrabold mb-6 sm:mb-8 leading-tight sm:leading-[1.05] tracking-tight max-w-4xl break-words">{module.name}</h2>
-        </div>
-      </div>
-      
+
+      <ModuleHero code={selectedModule.code} name={selectedModule.name} resourceCount={selectedModule.resources.length} />
+
       <div className="bg-white dark:bg-[#1E1E1E] rounded-[1.5rem] sm:rounded-[3rem] p-6 sm:p-16 shadow-sm border border-slate-100 dark:border-white/5 transition-colors duration-500">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-10 sm:mb-12">
           <h3 className="text-2xl sm:text-3xl font-bold text-slate-800 dark:text-white/90">Resources</h3>
@@ -61,14 +67,7 @@ export const ModuleDetail: React.FC<ModuleDetailProps> = ({
         
         <div className="space-y-4">
           {filteredResources.map((file, i) => (
-            <ResourceItem 
-              key={file.id} 
-              file={file} 
-              delay={i * 80} 
-              downloadingId={downloadingId}
-              onDownload={onDownload}
-              onShare={onShare}
-            />
+            <ResourceItem key={file.id} file={file} delay={i * 80} />
           ))}
           {filteredResources.length === 0 && (
             <div className="text-center py-16 sm:py-24 bg-slate-50/50 dark:bg-black/20 rounded-3xl border border-dashed border-slate-200 dark:border-white/5 px-4">
@@ -80,3 +79,5 @@ export const ModuleDetail: React.FC<ModuleDetailProps> = ({
     </div>
   );
 };
+
+export default ModuleDetailPage;
