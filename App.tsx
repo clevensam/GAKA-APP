@@ -15,6 +15,7 @@ import { About } from './pages/About';
 import { ErrorPage } from './pages/Error';
 
 const LIVE_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRn-pw2j_BMf_v--CHjpGLos3oFFAyOjrlZ8vsM0uFs4E23GPcGZ2F0tdBvRZGeg7VwZ-ZkIOpHU8zm/pub?output=csv";
+const CACHE_KEY = 'gaka_registry_cache';
 
 const App: React.FC = () => {
   const [modules, setModules] = useState<Module[]>([]);
@@ -48,6 +49,23 @@ const App: React.FC = () => {
     }
   }, [isDark]);
 
+  // Load cached data immediately on mount for instant mobile responsiveness
+  useEffect(() => {
+    const cached = localStorage.getItem(CACHE_KEY);
+    if (cached) {
+      try {
+        const { modules: cachedModules, recentFiles: cachedRecent } = JSON.parse(cached);
+        if (cachedModules && cachedModules.length > 0) {
+          setModules(cachedModules);
+          setRecentFiles(cachedRecent);
+          setIsLoading(false);
+        }
+      } catch (e) {
+        console.error("Cache parsing failed", e);
+      }
+    }
+  }, []);
+
   // Dynamic SEO Metadata Handler
   useEffect(() => {
     let title = "GAKA | MUST CS Academic Resource Hub";
@@ -68,7 +86,6 @@ const App: React.FC = () => {
     const metaDesc = document.querySelector('meta[name="description"]');
     if (metaDesc) metaDesc.setAttribute('content', description);
     
-    // Update Open Graph tags dynamically (primarily for browser/search history)
     const ogTitle = document.querySelector('meta[property="og:title"]');
     if (ogTitle) ogTitle.setAttribute('content', title);
   }, [currentView, selectedModule]);
@@ -79,7 +96,17 @@ const App: React.FC = () => {
       setIsSyncing(true);
       setError(null);
       
-      const response = await fetch(LIVE_CSV_URL);
+      // Add cache-busting timestamp to bypass aggressive mobile ISP/browser caching
+      const fetchUrl = `${LIVE_CSV_URL}&t=${Date.now()}`;
+      
+      const response = await fetch(fetchUrl, {
+        cache: 'no-cache', // Force fresh data on mobile
+        headers: {
+          'Pragma': 'no-cache',
+          'Cache-Control': 'no-cache'
+        }
+      });
+      
       if (!response.ok) throw new Error('Cloud registry server unreachable.');
       
       const csvText = await response.text();
@@ -141,14 +168,24 @@ const App: React.FC = () => {
       });
       
       const finalModules = Array.from(moduleMap.values()).filter(m => m.resources.length > 0);
+      const finalRecent = allExtractedFiles.sort((a, b) => b.rowIndex - a.rowIndex).slice(0, 3);
+      
       setModules(finalModules);
-      setRecentFiles(allExtractedFiles.sort((a, b) => b.rowIndex - a.rowIndex).slice(0, 3));
+      setRecentFiles(finalRecent);
       setError(null);
+      
+      // Update persistent cache
+      localStorage.setItem(CACHE_KEY, JSON.stringify({
+        modules: finalModules,
+        recentFiles: finalRecent,
+        timestamp: Date.now()
+      }));
+      
     } catch (err: any) {
       console.warn("Registry Sync Error:", err);
-      setError(err.message || "Offline Mode Active.");
+      // Only show error if we have no data at all (neither memory nor cache)
       if (modules.length === 0) {
-        setModules(MODULES_DATA.filter(m => m.resources.length > 0));
+        setError(err.message || "Network error. Please check your data connection.");
       }
     } finally {
       const remainingTime = Math.max(0, 1000 - (Date.now() - startTime));
@@ -217,7 +254,7 @@ const App: React.FC = () => {
     setTimeout(() => setDownloadingId(null), 3000);
   };
 
-  if (isLoading) {
+  if (isLoading && modules.length === 0) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-white dark:bg-black">
         <div className="relative">
@@ -230,7 +267,7 @@ const App: React.FC = () => {
     );
   }
 
-  const isFatalError = error && modules.every(m => m.resources.length === 0);
+  const isFatalError = error && modules.length === 0;
 
   return (
     <div className={`min-h-screen flex flex-col selection:bg-emerald-100 selection:text-emerald-900 transition-colors duration-500 ${isDark ? 'dark bg-black' : 'bg-[#fcfdfe]'}`}>
