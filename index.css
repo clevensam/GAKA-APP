@@ -3,89 +3,88 @@
 @tailwind utilities;
 
 :root {
-  --brand-primary: #059669;
+  --brand-primary: #10b981;
   --brand-secondary: #0d9488;
 }
 
-body {
-  font-family: 'Lexend', sans-serif;
-  background-color: #fcfdfe;
-  color: #1e293b;
-  overflow-x: hidden;
-  transition: background-color 0.5s cubic-bezier(0.4, 0, 0.2, 1), color 0.5s ease;
+@layer base {
+  body {
+    @apply font-lexend antialiased selection:bg-emerald-100 selection:text-emerald-900;
+    background-color: #fcfdfe;
+    color: #1e293b;
+    transition: background-color 0.5s cubic-bezier(0.4, 0, 0.2, 1), color 0.5s ease;
+  }
+
+  body.dark {
+    background-color: #050505;
+    color: rgba(255, 255, 255, 0.9);
+  }
 }
 
-/* Material Design Dark Theme principles updated: 
-   - Base background is pure black #000000 or near-black #0a0a0a
-   - Surfaces at higher elevation use desaturated grays (#1E1E1E)
-*/
-body.dark {
-  background-color: #000000;
-  color: rgba(255, 255, 255, 0.87);
+@layer components {
+  .glass {
+    @apply backdrop-blur-xl border-b transition-all duration-500;
+    background: rgba(255, 255, 255, 0.7);
+    border-color: rgba(241, 245, 249, 0.8);
+  }
+
+  .dark .glass {
+    background: rgba(10, 10, 10, 0.8);
+    border-color: rgba(255, 255, 255, 0.05);
+  }
+
+  .gradient-text {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-600;
+  }
+
+  .dark .gradient-text {
+    @apply from-emerald-400 via-emerald-300 to-teal-400;
+  }
+
+  .card-premium {
+    @apply relative overflow-hidden rounded-[2.5rem] border transition-all duration-500;
+    background: white;
+    border-color: theme('colors.slate.100');
+  }
+
+  .dark .card-premium {
+    background: #121212;
+    border-color: rgba(255, 255, 255, 0.05);
+  }
+
+  .card-premium:hover {
+    @apply -translate-y-1 shadow-2xl;
+    border-color: theme('colors.emerald.200');
+  }
+
+  .dark .card-premium:hover {
+    border-color: rgba(16, 185, 129, 0.3);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  }
 }
 
-.glass {
-  background: rgba(255, 255, 255, 0.75);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border-bottom: 1px solid rgba(241, 245, 249, 0.8);
-  transition: background 0.5s ease, border-color 0.5s ease;
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
 }
 
-.dark .glass {
-  background: rgba(0, 0, 0, 0.8);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.gradient-text {
-  background: linear-gradient(135deg, #059669 0%, #10b981 50%, #0d9488 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-.dark .gradient-text {
-  background: linear-gradient(135deg, #34d399 0%, #10b981 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-.hero-gradient {
-  background: radial-gradient(circle at top right, rgba(16, 185, 129, 0.05), transparent),
-              radial-gradient(circle at bottom left, rgba(13, 148, 136, 0.05), transparent);
-  transition: background 0.5s ease;
-}
-
-.dark .hero-gradient {
-  background: radial-gradient(circle at top right, rgba(16, 185, 129, 0.1), transparent),
-              radial-gradient(circle at bottom left, rgba(13, 148, 136, 0.06), transparent);
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
-.animate-fade-in {
-  animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+@keyframes glow {
+  0%, 100% { filter: drop-shadow(0 0 10px rgba(16, 185, 129, 0.3)); }
+  50% { filter: drop-shadow(0 0 25px rgba(16, 185, 129, 0.6)); }
 }
 
-.scrollbar-hide::-webkit-scrollbar {
-  display: none;
-}
+.animate-float { animation: float 6s ease-in-out infinite; }
+.animate-slide-up { animation: slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+.animate-glow { animation: glow 4s ease-in-out infinite; }
 
-.scrollbar-hide {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-
-h1, h2, h3, h4 {
-  letter-spacing: -0.02em;
-}
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
 
 .lamp-glow {
-  filter: drop-shadow(0 0 20px rgba(251, 191, 36, 0.9));
-}
-
-.dark .lamp-off {
-  filter: grayscale(1) opacity(0.1);
+  filter: drop-shadow(0 0 25px rgba(251, 191, 36, 0.8));
 }
