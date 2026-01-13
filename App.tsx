@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { Navbar } from './components/Navbar';
@@ -9,7 +10,6 @@ import { Analytics } from '@vercel/analytics/react';
 // --- SUPABASE CONFIGURATION ---
 const SUPABASE_URL = "https://tgnljtmvigschazflxis.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_nXfVOz8QEqs1mT0sxx_nYw_P8fmPVmI";
-
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const transformToDirectDownload = (url: string): string => {
@@ -45,9 +45,11 @@ const App: React.FC = () => {
   const [filterType, setFilterType] = useState<ResourceType | 'All'>('All');
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
-  // PWA Install State
+  // PWA & Installation State
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [showInstallBanner, setShowInstallBanner] = useState(false);
+  const [isIOS, setIsIOS] = useState(false);
+  const [isStandalone, setIsStandalone] = useState(false);
 
   const [isDark, setIsDark] = useState(() => {
     const saved = localStorage.getItem('gaka-theme');
@@ -68,36 +70,53 @@ const App: React.FC = () => {
   }, [isDark]);
 
   useEffect(() => {
-    // Listen for PWA install prompt
+    // Detect if already installed/standalone
+    const isRunningStandalone = window.matchMedia('(display-mode: standalone)').matches 
+      || (window.navigator as any).standalone 
+      || document.referrer.includes('android-app://');
+    
+    setIsStandalone(isRunningStandalone);
+
+    // Detect platform
+    const isApple = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+    setIsIOS(isApple);
+
+    // Capture the install prompt for Android/Chrome
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e);
-      // Only show banner if not already dismissed this session
-      const dismissed = sessionStorage.getItem('pwa-banner-dismissed');
-      if (!dismissed) {
-        setShowInstallBanner(true);
+      if (!isRunningStandalone) {
+        // Delayed show for better UX
+        const timer = setTimeout(() => setShowInstallBanner(true), 2000);
+        return () => clearTimeout(timer);
       }
     };
 
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    // For iOS, manually show if not standalone
+    if (isApple && !isRunningStandalone) {
+      const dismissed = localStorage.getItem('gaka-pwa-dismissed');
+      if (!dismissed) {
+        const timer = setTimeout(() => setShowInstallBanner(true), 3000);
+        return () => clearTimeout(timer);
+      }
+    }
 
-    return () => {
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-    };
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
   }, []);
 
   const handleInstallClick = async () => {
+    if (isIOS) return; // iOS users see instructions instead
     if (!deferredPrompt) return;
     deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
-    console.log(`User response to install: ${outcome}`);
+    if (outcome === 'accepted') setShowInstallBanner(false);
     setDeferredPrompt(null);
-    setShowInstallBanner(false);
   };
 
-  const dismissBanner = () => {
+  const dismissInstall = () => {
     setShowInstallBanner(false);
-    sessionStorage.setItem('pwa-banner-dismissed', 'true');
+    localStorage.setItem('gaka-pwa-dismissed', 'true');
   };
 
   useEffect(() => {
@@ -250,7 +269,7 @@ const App: React.FC = () => {
             </span>
           </div>
           <span className={`text-[9px] font-bold uppercase tracking-widest ${file.type === 'Notes' ? 'text-emerald-400' : 'text-teal-400'}`}>
-            {file.type === 'Notes' ? 'Note' : 'Past Paper'}
+            {file.type === 'Notes' ? 'Note' : 'Gaka'}
           </span>
         </div>
         <div className="flex-grow relative z-10">
@@ -305,6 +324,7 @@ const App: React.FC = () => {
             )}
           </nav>
         )}
+        
         {error && (
           <div className="mb-12 p-6 bg-amber-50/50 dark:bg-[#1E1E1E] border border-amber-100 dark:border-amber-900/30 rounded-3xl text-amber-800 dark:text-amber-400 text-sm font-medium flex flex-col sm:flex-row items-center justify-between animate-fade-in gap-4 shadow-sm">
             <div className="flex items-center">
@@ -317,6 +337,7 @@ const App: React.FC = () => {
             <button onClick={() => window.location.reload()} className="bg-white dark:bg-[#282828] px-6 py-2.5 rounded-full shadow-sm hover:shadow-md transition-all active:scale-95 text-amber-600 dark:text-amber-300 border border-amber-100 dark:border-white/5 font-semibold">Retry</button>
           </div>
         )}
+
         {currentView === 'home' && (
           <div className="animate-fade-in flex flex-col items-center">
             <div className="text-center pt-4 pb-16 lg:pt-32">
@@ -353,6 +374,7 @@ const App: React.FC = () => {
             )}
           </div>
         )}
+
         {currentView === 'about' && (
           <div className="animate-fade-in max-w-5xl mx-auto py-4 sm:py-12">
             <div className="bg-white dark:bg-[#1E1E1E] rounded-[2rem] sm:rounded-[3.5rem] p-8 sm:p-24 shadow-sm border border-slate-100 dark:border-white/5 relative overflow-hidden">
@@ -380,6 +402,7 @@ const App: React.FC = () => {
             </div>
           </div>
         )}
+
         {currentView === 'modules' && (
           <div className="animate-fade-in">
             <div className="flex flex-col lg:flex-row lg:items-end justify-between mb-10 sm:mb-16 gap-8 sm:gap-10">
@@ -405,6 +428,7 @@ const App: React.FC = () => {
             </div>
           </div>
         )}
+
         {currentView === 'detail' && selectedModule && (
           <div className="animate-fade-in max-w-5xl mx-auto pb-20 sm:pb-32">
             <div className="mb-8 px-1"><button onClick={() => navigateTo('modules')} className="flex items-center text-slate-800 dark:text-white/60 font-bold text-[13px] sm:text-[14px] uppercase tracking-widest hover:text-emerald-600 dark:hover:text-emerald-400 transition-all group"><BackIcon className="mr-3 w-6 h-6 sm:w-7 sm:h-7 group-hover:-translate-x-2 transition-transform" />Back to Modules</button></div>
@@ -433,22 +457,26 @@ const App: React.FC = () => {
         )}
       </main>
 
-      {/* PWA Installation Prompt Banner */}
-      {showInstallBanner && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-md z-[100] animate-slide-in">
-          <div className="bg-white/80 dark:bg-[#1E1E1E]/80 backdrop-blur-xl border border-emerald-100/50 dark:border-white/5 p-5 rounded-[2rem] shadow-2xl flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-emerald-600 dark:bg-emerald-500 rounded-2xl flex items-center justify-center text-white font-black text-xl shadow-lg shadow-emerald-500/20">
+      {/* Persistence Standalone Installation Banner */}
+      {showInstallBanner && !isStandalone && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[92%] max-w-md z-[100] animate-slide-in">
+          <div className="bg-white/90 dark:bg-[#1E1E1E]/90 backdrop-blur-2xl border border-emerald-500/10 p-5 rounded-[2.5rem] shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] flex items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 bg-emerald-600 dark:bg-emerald-500 rounded-2xl flex items-center justify-center text-white font-black text-2xl shadow-xl shadow-emerald-500/20">
                 G
               </div>
               <div>
-                <h4 className="font-bold text-slate-900 dark:text-white text-sm">Install GAKA App</h4>
-                <p className="text-slate-500 dark:text-white/40 text-[10px]">Access resources faster from home screen</p>
+                <h4 className="font-bold text-slate-900 dark:text-white text-sm">GAKA Portal</h4>
+                <p className="text-slate-500 dark:text-white/40 text-[11px] leading-tight">
+                  {isIOS ? "Tap Share → Add to Home Screen" : "Install as a standalone app"}
+                </p>
               </div>
             </div>
             <div className="flex items-center gap-2">
-               <button onClick={dismissBanner} className="px-3 py-2 text-[10px] font-bold text-slate-400 dark:text-white/20 uppercase tracking-widest hover:text-slate-600 dark:hover:text-white/40 transition-colors">Later</button>
-               <button onClick={handleInstallClick} className="px-6 py-2.5 bg-emerald-600 dark:bg-emerald-500 text-white rounded-xl text-[11px] font-black uppercase shadow-lg shadow-emerald-500/10 active:scale-95 transition-all">Install</button>
+               <button onClick={dismissInstall} className="px-3 py-2 text-[10px] font-bold text-slate-400 dark:text-white/20 uppercase tracking-widest">Later</button>
+               {!isIOS && (
+                 <button onClick={handleInstallClick} className="px-6 py-3 bg-emerald-600 dark:bg-emerald-500 text-white rounded-xl text-[11px] font-black uppercase shadow-lg shadow-emerald-500/10 active:scale-95 transition-all">Install</button>
+               )}
             </div>
           </div>
         </div>
