@@ -13,9 +13,13 @@ const SUPABASE_ANON_KEY = "sb_publishable_nXfVOz8QEqs1mT0sxx_nYw_P8fmPVmI";
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+/**
+ * Utility to ensure Drive links are transformed to direct download streams
+ * if the user inputs a standard share link in the database.
+ */
 const transformToDirectDownload = (url: string): string => {
   if (!url || url === '#') return '#';
-  const driveRegex = /\/file\/d\/([^/]+)\/(?:view|edit)/;
+  const driveRegex = /\/file\/d\/([^/]+)\/(?:view|edit|uc)/;
   const match = url.match(driveRegex);
   if (match && match[1]) {
     return `https://drive.google.com/uc?export=download&id=${match[1]}`;
@@ -68,7 +72,7 @@ const App: React.FC = () => {
       try {
         setIsLoading(true);
         
-        // 1. Fetch Modules
+        // 1. Fetch all modules from the database
         const { data: modulesData, error: modulesError } = await supabase
           .from('modules')
           .select('*')
@@ -76,7 +80,10 @@ const App: React.FC = () => {
 
         if (modulesError) throw modulesError;
 
-        // 2. Fetch Resources
+        /**
+         * 2. Fetch all resources with module code joined.
+         * Note: Using view_url and download_url columns as per provided schema.
+         */
         const { data: resourcesData, error: resourcesError } = await supabase
           .from('resources')
           .select('*, modules(code)')
@@ -84,33 +91,34 @@ const App: React.FC = () => {
 
         if (resourcesError) throw resourcesError;
 
-        // 3. Map to state
+        // 3. Map database relational data into the application state
         const finalModules: Module[] = (modulesData || []).map(m => ({
           id: m.id,
           code: m.code,
           name: m.name,
-          description: m.description || 'Academic resource module.',
+          description: m.description || 'Verified academic resource module.',
           resources: (resourcesData || [])
             .filter(r => r.module_id === m.id)
             .map(r => ({
               id: r.id,
               title: r.title,
               type: r.type as ResourceType,
-              downloadUrl: transformToDirectDownload(r.url),
-              viewUrl: ensureViewUrl(r.url),
+              // Prioritize database columns, fallback to transformers for flexibility
+              downloadUrl: r.download_url ? transformToDirectDownload(r.download_url) : '#',
+              viewUrl: r.view_url ? ensureViewUrl(r.view_url) : '#',
               size: '---'
             }))
         }));
 
         setModules(finalModules);
 
-        // 4. Global Recent Files
+        // 4. Extract top 3 most recent files globally
         const topRecent = (resourcesData || []).slice(0, 3).map(r => ({
           id: r.id,
           title: r.title,
           type: r.type as ResourceType,
-          downloadUrl: transformToDirectDownload(r.url),
-          viewUrl: ensureViewUrl(r.url),
+          downloadUrl: transformToDirectDownload(r.download_url),
+          viewUrl: ensureViewUrl(r.view_url),
           moduleCode: r.modules?.code || 'CS',
           moduleId: r.module_id
         }));
@@ -118,8 +126,8 @@ const App: React.FC = () => {
         setRecentFiles(topRecent);
         setError(null);
       } catch (err: any) {
-        console.error("Supabase Error:", err);
-        setError(err.message || "Failed to sync with the academic database.");
+        console.error("Database Connection Failure:", err);
+        setError(err.message || "Failed to establish link with the GAKA cloud database.");
       } finally {
         setIsLoading(false);
       }
@@ -127,6 +135,7 @@ const App: React.FC = () => {
     fetchData();
   }, []);
 
+  // Sync hash routing
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash;
@@ -267,7 +276,7 @@ const App: React.FC = () => {
             <div className="w-10 h-10 sm:w-12 h-12 bg-emerald-600 rounded-2xl flex items-center justify-center text-white font-black text-lg sm:text-xl shadow-lg shadow-emerald-100 dark:shadow-emerald-900/40 animate-pulse">G</div>
           </div>
         </div>
-        <p className="mt-8 text-[11px] font-bold uppercase tracking-[0.5em] text-slate-400 animate-pulse">Establishing Secure Session</p>
+        <p className="mt-8 text-[11px] font-bold uppercase tracking-[0.5em] text-slate-400 animate-pulse">Establishing Cloud Session</p>
       </div>
     );
   }
