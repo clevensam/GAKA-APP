@@ -1,7 +1,8 @@
+
 {
   "name": "gaka-portal",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.1.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -11,7 +12,8 @@
   "dependencies": {
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "@vercel/analytics": "^1.4.1"
+    "@vercel/analytics": "^1.4.1",
+    "@supabase/supabase-js": "^2.48.1"
   },
   "devDependencies": {
     "@types/react": "^19.0.0",
