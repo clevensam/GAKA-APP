@@ -13,10 +13,6 @@ const SUPABASE_ANON_KEY = "sb_publishable_nXfVOz8QEqs1mT0sxx_nYw_P8fmPVmI";
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-/**
- * Utility to ensure Drive links are transformed to direct download streams
- * if the user inputs a standard share link in the database.
- */
 const transformToDirectDownload = (url: string): string => {
   if (!url || url === '#') return '#';
   const driveRegex = /\/file\/d\/([^/]+)\/(?:view|edit|uc)/;
@@ -48,7 +44,6 @@ const App: React.FC = () => {
   const [filterType, setFilterType] = useState<ResourceType | 'All'>('All');
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
-  // Theme Persistence
   const [isDark, setIsDark] = useState(() => {
     const saved = localStorage.getItem('gaka-theme');
     if (saved) return saved === 'dark';
@@ -71,8 +66,6 @@ const App: React.FC = () => {
     const fetchData = async () => {
       try {
         setIsLoading(true);
-        
-        // 1. Fetch all modules from the database
         const { data: modulesData, error: modulesError } = await supabase
           .from('modules')
           .select('*')
@@ -80,10 +73,6 @@ const App: React.FC = () => {
 
         if (modulesError) throw modulesError;
 
-        /**
-         * 2. Fetch all resources with module code joined.
-         * Note: Using view_url and download_url columns as per provided schema.
-         */
         const { data: resourcesData, error: resourcesError } = await supabase
           .from('resources')
           .select('*, modules(code)')
@@ -91,7 +80,6 @@ const App: React.FC = () => {
 
         if (resourcesError) throw resourcesError;
 
-        // 3. Map database relational data into the application state
         const finalModules: Module[] = (modulesData || []).map(m => ({
           id: m.id,
           code: m.code,
@@ -103,7 +91,6 @@ const App: React.FC = () => {
               id: r.id,
               title: r.title,
               type: r.type as ResourceType,
-              // Prioritize database columns, fallback to transformers for flexibility
               downloadUrl: r.download_url ? transformToDirectDownload(r.download_url) : '#',
               viewUrl: r.view_url ? ensureViewUrl(r.view_url) : '#',
               size: '---'
@@ -112,7 +99,6 @@ const App: React.FC = () => {
 
         setModules(finalModules);
 
-        // 4. Extract top 3 most recent files globally
         const topRecent = (resourcesData || []).slice(0, 3).map(r => ({
           id: r.id,
           title: r.title,
@@ -126,8 +112,8 @@ const App: React.FC = () => {
         setRecentFiles(topRecent);
         setError(null);
       } catch (err: any) {
-        console.error("Database Connection Failure:", err);
-        setError(err.message || "Failed to establish link with the GAKA cloud database.");
+        console.error("Database Failure:", err);
+        setError(err.message || "Failed to establish link with the GAKA cloud registry.");
       } finally {
         setIsLoading(false);
       }
@@ -135,7 +121,6 @@ const App: React.FC = () => {
     fetchData();
   }, []);
 
-  // Sync hash routing
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash;
@@ -270,13 +255,12 @@ const App: React.FC = () => {
   if (isLoading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-white dark:bg-black transition-colors duration-500">
-        <div className="relative">
-          <div className="w-20 h-20 sm:w-24 sm:h-24 border-[4px] border-slate-100 dark:border-white/5 border-t-emerald-600 rounded-full animate-spin"></div>
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-10 h-10 sm:w-12 h-12 bg-emerald-600 rounded-2xl flex items-center justify-center text-white font-black text-lg sm:text-xl shadow-lg shadow-emerald-100 dark:shadow-emerald-900/40 animate-pulse">G</div>
-          </div>
+        <div className="book-loader">
+          <div className="book-back"></div>
+          <div className="book-page"></div>
+          <div className="book-page"></div>
+          <div className="book-page"></div>
         </div>
-        <p className="mt-8 text-[11px] font-bold uppercase tracking-[0.5em] text-slate-400 animate-pulse">Establishing Cloud Session</p>
       </div>
     );
   }
@@ -296,7 +280,7 @@ const App: React.FC = () => {
             <button onClick={() => navigateTo('#/home')} className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">Home</button>
             <ChevronRightIcon className="w-3.5 h-3.5 text-slate-300 dark:text-white/10 flex-shrink-0" />
             {currentView === 'modules' && <span className="text-slate-900 dark:text-white/90 font-bold">Modules</span>}
-            {currentView === 'about' && <span className="text-slate-900 dark:text-white/90 font-bold">About</span>}
+            {currentView === 'about' && <span className="text-slate-900 dark:text-white/90 font-bold">About Gaka</span>}
             {currentView === 'detail' && (
               <>
                 <button onClick={() => navigateTo('#/modules')} className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">Modules</button>
@@ -336,7 +320,7 @@ const App: React.FC = () => {
                   Access Modules <SearchIcon className="ml-3 w-5 h-5 group-hover:rotate-12 transition-transform" />
                 </button>
                 <button onClick={() => navigateTo('#/about')} className="px-10 py-5 sm:px-16 sm:py-6 bg-white dark:bg-[#1E1E1E] text-slate-700 dark:text-white/80 border border-slate-200 dark:border-white/5 rounded-full font-bold text-sm sm:text-base hover:bg-slate-50 dark:hover:bg-[#282828] hover:border-slate-300 dark:hover:border-white/10 transition-all duration-300 shadow-sm active:scale-95">
-                  Learn More
+                  About Gaka
                 </button>
               </div>
             </div>
@@ -388,10 +372,10 @@ const App: React.FC = () => {
                 <h2 className="text-4xl sm:text-5xl font-extrabold text-slate-900 dark:text-white/90 tracking-tight">Modules</h2>
                 <div className="flex items-center space-x-3 sm:space-x-4">
                   <div className="flex bg-emerald-100/50 dark:bg-[#1E1E1E] px-3 py-1.5 sm:px-4 sm:py-2 rounded-full border border-emerald-200/30 dark:border-white/5 shadow-sm">
-                     <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">Database Active</span>
+                     <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">Semester 1 | 2025/2026</span>
                   </div>
                   <div className="h-1 w-1 rounded-full bg-slate-300 dark:bg-white/10"></div>
-                  <span className="text-slate-400 dark:text-white/40 font-semibold text-sm sm:text-base tracking-tight">{filteredModules.length} Modules Indexed</span>
+                  <span className="text-slate-400 dark:text-white/40 font-semibold text-sm sm:text-base tracking-tight">{filteredModules.length} Registered Modules</span>
                 </div>
               </div>
               <div className="relative w-full lg:w-[480px] group px-1">
@@ -402,7 +386,7 @@ const App: React.FC = () => {
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-8">
               {filteredModules.map((module, i) => <div key={module.id} className="animate-fade-in" style={{ animationDelay: `${i * 50}ms` }}><ModuleCard module={module} onClick={() => navigateTo(`#/module/${module.id}`)} /></div>)}
-              {filteredModules.length === 0 && <div className="col-span-full py-16 sm:py-24 text-center"><p className="text-slate-400 dark:text-white/20 font-medium text-base sm:text-lg italic px-4">{modules.length === 0 ? "Establishing database link..." : "No matching modules found."}</p></div>}
+              {filteredModules.length === 0 && <div className="col-span-full py-16 sm:py-24 text-center"><p className="text-slate-400 dark:text-white/20 font-medium text-base sm:text-lg italic px-4">{modules.length === 0 ? "Searching registry..." : "No matching modules found."}</p></div>}
             </div>
           </div>
         )}
