@@ -45,7 +45,7 @@ const App: React.FC = () => {
   const [filterType, setFilterType] = useState<ResourceType | 'All'>('All');
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
-  // PWA Standalone Logic
+  // Native App Installation States
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [showInstallBanner, setShowInstallBanner] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
@@ -58,7 +58,7 @@ const App: React.FC = () => {
   });
 
   useEffect(() => {
-    // Detect Standalone (Installed) Mode
+    // Check if app is already running in standalone (installed) mode
     const checkStandalone = () => {
       const standalone = window.matchMedia('(display-mode: standalone)').matches 
         || (window.navigator as any).standalone 
@@ -66,24 +66,25 @@ const App: React.FC = () => {
       setIsStandalone(standalone);
     };
 
-    // Detect iOS
     const appleDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
     setIsIOS(appleDevice);
 
     checkStandalone();
 
     const handleBeforeInstallPrompt = (e: Event) => {
+      // Prevents the browser's default bar, so we can show our premium "App" button
       e.preventDefault();
       setDeferredPrompt(e);
-      // Show prompt if not already installed and not dismissed in this session
-      if (!isStandalone && !sessionStorage.getItem('gaka-install-dismissed')) {
-        setTimeout(() => setShowInstallBanner(true), 4000);
+      
+      // If not installed, show our high-end installation banner
+      if (!isStandalone && !sessionStorage.getItem('gaka-native-install-dismissed')) {
+        setTimeout(() => setShowInstallBanner(true), 3000);
       }
     };
 
-    // For iOS, manually show instructions if not standalone
-    if (appleDevice && !isStandalone && !sessionStorage.getItem('gaka-install-dismissed')) {
-      setTimeout(() => setShowInstallBanner(true), 5000);
+    // For iOS, manual instruction is needed as Apple blocks programmatic install
+    if (appleDevice && !isStandalone && !sessionStorage.getItem('gaka-native-install-dismissed')) {
+      setTimeout(() => setShowInstallBanner(true), 4000);
     }
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
@@ -102,18 +103,24 @@ const App: React.FC = () => {
     }
   }, [isDark]);
 
-  const handleInstallClick = async () => {
-    if (isIOS) return; // Instructions handled in UI
+  const handleNativeInstall = async () => {
+    if (isIOS) return; // User must use Safari share menu
     if (!deferredPrompt) return;
+    
+    // This triggers the official "Rich" installation dialog on Chrome/Android/Windows
     deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
-    if (outcome === 'accepted') setShowInstallBanner(false);
+    
+    if (outcome === 'accepted') {
+      setShowInstallBanner(false);
+      console.log('User installed GAKA as a native app.');
+    }
     setDeferredPrompt(null);
   };
 
   const dismissInstall = () => {
     setShowInstallBanner(false);
-    sessionStorage.setItem('gaka-install-dismissed', 'true');
+    sessionStorage.setItem('gaka-native-install-dismissed', 'true');
   };
 
   useEffect(() => {
@@ -205,84 +212,6 @@ const App: React.FC = () => {
     setTimeout(() => setDownloadingId(null), 3000);
   };
 
-  const ResourceItem: React.FC<{ file: AcademicFile; moduleCode?: string; delay: number }> = ({ file, moduleCode, delay }) => (
-    <div 
-      className="group flex flex-col sm:flex-row sm:items-center justify-between p-5 sm:p-7 bg-white dark:bg-[#1E1E1E] hover:bg-slate-50 dark:hover:bg-[#282828] border border-slate-100 dark:border-white/5 hover:border-emerald-100 dark:hover:border-emerald-500/30 rounded-3xl transition-all duration-500 hover:shadow-xl animate-fade-in"
-      style={{ animationDelay: `${delay}ms` }}
-    >
-      <div className="flex items-center space-x-5 mb-5 sm:mb-0">
-        <div className={`w-12 h-12 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center flex-shrink-0 transition-all duration-500 group-hover:scale-105 ${
-          file.type === 'Notes' ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : 'bg-teal-50 dark:bg-teal-500/10 text-teal-600 dark:text-teal-400'
-        }`}>
-          <FileIcon className="w-6 h-6 sm:w-8 sm:h-8" />
-        </div>
-        <div className="min-w-0">
-          <div className="flex items-center space-x-2 mb-1">
-            {moduleCode && (
-              <span className="text-[9px] font-black bg-slate-100 dark:bg-black text-slate-500 dark:text-white/40 px-2 py-0.5 rounded-md uppercase tracking-tighter border dark:border-white/5">
-                {moduleCode}
-              </span>
-            )}
-            <span className={`text-[9px] font-bold uppercase tracking-widest ${file.type === 'Notes' ? 'text-emerald-500' : 'text-teal-500'}`}>
-              {file.type === 'Notes' ? 'Note' : 'Gaka'}
-            </span>
-          </div>
-          <h4 className="font-bold text-slate-800 dark:text-white/90 text-base sm:text-lg leading-tight break-words pr-4 group-hover:text-emerald-900 dark:group-hover:text-emerald-400 transition-colors">
-            {file.title}
-          </h4>
-        </div>
-      </div>
-      <div className="flex items-center justify-between sm:justify-end gap-3">
-        <div className="flex items-center gap-2">
-          <button onClick={() => handleShare(file.title)} className="w-11 h-11 flex items-center justify-center text-slate-400 dark:text-white/30 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-black rounded-full transition-all active:scale-90 border border-transparent hover:border-emerald-100 dark:hover:border-emerald-500/20">
-            <ShareIcon className="w-5 h-5" />
-          </button>
-          <a href={file.viewUrl} target="_blank" rel="noopener noreferrer" className="w-11 h-11 flex items-center justify-center bg-slate-100 dark:bg-[#282828] text-slate-500 dark:text-white/40 hover:bg-slate-200 dark:hover:bg-[#333333] hover:text-slate-800 dark:hover:text-white/90 rounded-2xl transition-all active:scale-90">
-            <ViewIcon className="w-5 h-5" />
-          </a>
-        </div>
-        <a href={file.downloadUrl} onClick={(e) => handleDownloadClick(e, file.id, file.downloadUrl)} className={`flex-1 sm:flex-none flex items-center justify-center space-x-3 px-6 py-4 sm:px-8 sm:py-4 font-bold text-xs rounded-2xl transition-all shadow-lg active:scale-95 ${
-          downloadingId === file.id ? 'bg-slate-800 dark:bg-black text-white shadow-none cursor-default' : 'bg-emerald-600 dark:bg-emerald-500 text-white shadow-emerald-100 dark:shadow-emerald-900/10 hover:bg-emerald-700 dark:hover:bg-emerald-600'
-        }`}>
-          {downloadingId === file.id ? <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></div> : <><DownloadIcon className="w-4 h-4" /><span>Download</span></>}
-        </a>
-      </div>
-    </div>
-  );
-
-  const RecentFileCard: React.FC<{ file: AcademicFile & { moduleCode: string; moduleId: string }; delay: number }> = ({ file, delay }) => {
-    const module = modules.find(m => m.id === file.moduleId);
-    const moduleName = module ? module.name : file.moduleCode;
-    return (
-      <div 
-        className="group bg-white dark:bg-[#1E1E1E] p-8 sm:p-10 rounded-[2.5rem] border border-slate-100 dark:border-white/5 hover:border-emerald-100 dark:hover:border-emerald-500/30 transition-all duration-500 hover:shadow-2xl flex flex-col h-full animate-fade-in relative overflow-hidden"
-        style={{ animationDelay: `${delay}ms` }}
-      >
-        <div className="flex items-center justify-between mb-6 relative z-10">
-          <div className="flex items-center space-x-3">
-             <div className={`w-3 h-3 rounded-full animate-pulse ${file.type === 'Notes' ? 'bg-emerald-500' : 'bg-teal-500'}`}></div>
-             <span className="text-[10px] font-black bg-emerald-50 dark:bg-black text-emerald-600 dark:text-emerald-400 px-3 py-1.5 rounded-xl uppercase tracking-tighter border dark:border-white/5">
-              {file.moduleCode}
-            </span>
-          </div>
-          <span className={`text-[9px] font-bold uppercase tracking-widest ${file.type === 'Notes' ? 'text-emerald-400' : 'text-teal-400'}`}>
-            {file.type === 'Notes' ? 'Note' : 'Gaka'}
-          </span>
-        </div>
-        <div className="flex-grow relative z-10">
-          <h4 className="text-[12px] font-bold text-slate-400 dark:text-white/30 uppercase tracking-[0.1em] mb-3 line-clamp-1">{moduleName}</h4>
-          <h3 className="text-xl sm:text-2xl font-black text-slate-800 dark:text-white/90 leading-[1.25] mb-8 line-clamp-2 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors tracking-tight">
-            {file.title}
-          </h3>
-        </div>
-        <button onClick={() => navigateTo('detail', module)} className="relative z-10 w-full py-5 bg-slate-50 dark:bg-black text-slate-600 dark:text-white/40 font-bold text-[11px] uppercase tracking-[0.2em] rounded-2xl hover:bg-emerald-600 dark:hover:bg-emerald-500 hover:text-white transition-all active:scale-95 flex items-center justify-center gap-3 border border-slate-100 dark:border-white/5 group-hover:border-transparent group-hover:shadow-lg group-hover:shadow-emerald-100 dark:group-hover:shadow-emerald-900/40">
-          <span>View Resources</span>
-          <ChevronRightIcon className="w-4 h-4" />
-        </button>
-      </div>
-    );
-  };
-
   if (isLoading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-white dark:bg-black transition-colors duration-500">
@@ -357,6 +286,7 @@ const App: React.FC = () => {
                 </button>
               </div>
             </div>
+            
             {recentFiles.length > 0 && (
               <div className="w-full max-w-6xl mb-12 px-4 animate-fade-in">
                 <div className="flex items-center justify-between mb-10">
@@ -366,128 +296,138 @@ const App: React.FC = () => {
                   </div>
                   <button onClick={() => navigateTo('modules')} className="text-[10px] font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 transition-colors">View All</button>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-10">{recentFiles.map((file, idx) => <RecentFileCard key={file.id} file={file} delay={idx * 100} />)}</div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-10">
+                   {recentFiles.map((file, idx) => (
+                      <div key={file.id} className="group bg-white dark:bg-[#1E1E1E] p-8 sm:p-10 rounded-[2.5rem] border border-slate-100 dark:border-white/5 hover:border-emerald-100 dark:hover:border-emerald-500/30 transition-all duration-500 hover:shadow-2xl flex flex-col h-full animate-fade-in relative overflow-hidden" style={{ animationDelay: `${idx * 100}ms` }}>
+                         <div className="flex justify-between items-center mb-6 z-10">
+                           <span className="text-[10px] font-black bg-emerald-50 dark:bg-black text-emerald-600 dark:text-emerald-400 px-3 py-1.5 rounded-xl uppercase tracking-tighter border dark:border-white/5">{file.moduleCode}</span>
+                           <span className="text-[9px] font-bold uppercase tracking-widest text-slate-400">{file.type}</span>
+                         </div>
+                         <h3 className="text-xl font-black text-slate-800 dark:text-white/90 leading-tight mb-8 line-clamp-2 min-h-[3rem] tracking-tight">{file.title}</h3>
+                         <button onClick={() => navigateTo('detail', modules.find(m => m.id === file.moduleId))} className="w-full py-5 bg-slate-50 dark:bg-black text-slate-600 dark:text-white/40 font-bold text-[11px] uppercase tracking-[0.2em] rounded-2xl hover:bg-emerald-600 dark:hover:bg-emerald-500 hover:text-white transition-all">Open Resources</button>
+                      </div>
+                   ))}
+                </div>
               </div>
             )}
           </div>
         )}
 
-        {currentView === 'about' && (
-          <div className="animate-fade-in max-w-5xl mx-auto py-4 sm:py-12">
-            <div className="bg-white dark:bg-[#1E1E1E] rounded-[2rem] sm:rounded-[3.5rem] p-8 sm:p-24 shadow-sm border border-slate-100 dark:border-white/5 relative overflow-hidden">
-               <div className="absolute top-0 right-0 w-48 h-48 sm:w-64 sm:h-64 bg-emerald-50 dark:bg-emerald-400/5 rounded-full -mr-24 -mt-24 sm:-mr-32 sm:-mt-32 opacity-50 transition-colors"></div>
-               <h2 className="text-3xl sm:text-7xl font-extrabold text-slate-900 dark:text-white/90 mb-8 sm:mb-12 leading-tight tracking-tight relative break-words">Academic <span className="gradient-text">Efficiency.</span></h2>
-               <div className="space-y-10 sm:space-y-16 text-slate-600 dark:text-white/60 leading-relaxed text-base sm:text-lg font-normal relative">
-                <section>
-                  <h3 className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-[0.3em] mb-4 sm:mb-6">Objective</h3>
-                  <p className="text-xl sm:text-3xl font-semibold text-slate-800 dark:text-white/90 tracking-tight leading-snug">GAKA bridges the gap between students and their course materials.</p>
-                  <p className="mt-6 sm:mt-8">By providing a unified interface for Mbeya University of Science and Technology (MUST) resources, we ensure that focus remains on learning rather than logistics.</p>
-                </section>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-10">
-                  <div className="bg-slate-50 dark:bg-[#282828] p-8 sm:p-10 rounded-[1.5rem] sm:rounded-[2rem] border border-slate-100 dark:border-white/5 shadow-sm">
-                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-white/40 mb-3">Dev Team</h4>
-                    <p className="text-slate-900 dark:text-white font-bold text-lg sm:text-xl mb-1">Softlink Africa</p>
-                    <p className="text-sm sm:text-base font-normal">Modern engineering optimized for mobile environments.</p>
-                  </div>
-                  <div className="bg-emerald-600 dark:bg-emerald-500 p-8 sm:p-10 rounded-[1.5rem] sm:rounded-[2rem] text-white shadow-xl shadow-emerald-100 dark:shadow-emerald-900/10 group">
-                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-emerald-100/60 mb-3">Lead Developer</h4>
-                    <p className="font-bold text-xl sm:text-2xl mb-4">Cleven Samwel</p>
-                    <a href="https://wa.me/255685208576" target="_blank" rel="noopener noreferrer" className="inline-block mt-2 text-[10px] font-bold uppercase tracking-widest bg-white/20 px-6 py-2.5 sm:px-8 sm:py-3 rounded-full hover:bg-white/30 transition-all active:scale-95 shadow-sm">Connect</a>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
         {currentView === 'modules' && (
           <div className="animate-fade-in">
-            <div className="flex flex-col lg:flex-row lg:items-end justify-between mb-10 sm:mb-16 gap-8 sm:gap-10">
-              <div className="space-y-3 sm:space-y-4 px-1">
-                <h2 className="text-4xl sm:text-5xl font-extrabold text-slate-900 dark:text-white/90 tracking-tight">Modules</h2>
-                <div className="flex items-center space-x-3 sm:space-x-4">
-                  <div className="flex bg-emerald-100/50 dark:bg-[#1E1E1E] px-3 py-1.5 sm:px-4 sm:py-2 rounded-full border border-emerald-200/30 dark:border-white/5 shadow-sm">
-                     <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">Semester 1 | 2025/2026</span>
-                  </div>
-                  <div className="h-1 w-1 rounded-full bg-slate-300 dark:bg-white/10"></div>
-                  <span className="text-slate-400 dark:text-white/40 font-semibold text-sm sm:text-base tracking-tight">{filteredModules.length} Registered Modules</span>
-                </div>
-              </div>
-              <div className="relative w-full lg:w-[480px] group px-1">
-                <div className="absolute inset-y-0 left-6 sm:left-8 flex items-center pointer-events-none"><SearchIcon className="w-5 h-5 sm:w-6 h-6 text-slate-300 dark:text-white/20 group-focus-within:text-emerald-500 transition-colors" /></div>
-                <input type="text" placeholder="Search course code or name..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-16 sm:pl-20 pr-6 py-5 sm:py-7 bg-white dark:bg-[#1E1E1E] border border-slate-100 dark:border-white/5 rounded-2xl sm:rounded-3xl focus:ring-8 focus:ring-emerald-50 dark:focus:ring-emerald-500/5 focus:border-emerald-300 dark:focus:border-emerald-500 outline-none transition-all shadow-sm hover:shadow-md text-lg sm:text-xl font-medium placeholder:text-slate-200 dark:placeholder:text-white/10 text-slate-900 dark:text-white/90" />
-              </div>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-8">
-              {filteredModules.map((module, i) => <div key={module.id} className="animate-fade-in" style={{ animationDelay: `${i * 50}ms` }}><ModuleCard module={module} onClick={() => navigateTo('detail', module)} /></div>)}
-              {filteredModules.length === 0 && <div className="col-span-full py-16 sm:py-24 text-center"><p className="text-slate-400 dark:text-white/20 font-medium text-base sm:text-lg italic px-4">{modules.length === 0 ? "Building registry..." : "No matching modules found."}</p></div>}
-            </div>
+             <div className="flex flex-col lg:flex-row lg:items-end justify-between mb-10 sm:mb-16 gap-8">
+               <div className="space-y-3 px-1">
+                 <h2 className="text-4xl sm:text-5xl font-extrabold text-slate-900 dark:text-white/90 tracking-tight">Academic Modules</h2>
+                 <p className="text-slate-500 dark:text-white/40 font-medium">Verified resources curated for MUST Computer Science.</p>
+               </div>
+               <div className="relative w-full lg:w-[480px] group px-1">
+                 <div className="absolute inset-y-0 left-6 flex items-center pointer-events-none"><SearchIcon className="w-6 h-6 text-slate-300 dark:text-white/20 group-focus-within:text-emerald-500 transition-colors" /></div>
+                 <input type="text" placeholder="Search module code or title..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
+                   className="w-full pl-16 pr-6 py-5 sm:py-7 bg-white dark:bg-[#1E1E1E] border border-slate-100 dark:border-white/5 rounded-2xl sm:rounded-3xl focus:ring-8 focus:ring-emerald-50 dark:focus:ring-emerald-500/5 outline-none transition-all shadow-sm text-lg sm:text-xl font-medium text-slate-900 dark:text-white/90" />
+               </div>
+             </div>
+             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 pb-20">
+               {filteredModules.map((module, i) => <div key={module.id} className="animate-fade-in" style={{ animationDelay: `${i * 50}ms` }}><ModuleCard module={module} onClick={() => navigateTo('detail', module)} /></div>)}
+             </div>
           </div>
         )}
 
         {currentView === 'detail' && selectedModule && (
-          <div className="animate-fade-in max-w-5xl mx-auto pb-20 sm:pb-32">
-            <div className="mb-8 px-1"><button onClick={() => navigateTo('modules')} className="flex items-center text-slate-800 dark:text-white/60 font-bold text-[13px] sm:text-[14px] uppercase tracking-widest hover:text-emerald-600 dark:hover:text-emerald-400 transition-all group"><BackIcon className="mr-3 w-6 h-6 sm:w-7 sm:h-7 group-hover:-translate-x-2 transition-transform" />Back to Modules</button></div>
-            <div className="bg-gradient-to-br from-emerald-600 via-emerald-700 to-teal-900 dark:from-emerald-700 dark:via-emerald-800 dark:to-teal-950 p-8 sm:p-24 rounded-[2rem] sm:rounded-[3.5rem] text-white shadow-2xl shadow-emerald-100 dark:shadow-none mb-8 sm:mb-12 relative overflow-hidden">
-              <div className="relative z-10">
-                <div className="flex flex-wrap items-center gap-2 sm:gap-4 mb-8 sm:mb-10">
-                  <span className="bg-white/15 backdrop-blur-md px-4 py-1.5 sm:px-6 sm:py-2 rounded-full text-[10px] font-bold tracking-widest uppercase border border-white/10">{selectedModule.code}</span>
-                  <span className="bg-black/10 backdrop-blur-md px-4 py-1.5 sm:px-6 sm:py-2 rounded-full text-[10px] font-bold tracking-widest uppercase border border-white/10">{selectedModule.resources.length} Files Available</span>
-                </div>
-                <h2 className="text-3xl sm:text-7xl font-extrabold mb-6 sm:mb-8 leading-tight sm:leading-[1.05] tracking-tight max-w-4xl break-words">{selectedModule.name}</h2>
-              </div>
+          <div className="animate-fade-in max-w-5xl mx-auto pb-20">
+            <button onClick={() => navigateTo('modules')} className="flex items-center text-slate-800 dark:text-white/60 font-bold text-[13px] uppercase tracking-widest hover:text-emerald-600 mb-8 group transition-all">
+              <BackIcon className="mr-3 w-6 h-6 group-hover:-translate-x-2 transition-transform" /> Back to Directory
+            </button>
+            <div className="bg-emerald-600 dark:bg-emerald-700 p-8 sm:p-20 rounded-[2.5rem] text-white shadow-2xl mb-8 relative overflow-hidden">
+               <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-32 -mt-32"></div>
+               <span className="bg-white/10 px-4 py-1.5 rounded-full text-[10px] font-bold tracking-widest uppercase border border-white/10 mb-6 inline-block">{selectedModule.code}</span>
+               <h2 className="text-3xl sm:text-6xl font-extrabold mb-6 leading-tight tracking-tight">{selectedModule.name}</h2>
+               <p className="text-emerald-50/70 max-w-2xl font-medium">{selectedModule.description}</p>
             </div>
-            <div className="bg-white dark:bg-[#1E1E1E] rounded-[1.5rem] sm:rounded-[3rem] p-6 sm:p-16 shadow-sm border border-slate-100 dark:border-white/5 transition-colors duration-500">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-10 sm:mb-12">
-                <h3 className="text-2xl sm:text-3xl font-bold text-slate-800 dark:text-white/90">Resources</h3>
-                <div className="flex bg-slate-100/50 dark:bg-black/40 p-1.5 rounded-2xl w-full sm:w-fit animate-fade-in shadow-inner border dark:border-white/5">
-                  {['All', 'Notes', 'Past Paper'].map((v) => <button key={v} onClick={() => setFilterType(v as any)} className={`flex-1 sm:flex-none px-4 sm:px-8 py-2.5 sm:py-3 rounded-xl text-[10px] sm:text-[11px] font-bold uppercase tracking-widest transition-all ${filterType === v ? 'bg-emerald-600 dark:bg-emerald-500 text-white shadow-lg dark:shadow-emerald-900/10' : 'text-slate-400 dark:text-white/40 hover:text-slate-600 dark:hover:text-white/80'}`}>{v === 'Past Paper' ? 'Gaka' : v.toUpperCase()}</button>)}
+            <div className="bg-white dark:bg-[#1E1E1E] rounded-[2.5rem] p-6 sm:p-12 border border-slate-100 dark:border-white/5 transition-colors">
+              <div className="flex flex-col sm:flex-row items-center justify-between mb-10 gap-4">
+                <h3 className="text-2xl font-bold text-slate-800 dark:text-white/90">Resources</h3>
+                <div className="flex bg-slate-50 dark:bg-black p-1 rounded-xl w-full sm:w-fit border dark:border-white/5">
+                  {['All', 'Notes', 'Past Paper'].map((v) => <button key={v} onClick={() => setFilterType(v as any)} className={`flex-1 px-4 py-2.5 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all ${filterType === v ? 'bg-emerald-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-600 dark:hover:text-white/80'}`}>{v}</button>)}
                 </div>
               </div>
               <div className="space-y-4">
-                {filteredResources.map((file, i) => <ResourceItem key={file.id} file={file} delay={i * 80} />)}
-                {filteredResources.length === 0 && <div className="text-center py-16 sm:py-24 bg-slate-50/50 dark:bg-black/20 rounded-3xl border border-dashed border-slate-200 dark:border-white/5 px-4"><p className="text-slate-400 dark:text-white/20 font-medium text-base italic">No matching resources found.</p></div>}
+                {filteredResources.map((file, i) => (
+                  <div key={file.id} className="group flex flex-col sm:flex-row items-center justify-between p-6 bg-slate-50 dark:bg-black/20 rounded-3xl border border-transparent hover:border-emerald-100 dark:hover:border-emerald-900/40 transition-all">
+                    <div className="flex items-center space-x-5 w-full mb-4 sm:mb-0">
+                      <div className="w-14 h-14 bg-white dark:bg-[#1E1E1E] rounded-2xl flex items-center justify-center text-emerald-600 dark:text-emerald-400 shadow-sm transition-transform group-hover:scale-110"><FileIcon className="w-6 h-6" /></div>
+                      <div>
+                        <h4 className="font-bold text-slate-800 dark:text-white/90">{file.title}</h4>
+                        <span className="text-[9px] font-bold uppercase tracking-widest text-slate-400">{file.type} • Verified</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 w-full sm:w-auto">
+                      <a href={file.viewUrl} target="_blank" rel="noopener noreferrer" className="p-4 bg-white dark:bg-[#1E1E1E] text-slate-400 dark:text-white/20 rounded-2xl hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors shadow-sm"><ViewIcon className="w-5 h-5" /></a>
+                      <a href={file.downloadUrl} className="flex-1 sm:flex-none flex items-center justify-center space-x-2 px-8 py-4 bg-emerald-600 text-white rounded-2xl font-black text-[11px] uppercase tracking-widest shadow-lg hover:bg-emerald-700 transition-all active:scale-95"><DownloadIcon className="w-4 h-4" /> <span>Download</span></a>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
         )}
+
+        {currentView === 'about' && (
+          <div className="max-w-4xl mx-auto py-12 px-2 animate-fade-in">
+             <h2 className="text-4xl sm:text-7xl font-extrabold text-slate-900 dark:text-white/90 mb-12 tracking-tight">Built for <span className="gradient-text">Academic Success.</span></h2>
+             <div className="prose prose-lg dark:prose-invert space-y-12 text-slate-600 dark:text-white/60 leading-relaxed">
+               <p className="text-xl sm:text-2xl font-medium tracking-tight">GAKA Portal is a specialized academic repository designed to bypass the complexity of university portals and fragmented file sharing.</p>
+               <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 pt-8">
+                  <div className="p-10 bg-emerald-50 dark:bg-emerald-900/10 rounded-3xl border border-emerald-100 dark:border-emerald-900/20 shadow-sm hover:shadow-lg transition-shadow">
+                    <h4 className="text-emerald-800 dark:text-emerald-400 font-black text-xl mb-4">The Objective</h4>
+                    <p className="text-emerald-700/80 dark:text-emerald-300/60 leading-relaxed text-base font-normal">Provide MUST CS students with zero-friction access to the lecture materials they need, when they need them.</p>
+                  </div>
+                  <div className="p-10 bg-slate-50 dark:bg-white/5 rounded-3xl border border-slate-100 dark:border-white/10 shadow-sm hover:shadow-lg transition-shadow">
+                    <h4 className="text-slate-900 dark:text-white font-black text-xl mb-4">Softlink Africa</h4>
+                    <p className="leading-relaxed text-base font-normal">Engineering software solutions that empower students and professionals across Africa.</p>
+                  </div>
+               </div>
+               <div className="pt-20 text-center border-t border-slate-100 dark:border-white/5">
+                 <p className="text-[10px] font-bold uppercase tracking-[0.4em] opacity-40">Created by Cleven Samwel</p>
+               </div>
+             </div>
+          </div>
+        )}
       </main>
 
-      {/* Persistence Standalone Installation Banner (Pinterest-style UI) */}
+      {/* Standalone Application Installation Prompter (Pinterest Style) */}
       {showInstallBanner && !isStandalone && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[92%] max-w-md z-[100] animate-slide-in">
-          <div className="bg-white/95 dark:bg-[#1E1E1E]/95 backdrop-blur-2xl border border-emerald-500/10 p-5 rounded-[2.5rem] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.5)] flex flex-col gap-4">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[92%] max-w-md z-[150] animate-slide-in">
+          <div className="bg-white/95 dark:bg-[#1E1E1E]/95 backdrop-blur-2xl border border-emerald-500/10 p-6 rounded-[2.5rem] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.5)] flex flex-col gap-5">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
-                <div className="w-14 h-14 bg-emerald-600 dark:bg-emerald-500 rounded-2xl flex items-center justify-center text-white font-black text-2xl shadow-xl shadow-emerald-500/20">
+                <div className="w-16 h-16 bg-emerald-600 dark:bg-emerald-500 rounded-3xl flex items-center justify-center text-white font-black text-3xl shadow-xl shadow-emerald-500/20">
                   G
                 </div>
                 <div>
-                  <h4 className="font-bold text-slate-900 dark:text-white text-base">GAKA Portal</h4>
-                  <p className="text-slate-500 dark:text-white/40 text-[11px] leading-tight max-w-[180px]">
-                    Install to your desktop or home screen for faster, offline-ready access.
+                  <h4 className="font-bold text-slate-900 dark:text-white text-lg">GAKA Portal</h4>
+                  <p className="text-slate-500 dark:text-white/40 text-[11px] leading-snug">
+                    Install as a standalone application for faster, offline-ready access.
                   </p>
                 </div>
               </div>
               <button onClick={dismissInstall} className="p-2 text-slate-300 dark:text-white/10 hover:text-slate-500 transition-colors">
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </div>
             
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-3">
                {isIOS ? (
                  <div className="bg-emerald-50 dark:bg-emerald-500/5 p-4 rounded-2xl border border-emerald-100/50 dark:border-emerald-500/10">
-                   <p className="text-[11px] font-medium text-emerald-800 dark:text-emerald-400 text-center">
-                     Tap <span className="inline-block mx-1"><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" /></svg></span> then <b>"Add to Home Screen"</b>
+                   <p className="text-[12px] font-medium text-emerald-800 dark:text-emerald-400 text-center">
+                     To Install: Tap <span className="inline-block mx-1"><svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" /></svg></span> then select <b>"Add to Home Screen"</b>
                    </p>
                  </div>
                ) : (
                  <button 
-                   onClick={handleInstallClick} 
-                   className="w-full py-4 bg-emerald-600 dark:bg-emerald-500 text-white rounded-2xl font-black text-sm uppercase tracking-wider shadow-lg shadow-emerald-500/20 active:scale-95 transition-all"
+                   onClick={handleNativeInstall} 
+                   className="w-full py-5 bg-emerald-600 dark:bg-emerald-500 text-white rounded-2xl font-black text-[13px] uppercase tracking-widest shadow-xl shadow-emerald-500/20 active:scale-95 transition-all hover:bg-emerald-700"
                  >
-                   Install App
+                   Install GAKA App
                  </button>
                )}
             </div>
@@ -495,20 +435,8 @@ const App: React.FC = () => {
         </div>
       )}
 
-      <footer className="bg-white dark:bg-black border-t border-slate-50 dark:border-white/5 py-12 transition-colors duration-500">
-        <div className="container mx-auto px-6 sm:px-8 max-w-7xl text-center md:text-left">
-          <div className="flex flex-col md:flex-row justify-between items-center md:items-start gap-10">
-            <div className="space-y-4">
-              <div className="flex items-center justify-center md:justify-start space-x-3"><div className="w-9 h-9 bg-emerald-600 dark:bg-emerald-500 rounded-xl flex items-center justify-center text-white font-black text-lg">G</div><span className="text-lg font-extrabold tracking-tight text-slate-900 dark:text-white/90 uppercase">GAKA Portal</span></div>
-              <p className="text-slate-400 dark:text-white/30 text-xs sm:text-sm font-medium max-w-sm leading-relaxed mx-auto md:mx-0">Centralized academic hub for MUST Computer Science students.</p>
-            </div>
-            <div className="flex flex-col sm:flex-row gap-8 sm:gap-12 text-sm">
-              <div className="space-y-2"><h4 className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest">Connect</h4><a href="https://wa.me/255685208576" className="block text-slate-600 dark:text-white/40 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors font-medium">Support Channel</a></div>
-              <div className="space-y-2"><h4 className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest">Team</h4><p className="text-slate-900 dark:text-white/90 font-bold">Cleven Samwel</p></div>
-            </div>
-          </div>
-          <div className="mt-12 pt-8 border-t border-slate-50 dark:border-white/5 text-center"><p className="text-slate-300 dark:text-white/10 text-[9px] font-bold uppercase tracking-[0.3em]">&copy; {new Date().getFullYear()} Softlink Africa | MUST ICT</p></div>
-        </div>
+      <footer className="py-16 px-6 border-t border-slate-50 dark:border-white/5 text-center transition-colors duration-500">
+         <p className="text-[9px] font-bold text-slate-300 dark:text-white/10 uppercase tracking-[0.4em]">&copy; {new Date().getFullYear()} SOFTLINK AFRICA | MUST ICT</p>
       </footer>
       <Analytics />
     </div>

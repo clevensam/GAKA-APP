@@ -1,15 +1,15 @@
 
 {
-  "id": "gaka-portal-v1",
-  "name": "GAKA | MUST Academic Portal",
+  "id": "gaka-portal-native-v1",
+  "name": "GAKA | Academic Portal",
   "short_name": "GAKA",
-  "description": "Centralized, lightweight academic repository for Computer Science students at MUST.",
-  "start_url": "./?utm_source=pwa",
+  "description": "The official standalone academic portal for Computer Science students. Access notes and papers offline.",
+  "start_url": "./?mode=standalone",
   "display": "standalone",
   "display_override": ["window-controls-overlay", "minimal-ui"],
   "background_color": "#ffffff",
   "theme_color": "#059669",
-  "orientation": "portrait",
+  "orientation": "any",
   "scope": "./",
   "categories": ["education", "productivity", "reference"],
   "dir": "ltr",
@@ -35,22 +35,22 @@
       "sizes": "1080x1920",
       "type": "image/svg+xml",
       "form_factor": "narrow",
-      "label": "GAKA Home Screen"
+      "label": "GAKA Mobile App Interface"
     },
     {
-      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1920' height='1080' viewBox='0 0 1920 1080'%3E%3Crect width='1920' height='1080' fill='%23059669'/%3E%3Ctext x='960' y='540' fill='white' font-size='100' font-family='sans-serif' text-anchor='middle' font-weight='bold'%3EGAKA PORTAL - DESKTOP VIEW%3C/text%3E%3C/svg%3E",
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1920' height='1080' viewBox='0 0 1920 1080'%3E%3Crect width='1920' height='1080' fill='%23059669'/%3E%3Ctext x='960' y='540' fill='white' font-size='100' font-family='sans-serif' text-anchor='middle' font-weight='bold'%3EGAKA PORTAL - DESKTOP EXPERIENCE%3C/text%3E%3C/svg%3E",
       "sizes": "1920x1080",
       "type": "image/svg+xml",
       "form_factor": "wide",
-      "label": "Desktop Experience"
+      "label": "GAKA Standalone Desktop Experience"
     }
   ],
   "shortcuts": [
     {
-      "name": "View Modules",
-      "short_name": "Modules",
+      "name": "Quick Search",
+      "short_name": "Search",
       "url": "./modules",
-      "icons": [{ "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'%3E%3Cpath d='M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.75 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.75 0-3.332.477-4.5 1.253'/%3E%3C/svg%3E", "sizes": "96x96" }]
+      "icons": [{ "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23059669' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E", "sizes": "96x96" }]
     }
   ]
 }
