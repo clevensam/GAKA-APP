@@ -10,7 +10,6 @@ import { Analytics } from '@vercel/analytics/react';
 // --- SUPABASE CONFIGURATION ---
 const SUPABASE_URL = "https://tgnljtmvigschazflxis.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_nXfVOz8QEqs1mT0sxx_nYw_P8fmPVmI";
-
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const transformToDirectDownload = (url: string): string => {
@@ -40,11 +39,19 @@ const App: React.FC = () => {
   const [recentFiles, setRecentFiles] = useState<(AcademicFile & { moduleCode: string; moduleId: string })[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // Navigation State
   const [currentView, setCurrentView] = useState<ViewState>('home');
   const [selectedModule, setSelectedModule] = useState<Module | null>(null);
+  
+  // UI State
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<ResourceType | 'All'>('All');
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  
+  // PWA State
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [showInstallBanner, setShowInstallBanner] = useState(false);
 
   const [isDark, setIsDark] = useState(() => {
     const saved = localStorage.getItem('gaka-theme');
@@ -52,17 +59,60 @@ const App: React.FC = () => {
     return window.matchMedia('(prefers-color-scheme: dark)').matches;
   });
 
+  // Theme Sync
   useEffect(() => {
     if (isDark) {
       document.documentElement.classList.add('dark');
-      document.body.classList.add('dark');
       localStorage.setItem('gaka-theme', 'dark');
     } else {
       document.documentElement.classList.remove('dark');
-      document.body.classList.remove('dark');
       localStorage.setItem('gaka-theme', 'light');
     }
   }, [isDark]);
+
+  // Routing Simulation & PWA Prompt
+  useEffect(() => {
+    const handlePopState = () => {
+      const path = window.location.pathname;
+      if (path === '/modules') setCurrentView('modules');
+      else if (path === '/about') setCurrentView('about');
+      else if (path.startsWith('/module/')) setCurrentView('detail');
+      else setCurrentView('home');
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    
+    const handleBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setShowInstallBanner(true);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
+  }, []);
+
+  const navigateTo = (view: ViewState, module?: Module) => {
+    if (module) setSelectedModule(module);
+    setCurrentView(view);
+    
+    // Update URL without hash or reload
+    const path = view === 'home' ? '/' : `/${view}${module ? `/${module.id}` : ''}`;
+    window.history.pushState({}, '', path);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleInstallClick = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') setShowInstallBanner(false);
+    setDeferredPrompt(null);
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -122,12 +172,6 @@ const App: React.FC = () => {
     };
     fetchData();
   }, []);
-
-  const navigateTo = (view: ViewState, module?: Module) => {
-    if (module) setSelectedModule(module);
-    setCurrentView(view);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
 
   const filteredModules = useMemo(() => {
     const q = searchQuery.toLowerCase();
@@ -214,7 +258,7 @@ const App: React.FC = () => {
             </span>
           </div>
           <span className={`text-[9px] font-bold uppercase tracking-widest ${file.type === 'Notes' ? 'text-emerald-400' : 'text-teal-400'}`}>
-            {file.type === 'Notes' ? 'Note' : 'Past Paper'}
+            {file.type === 'Notes' ? 'Note' : 'Gaka'}
           </span>
         </div>
         <div className="flex-grow relative z-10">
@@ -269,6 +313,7 @@ const App: React.FC = () => {
             )}
           </nav>
         )}
+        
         {error && (
           <div className="mb-12 p-6 bg-amber-50/50 dark:bg-[#1E1E1E] border border-amber-100 dark:border-amber-900/30 rounded-3xl text-amber-800 dark:text-amber-400 text-sm font-medium flex flex-col sm:flex-row items-center justify-between animate-fade-in gap-4 shadow-sm">
             <div className="flex items-center">
@@ -281,6 +326,7 @@ const App: React.FC = () => {
             <button onClick={() => window.location.reload()} className="bg-white dark:bg-[#282828] px-6 py-2.5 rounded-full shadow-sm hover:shadow-md transition-all active:scale-95 text-amber-600 dark:text-amber-300 border border-amber-100 dark:border-white/5 font-semibold">Retry</button>
           </div>
         )}
+
         {currentView === 'home' && (
           <div className="animate-fade-in flex flex-col items-center">
             <div className="text-center pt-4 pb-16 lg:pt-32">
@@ -317,6 +363,7 @@ const App: React.FC = () => {
             )}
           </div>
         )}
+
         {currentView === 'about' && (
           <div className="animate-fade-in max-w-5xl mx-auto py-4 sm:py-12">
             <div className="bg-white dark:bg-[#1E1E1E] rounded-[2rem] sm:rounded-[3.5rem] p-8 sm:p-24 shadow-sm border border-slate-100 dark:border-white/5 relative overflow-hidden">
@@ -344,6 +391,7 @@ const App: React.FC = () => {
             </div>
           </div>
         )}
+
         {currentView === 'modules' && (
           <div className="animate-fade-in">
             <div className="flex flex-col lg:flex-row lg:items-end justify-between mb-10 sm:mb-16 gap-8 sm:gap-10">
@@ -369,6 +417,7 @@ const App: React.FC = () => {
             </div>
           </div>
         )}
+
         {currentView === 'detail' && selectedModule && (
           <div className="animate-fade-in max-w-5xl mx-auto pb-20 sm:pb-32">
             <div className="mb-8 px-1"><button onClick={() => navigateTo('modules')} className="flex items-center text-slate-800 dark:text-white/60 font-bold text-[13px] sm:text-[14px] uppercase tracking-widest hover:text-emerald-600 dark:hover:text-emerald-400 transition-all group"><BackIcon className="mr-3 w-6 h-6 sm:w-7 sm:h-7 group-hover:-translate-x-2 transition-transform" />Back to Modules</button></div>
@@ -396,6 +445,7 @@ const App: React.FC = () => {
           </div>
         )}
       </main>
+
       <footer className="bg-white dark:bg-black border-t border-slate-50 dark:border-white/5 py-12 transition-colors duration-500">
         <div className="container mx-auto px-6 sm:px-8 max-w-7xl text-center md:text-left">
           <div className="flex flex-col md:flex-row justify-between items-center md:items-start gap-10">
@@ -411,6 +461,26 @@ const App: React.FC = () => {
           <div className="mt-12 pt-8 border-t border-slate-50 dark:border-white/5 text-center"><p className="text-slate-300 dark:text-white/10 text-[9px] font-bold uppercase tracking-[0.3em]">&copy; {new Date().getFullYear()} Softlink Africa | MUST ICT</p></div>
         </div>
       </footer>
+
+      {/* Floating PWA Install CTA */}
+      {showInstallBanner && (
+          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-md z-[100] animate-slide-in">
+            <div className="bg-white dark:bg-[#1E1E1E] border border-slate-100 dark:border-white/10 p-5 rounded-3xl shadow-2xl flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-emerald-600 dark:bg-emerald-500 rounded-2xl flex items-center justify-center text-white font-black text-xl shadow-lg shadow-emerald-500/20">G</div>
+                <div>
+                  <h4 className="font-bold text-slate-900 dark:text-white text-sm">Install GAKA App</h4>
+                  <p className="text-slate-500 dark:text-white/40 text-[11px]">Access resources faster from home screen</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                 <button onClick={() => setShowInstallBanner(false)} className="px-3 py-2 text-[10px] font-bold text-slate-400 dark:text-white/20 uppercase hover:text-slate-600 dark:hover:text-white/40 transition-colors">Later</button>
+                 <button onClick={handleInstallClick} className="px-6 py-2.5 bg-emerald-600 dark:bg-emerald-500 text-white rounded-xl text-[11px] font-black uppercase shadow-lg shadow-emerald-500/10 active:scale-95 transition-all">Install</button>
+              </div>
+            </div>
+          </div>
+        )}
+
       <Analytics />
     </div>
   );
