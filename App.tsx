@@ -45,17 +45,50 @@ const App: React.FC = () => {
   const [filterType, setFilterType] = useState<ResourceType | 'All'>('All');
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
-  // PWA & Installation State
+  // PWA Standalone Logic
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [showInstallBanner, setShowInstallBanner] = useState(false);
-  const [isIOS, setIsIOS] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
+  const [isIOS, setIsIOS] = useState(false);
 
   const [isDark, setIsDark] = useState(() => {
     const saved = localStorage.getItem('gaka-theme');
     if (saved) return saved === 'dark';
     return window.matchMedia('(prefers-color-scheme: dark)').matches;
   });
+
+  useEffect(() => {
+    // Detect Standalone (Installed) Mode
+    const checkStandalone = () => {
+      const standalone = window.matchMedia('(display-mode: standalone)').matches 
+        || (window.navigator as any).standalone 
+        || document.referrer.includes('android-app://');
+      setIsStandalone(standalone);
+    };
+
+    // Detect iOS
+    const appleDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+    setIsIOS(appleDevice);
+
+    checkStandalone();
+
+    const handleBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      // Show prompt if not already installed and not dismissed in this session
+      if (!isStandalone && !sessionStorage.getItem('gaka-install-dismissed')) {
+        setTimeout(() => setShowInstallBanner(true), 4000);
+      }
+    };
+
+    // For iOS, manually show instructions if not standalone
+    if (appleDevice && !isStandalone && !sessionStorage.getItem('gaka-install-dismissed')) {
+      setTimeout(() => setShowInstallBanner(true), 5000);
+    }
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+  }, [isStandalone]);
 
   useEffect(() => {
     if (isDark) {
@@ -69,44 +102,8 @@ const App: React.FC = () => {
     }
   }, [isDark]);
 
-  useEffect(() => {
-    // Detect if already installed/standalone
-    const isRunningStandalone = window.matchMedia('(display-mode: standalone)').matches 
-      || (window.navigator as any).standalone 
-      || document.referrer.includes('android-app://');
-    
-    setIsStandalone(isRunningStandalone);
-
-    // Detect platform
-    const isApple = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
-    setIsIOS(isApple);
-
-    // Capture the install prompt for Android/Chrome
-    const handleBeforeInstallPrompt = (e: Event) => {
-      e.preventDefault();
-      setDeferredPrompt(e);
-      if (!isRunningStandalone) {
-        // Delayed show for better UX
-        const timer = setTimeout(() => setShowInstallBanner(true), 2000);
-        return () => clearTimeout(timer);
-      }
-    };
-
-    // For iOS, manually show if not standalone
-    if (isApple && !isRunningStandalone) {
-      const dismissed = localStorage.getItem('gaka-pwa-dismissed');
-      if (!dismissed) {
-        const timer = setTimeout(() => setShowInstallBanner(true), 3000);
-        return () => clearTimeout(timer);
-      }
-    }
-
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-    return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-  }, []);
-
   const handleInstallClick = async () => {
-    if (isIOS) return; // iOS users see instructions instead
+    if (isIOS) return; // Instructions handled in UI
     if (!deferredPrompt) return;
     deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
@@ -116,7 +113,7 @@ const App: React.FC = () => {
 
   const dismissInstall = () => {
     setShowInstallBanner(false);
-    localStorage.setItem('gaka-pwa-dismissed', 'true');
+    sessionStorage.setItem('gaka-install-dismissed', 'true');
   };
 
   useEffect(() => {
@@ -170,7 +167,7 @@ const App: React.FC = () => {
         setError(null);
       } catch (err: any) {
         console.error("Registry Sync Failure:", err);
-        setError("Unable to retrieve registered modules at this time.");
+        setError("Unable to sync with academic registry.");
       } finally {
         setIsLoading(false);
       }
@@ -457,25 +454,41 @@ const App: React.FC = () => {
         )}
       </main>
 
-      {/* Persistence Standalone Installation Banner */}
+      {/* Persistence Standalone Installation Banner (Pinterest-style UI) */}
       {showInstallBanner && !isStandalone && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[92%] max-w-md z-[100] animate-slide-in">
-          <div className="bg-white/90 dark:bg-[#1E1E1E]/90 backdrop-blur-2xl border border-emerald-500/10 p-5 rounded-[2.5rem] shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] flex items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <div className="w-14 h-14 bg-emerald-600 dark:bg-emerald-500 rounded-2xl flex items-center justify-center text-white font-black text-2xl shadow-xl shadow-emerald-500/20">
-                G
+          <div className="bg-white/95 dark:bg-[#1E1E1E]/95 backdrop-blur-2xl border border-emerald-500/10 p-5 rounded-[2.5rem] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.5)] flex flex-col gap-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 bg-emerald-600 dark:bg-emerald-500 rounded-2xl flex items-center justify-center text-white font-black text-2xl shadow-xl shadow-emerald-500/20">
+                  G
+                </div>
+                <div>
+                  <h4 className="font-bold text-slate-900 dark:text-white text-base">GAKA Portal</h4>
+                  <p className="text-slate-500 dark:text-white/40 text-[11px] leading-tight max-w-[180px]">
+                    Install to your desktop or home screen for faster, offline-ready access.
+                  </p>
+                </div>
               </div>
-              <div>
-                <h4 className="font-bold text-slate-900 dark:text-white text-sm">GAKA Portal</h4>
-                <p className="text-slate-500 dark:text-white/40 text-[11px] leading-tight">
-                  {isIOS ? "Tap Share → Add to Home Screen" : "Install as a standalone app"}
-                </p>
-              </div>
+              <button onClick={dismissInstall} className="p-2 text-slate-300 dark:text-white/10 hover:text-slate-500 transition-colors">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
             </div>
-            <div className="flex items-center gap-2">
-               <button onClick={dismissInstall} className="px-3 py-2 text-[10px] font-bold text-slate-400 dark:text-white/20 uppercase tracking-widest">Later</button>
-               {!isIOS && (
-                 <button onClick={handleInstallClick} className="px-6 py-3 bg-emerald-600 dark:bg-emerald-500 text-white rounded-xl text-[11px] font-black uppercase shadow-lg shadow-emerald-500/10 active:scale-95 transition-all">Install</button>
+            
+            <div className="flex flex-col gap-2">
+               {isIOS ? (
+                 <div className="bg-emerald-50 dark:bg-emerald-500/5 p-4 rounded-2xl border border-emerald-100/50 dark:border-emerald-500/10">
+                   <p className="text-[11px] font-medium text-emerald-800 dark:text-emerald-400 text-center">
+                     Tap <span className="inline-block mx-1"><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" /></svg></span> then <b>"Add to Home Screen"</b>
+                   </p>
+                 </div>
+               ) : (
+                 <button 
+                   onClick={handleInstallClick} 
+                   className="w-full py-4 bg-emerald-600 dark:bg-emerald-500 text-white rounded-2xl font-black text-sm uppercase tracking-wider shadow-lg shadow-emerald-500/20 active:scale-95 transition-all"
+                 >
+                   Install App
+                 </button>
                )}
             </div>
           </div>

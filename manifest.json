@@ -3,24 +3,27 @@
   "id": "gaka-portal-v1",
   "name": "GAKA | MUST Academic Portal",
   "short_name": "GAKA",
-  "description": "Centralized Academic Repository for MUST CS Students",
-  "start_url": "./",
+  "description": "Centralized, lightweight academic repository for Computer Science students at MUST.",
+  "start_url": "./?utm_source=pwa",
   "display": "standalone",
   "display_override": ["window-controls-overlay", "minimal-ui"],
-  "background_color": "#000000",
+  "background_color": "#ffffff",
   "theme_color": "#059669",
   "orientation": "portrait",
   "scope": "./",
-  "categories": ["education", "productivity"],
+  "categories": ["education", "productivity", "reference"],
+  "dir": "ltr",
+  "lang": "en-US",
+  "prefer_related_applications": false,
   "icons": [
     {
-      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%23059669'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='central' text-anchor='middle' font-family='sans-serif' font-weight='900' font-size='60' fill='white'%3EG%3C/text%3E%3C/svg%3E",
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23059669'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='central' text-anchor='middle' font-family='sans-serif' font-weight='900' font-size='55' fill='white'%3EG%3C/text%3E%3C/svg%3E",
       "sizes": "192x192",
       "type": "image/svg+xml",
       "purpose": "any"
     },
     {
-      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%23059669'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='central' text-anchor='middle' font-family='sans-serif' font-weight='900' font-size='60' fill='white'%3EG%3C/text%3E%3C/svg%3E",
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23059669'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='central' text-anchor='middle' font-family='sans-serif' font-weight='900' font-size='55' fill='white'%3EG%3C/text%3E%3C/svg%3E",
       "sizes": "512x512",
       "type": "image/svg+xml",
       "purpose": "maskable"
@@ -28,10 +31,26 @@
   ],
   "screenshots": [
     {
-      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1080' height='1920' viewBox='0 0 1080 1920'%3E%3Crect width='1080' height='1920' fill='%23059669'/%3E%3Ctext x='540' y='960' fill='white' font-size='100' font-family='sans-serif' text-anchor='middle'%3EGAKA PORTAL%3C/text%3E%3C/svg%3E",
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1080' height='1920' viewBox='0 0 1080 1920'%3E%3Crect width='1080' height='1920' fill='%23059669'/%3E%3Ctext x='540' y='960' fill='white' font-size='80' font-family='sans-serif' text-anchor='middle' font-weight='bold'%3EGAKA ACADEMIC HUB%3C/text%3E%3C/svg%3E",
       "sizes": "1080x1920",
       "type": "image/svg+xml",
-      "form_factor": "narrow"
+      "form_factor": "narrow",
+      "label": "GAKA Home Screen"
+    },
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1920' height='1080' viewBox='0 0 1920 1080'%3E%3Crect width='1920' height='1080' fill='%23059669'/%3E%3Ctext x='960' y='540' fill='white' font-size='100' font-family='sans-serif' text-anchor='middle' font-weight='bold'%3EGAKA PORTAL - DESKTOP VIEW%3C/text%3E%3C/svg%3E",
+      "sizes": "1920x1080",
+      "type": "image/svg+xml",
+      "form_factor": "wide",
+      "label": "Desktop Experience"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "View Modules",
+      "short_name": "Modules",
+      "url": "./modules",
+      "icons": [{ "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'%3E%3Cpath d='M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.75 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.75 0-3.332.477-4.5 1.253'/%3E%3C/svg%3E", "sizes": "96x96" }]
     }
   ]
 }
