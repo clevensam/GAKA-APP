@@ -57,7 +57,7 @@ const App: React.FC = () => {
     return window.matchMedia('(prefers-color-scheme: dark)').matches;
   });
 
-  // Handle routing based on URL parameters (for shortcuts)
+  // Handle routing based on URL parameters (for PWA shortcuts)
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const viewParam = params.get('view');
@@ -182,7 +182,6 @@ const App: React.FC = () => {
   const navigateTo = (view: ViewState, module?: Module) => {
     if (module) setSelectedModule(module);
     setCurrentView(view);
-    // Sync the URL for clean refreshes if needed, though this is a state-based SPA
     const url = new URL(window.location.href);
     url.searchParams.delete('view');
     if (view === 'modules' || view === 'about') url.searchParams.set('view', view);
@@ -213,6 +212,51 @@ const App: React.FC = () => {
     setDownloadingId(fileId);
     setTimeout(() => setDownloadingId(null), 3000);
   };
+
+  const ResourceItem: React.FC<{ file: AcademicFile; moduleCode?: string; delay: number }> = ({ file, moduleCode, delay }) => (
+    <div 
+      className="group flex flex-col sm:flex-row sm:items-center justify-between p-5 sm:p-7 bg-white dark:bg-[#1E1E1E] hover:bg-slate-50 dark:hover:bg-[#282828] border border-slate-100 dark:border-white/5 hover:border-emerald-100 dark:hover:border-emerald-500/30 rounded-3xl transition-all duration-500 hover:shadow-xl animate-fade-in"
+      style={{ animationDelay: `${delay}ms` }}
+    >
+      <div className="flex items-center space-x-5 mb-5 sm:mb-0">
+        <div className={`w-12 h-12 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center flex-shrink-0 transition-all duration-500 group-hover:scale-105 ${
+          file.type === 'Notes' ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : 'bg-teal-50 dark:bg-teal-500/10 text-teal-600 dark:text-teal-400'
+        }`}>
+          <FileIcon className="w-6 h-6 sm:w-8 sm:h-8" />
+        </div>
+        <div className="min-w-0">
+          <div className="flex items-center space-x-2 mb-1">
+            {moduleCode && (
+              <span className="text-[9px] font-black bg-slate-100 dark:bg-black text-slate-500 dark:text-white/40 px-2 py-0.5 rounded-md uppercase tracking-tighter border dark:border-white/5">
+                {moduleCode}
+              </span>
+            )}
+            <span className={`text-[9px] font-bold uppercase tracking-widest ${file.type === 'Notes' ? 'text-emerald-500' : 'text-teal-500'}`}>
+              {file.type === 'Notes' ? 'Note' : 'Gaka'}
+            </span>
+          </div>
+          <h4 className="font-bold text-slate-800 dark:text-white/90 text-base sm:text-lg leading-tight break-words pr-4 group-hover:text-emerald-900 dark:group-hover:text-emerald-400 transition-colors">
+            {file.title}
+          </h4>
+        </div>
+      </div>
+      <div className="flex items-center justify-between sm:justify-end gap-3">
+        <div className="flex items-center gap-2">
+          <button onClick={() => handleShare(file.title)} className="w-11 h-11 flex items-center justify-center text-slate-400 dark:text-white/30 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-black rounded-full transition-all active:scale-90 border border-transparent hover:border-emerald-100 dark:hover:border-emerald-500/20">
+            <ShareIcon className="w-5 h-5" />
+          </button>
+          <a href={file.viewUrl} target="_blank" rel="noopener noreferrer" className="w-11 h-11 flex items-center justify-center bg-slate-100 dark:bg-[#282828] text-slate-500 dark:text-white/40 hover:bg-slate-200 dark:hover:bg-[#333333] hover:text-slate-800 dark:hover:text-white/90 rounded-2xl transition-all active:scale-90">
+            <ViewIcon className="w-5 h-5" />
+          </a>
+        </div>
+        <a href={file.downloadUrl} onClick={(e) => handleDownloadClick(e, file.id, file.downloadUrl)} className={`flex-1 sm:flex-none flex items-center justify-center space-x-3 px-6 py-4 sm:px-8 sm:py-4 font-bold text-xs rounded-2xl transition-all shadow-lg active:scale-95 ${
+          downloadingId === file.id ? 'bg-slate-800 dark:bg-black text-white shadow-none cursor-default' : 'bg-emerald-600 dark:bg-emerald-500 text-white shadow-emerald-100 dark:shadow-emerald-900/10 hover:bg-emerald-700 dark:hover:bg-emerald-600'
+        }`}>
+          {downloadingId === file.id ? <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></div> : <><DownloadIcon className="w-4 h-4" /><span>Download</span></>}
+        </a>
+      </div>
+    </div>
+  );
 
   if (isLoading) {
     return (
@@ -288,7 +332,6 @@ const App: React.FC = () => {
                 </button>
               </div>
             </div>
-            
             {recentFiles.length > 0 && (
               <div className="w-full max-w-6xl mb-12 px-4 animate-fade-in">
                 <div className="flex items-center justify-between mb-10">
@@ -299,38 +342,76 @@ const App: React.FC = () => {
                   <button onClick={() => navigateTo('modules')} className="text-[10px] font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 transition-colors">View All</button>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-10">
-                   {recentFiles.map((file, idx) => (
-                      <div key={file.id} className="group bg-white dark:bg-[#1E1E1E] p-8 sm:p-10 rounded-[2.5rem] border border-slate-100 dark:border-white/5 hover:border-emerald-100 dark:hover:border-emerald-500/30 transition-all duration-500 hover:shadow-2xl flex flex-col h-full animate-fade-in relative overflow-hidden" style={{ animationDelay: `${idx * 100}ms` }}>
-                         <div className="flex justify-between items-center mb-6 z-10">
-                           <span className="text-[10px] font-black bg-emerald-50 dark:bg-black text-emerald-600 dark:text-emerald-400 px-3 py-1.5 rounded-xl uppercase tracking-tighter border dark:border-white/5">{file.moduleCode}</span>
-                           <span className="text-[9px] font-bold uppercase tracking-widest text-slate-400">{file.type}</span>
-                         </div>
-                         <h3 className="text-xl font-black text-slate-800 dark:text-white/90 leading-tight mb-8 line-clamp-2 min-h-[3rem] tracking-tight">{file.title}</h3>
-                         <button onClick={() => navigateTo('detail', modules.find(m => m.id === file.moduleId))} className="w-full py-5 bg-slate-50 dark:bg-black text-slate-600 dark:text-white/40 font-bold text-[11px] uppercase tracking-[0.2em] rounded-2xl hover:bg-emerald-600 dark:hover:bg-emerald-500 hover:text-white transition-all">Open Resources</button>
-                      </div>
-                   ))}
+                   {recentFiles.map((file, idx) => {
+                      const module = modules.find(m => m.id === file.moduleId);
+                      return (
+                        <div 
+                          key={file.id} 
+                          className="group bg-white dark:bg-[#1E1E1E] p-8 sm:p-10 rounded-[2.5rem] border border-slate-100 dark:border-white/5 hover:border-emerald-100 dark:hover:border-emerald-500/30 transition-all duration-500 hover:shadow-2xl flex flex-col h-full animate-fade-in relative overflow-hidden" 
+                          style={{ animationDelay: `${idx * 100}ms` }}
+                        >
+                           <div className="flex justify-between items-center mb-6 z-10">
+                             <span className="text-[10px] font-black bg-emerald-50 dark:bg-black text-emerald-600 dark:text-emerald-400 px-3 py-1.5 rounded-xl uppercase tracking-tighter border dark:border-white/5">{file.moduleCode}</span>
+                             <span className="text-[9px] font-bold uppercase tracking-widest text-slate-400">{file.type === 'Past Paper' ? 'Gaka' : 'Notes'}</span>
+                           </div>
+                           <h3 className="text-xl font-black text-slate-800 dark:text-white/90 leading-tight mb-8 line-clamp-2 min-h-[3rem] tracking-tight">{file.title}</h3>
+                           <button onClick={() => navigateTo('detail', module)} className="w-full py-5 bg-slate-50 dark:bg-black text-slate-600 dark:text-white/40 font-bold text-[11px] uppercase tracking-[0.2em] rounded-2xl hover:bg-emerald-600 dark:hover:bg-emerald-500 hover:text-white transition-all active:scale-95 flex items-center justify-center gap-3">
+                              <span>Open Resources</span>
+                              <ChevronRightIcon className="w-4 h-4" />
+                           </button>
+                        </div>
+                      );
+                   })}
                 </div>
               </div>
             )}
           </div>
         )}
 
+        {currentView === 'about' && (
+          <div className="animate-fade-in max-w-5xl mx-auto py-4 sm:py-12">
+            <div className="bg-white dark:bg-[#1E1E1E] rounded-[2rem] sm:rounded-[3.5rem] p-8 sm:p-24 shadow-sm border border-slate-100 dark:border-white/5 relative overflow-hidden">
+               <div className="absolute top-0 right-0 w-48 h-48 sm:w-64 sm:h-64 bg-emerald-50 dark:bg-emerald-400/5 rounded-full -mr-24 -mt-24 sm:-mr-32 sm:-mt-32 opacity-50 transition-colors"></div>
+               <h2 className="text-3xl sm:text-7xl font-extrabold text-slate-900 dark:text-white/90 mb-8 sm:mb-12 leading-tight tracking-tight relative break-words">Academic <span className="gradient-text">Efficiency.</span></h2>
+               <div className="space-y-10 sm:space-y-16 text-slate-600 dark:text-white/60 leading-relaxed text-base sm:text-lg font-normal relative">
+                <section>
+                  <h3 className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-[0.3em] mb-4 sm:mb-6">Objective</h3>
+                  <p className="text-xl sm:text-3xl font-semibold text-slate-800 dark:text-white/90 tracking-tight leading-snug">GAKA bridges the gap between students and their course materials.</p>
+                  <p className="mt-6 sm:mt-8">By providing a unified interface for Mbeya University of Science and Technology (MUST) resources, we ensure that focus remains on learning rather than logistics.</p>
+                </section>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-10">
+                  <div className="bg-slate-50 dark:bg-[#282828] p-8 sm:p-10 rounded-[1.5rem] sm:rounded-[2rem] border border-slate-100 dark:border-white/5 shadow-sm">
+                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-white/40 mb-3">Dev Team</h4>
+                    <p className="text-slate-900 dark:text-white font-bold text-lg sm:text-xl mb-1">Softlink Africa</p>
+                    <p className="text-sm sm:text-base font-normal">Modern engineering optimized for mobile environments.</p>
+                  </div>
+                  <div className="bg-emerald-600 dark:bg-emerald-500 p-8 sm:p-10 rounded-[1.5rem] sm:rounded-[2rem] text-white shadow-xl shadow-emerald-100 dark:shadow-emerald-900/10 group">
+                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-emerald-100/60 mb-3">Lead Developer</h4>
+                    <p className="font-bold text-xl sm:text-2xl mb-4">Cleven Samwel</p>
+                    <a href="https://wa.me/255685208576" target="_blank" rel="noopener noreferrer" className="inline-block mt-2 text-[10px] font-bold uppercase tracking-widest bg-white/20 px-6 py-2.5 sm:px-8 sm:py-3 rounded-full hover:bg-white/30 transition-all active:scale-95 shadow-sm">Connect</a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {currentView === 'modules' && (
           <div className="animate-fade-in">
-             <div className="flex flex-col lg:flex-row lg:items-end justify-between mb-10 sm:mb-16 gap-8">
-               <div className="space-y-3 px-1">
-                 <h2 className="text-4xl sm:text-5xl font-extrabold text-slate-900 dark:text-white/90 tracking-tight">Academic Modules</h2>
-                 <p className="text-slate-500 dark:text-white/40 font-medium">Verified resources curated for MUST Computer Science.</p>
-               </div>
-               <div className="relative w-full lg:w-[480px] group px-1">
-                 <div className="absolute inset-y-0 left-6 flex items-center pointer-events-none"><SearchIcon className="w-6 h-6 text-slate-300 dark:text-white/20 group-focus-within:text-emerald-500 transition-colors" /></div>
-                 <input type="text" placeholder="Search module code or title..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
-                   className="w-full pl-16 pr-6 py-5 sm:py-7 bg-white dark:bg-[#1E1E1E] border border-slate-100 dark:border-white/5 rounded-2xl sm:rounded-3xl focus:ring-8 focus:ring-emerald-50 dark:focus:ring-emerald-500/5 outline-none transition-all shadow-sm text-lg sm:text-xl font-medium text-slate-900 dark:text-white/90" />
-               </div>
-             </div>
-             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 pb-20">
-               {filteredModules.map((module, i) => <div key={module.id} className="animate-fade-in" style={{ animationDelay: `${i * 50}ms` }}><ModuleCard module={module} onClick={() => navigateTo('detail', module)} /></div>)}
-             </div>
+            <div className="flex flex-col lg:flex-row lg:items-end justify-between mb-10 sm:mb-16 gap-8">
+              <div className="space-y-3 px-1">
+                <h2 className="text-4xl sm:text-5xl font-extrabold text-slate-900 dark:text-white/90 tracking-tight">Modules</h2>
+                <p className="text-slate-500 dark:text-white/40 font-medium">Verified resources curated for MUST Computer Science.</p>
+              </div>
+              <div className="relative w-full lg:w-[480px] group px-1">
+                <div className="absolute inset-y-0 left-6 flex items-center pointer-events-none"><SearchIcon className="w-6 h-6 text-slate-300 dark:text-white/20 group-focus-within:text-emerald-500 transition-colors" /></div>
+                <input type="text" placeholder="Search module code or title..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-16 pr-6 py-5 sm:py-7 bg-white dark:bg-[#1E1E1E] border border-slate-100 dark:border-white/5 rounded-2xl sm:rounded-3xl focus:ring-8 focus:ring-emerald-50 dark:focus:ring-emerald-500/5 outline-none transition-all shadow-sm text-lg sm:text-xl font-medium text-slate-900 dark:text-white/90" />
+              </div>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 pb-20">
+              {filteredModules.map((module, i) => <div key={module.id} className="animate-fade-in" style={{ animationDelay: `${i * 50}ms` }}><ModuleCard module={module} onClick={() => navigateTo('detail', module)} /></div>)}
+            </div>
           </div>
         )}
 
@@ -349,54 +430,33 @@ const App: React.FC = () => {
               <div className="flex flex-col sm:flex-row items-center justify-between mb-10 gap-4">
                 <h3 className="text-2xl font-bold text-slate-800 dark:text-white/90">Resources</h3>
                 <div className="flex bg-slate-50 dark:bg-black p-1 rounded-xl w-full sm:w-fit border dark:border-white/5">
-                  {['All', 'Notes', 'Past Paper'].map((v) => <button key={v} onClick={() => setFilterType(v as any)} className={`flex-1 px-4 py-2.5 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all ${filterType === v ? 'bg-emerald-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-600 dark:hover:text-white/80'}`}>{v}</button>)}
+                  {['All', 'Notes', 'Past Paper'].map((v) => (
+                    <button 
+                      key={v} 
+                      onClick={() => setFilterType(v as any)} 
+                      className={`flex-1 px-4 py-2.5 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all ${filterType === v ? 'bg-emerald-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-600 dark:hover:text-white/80'}`}
+                    >
+                      {v === 'Past Paper' ? 'Gaka' : v}
+                    </button>
+                  ))}
                 </div>
               </div>
               <div className="space-y-4">
                 {filteredResources.map((file, i) => (
-                  <div key={file.id} className="group flex flex-col sm:flex-row items-center justify-between p-6 bg-slate-50 dark:bg-black/20 rounded-3xl border border-transparent hover:border-emerald-100 dark:hover:border-emerald-900/40 transition-all">
-                    <div className="flex items-center space-x-5 w-full mb-4 sm:mb-0">
-                      <div className="w-14 h-14 bg-white dark:bg-[#1E1E1E] rounded-2xl flex items-center justify-center text-emerald-600 dark:text-emerald-400 shadow-sm transition-transform group-hover:scale-110"><FileIcon className="w-6 h-6" /></div>
-                      <div>
-                        <h4 className="font-bold text-slate-800 dark:text-white/90">{file.title}</h4>
-                        <span className="text-[9px] font-bold uppercase tracking-widest text-slate-400">{file.type} • Verified</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2 w-full sm:w-auto">
-                      <a href={file.viewUrl} target="_blank" rel="noopener noreferrer" className="p-4 bg-white dark:bg-[#1E1E1E] text-slate-400 dark:text-white/20 rounded-2xl hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors shadow-sm"><ViewIcon className="w-5 h-5" /></a>
-                      <a href={file.downloadUrl} className="flex-1 sm:flex-none flex items-center justify-center space-x-2 px-8 py-4 bg-emerald-600 text-white rounded-2xl font-black text-[11px] uppercase tracking-widest shadow-lg hover:bg-emerald-700 transition-all active:scale-95"><DownloadIcon className="w-4 h-4" /> <span>Download</span></a>
-                    </div>
-                  </div>
+                  <ResourceItem key={file.id} file={file} delay={i * 80} />
                 ))}
+                {filteredResources.length === 0 && (
+                  <div className="text-center py-24 bg-slate-50 dark:bg-black/20 rounded-3xl border border-dashed border-slate-200 dark:border-white/5">
+                    <p className="text-slate-400 dark:text-white/20 font-medium italic">No matching resources found.</p>
+                  </div>
+                )}
               </div>
             </div>
           </div>
         )}
-
-        {currentView === 'about' && (
-          <div className="max-w-4xl mx-auto py-12 px-2 animate-fade-in">
-             <h2 className="text-4xl sm:text-7xl font-extrabold text-slate-900 dark:text-white/90 mb-12 tracking-tight">Built for <span className="gradient-text">Academic Success.</span></h2>
-             <div className="prose prose-lg dark:prose-invert space-y-12 text-slate-600 dark:text-white/60 leading-relaxed">
-               <p className="text-xl sm:text-2xl font-medium tracking-tight">GAKA Portal is a specialized academic repository designed to bypass the complexity of university portals and fragmented file sharing.</p>
-               <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 pt-8">
-                  <div className="p-10 bg-emerald-50 dark:bg-emerald-900/10 rounded-3xl border border-emerald-100 dark:border-emerald-900/20 shadow-sm hover:shadow-lg transition-shadow">
-                    <h4 className="text-emerald-800 dark:text-emerald-400 font-black text-xl mb-4">The Objective</h4>
-                    <p className="text-emerald-700/80 dark:text-emerald-300/60 leading-relaxed text-base font-normal">Provide MUST CS students with zero-friction access to the lecture materials they need, when they need them.</p>
-                  </div>
-                  <div className="p-10 bg-slate-50 dark:bg-white/5 rounded-3xl border border-slate-100 dark:border-white/10 shadow-sm hover:shadow-lg transition-shadow">
-                    <h4 className="text-slate-900 dark:text-white font-black text-xl mb-4">Softlink Africa</h4>
-                    <p className="leading-relaxed text-base font-normal">Engineering software solutions that empower students and professionals across Africa.</p>
-                  </div>
-               </div>
-               <div className="pt-20 text-center border-t border-slate-100 dark:border-white/5">
-                 <p className="text-[10px] font-bold uppercase tracking-[0.4em] opacity-40">Created by Cleven Samwel</p>
-               </div>
-             </div>
-          </div>
-        )}
       </main>
 
-      {/* Standalone Application Installation Prompter (Pinterest Style) */}
+      {/* Standalone Installation Prompter */}
       {showInstallBanner && !isStandalone && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[92%] max-w-md z-[150] animate-slide-in">
           <div className="bg-white/95 dark:bg-[#1E1E1E]/95 backdrop-blur-2xl border border-emerald-500/10 p-6 rounded-[2.5rem] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.5)] flex flex-col gap-5">
