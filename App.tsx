@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { Navbar } from './components/Navbar';
@@ -462,7 +461,6 @@ const App: React.FC = () => {
         </div>
       </footer>
 
-      {/* Floating PWA Install CTA */}
       {showInstallBanner && (
           <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-md z-[100] animate-slide-in">
             <div className="bg-white dark:bg-[#1E1E1E] border border-slate-100 dark:border-white/10 p-5 rounded-3xl shadow-2xl flex items-center justify-between gap-4">

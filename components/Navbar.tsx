@@ -55,7 +55,6 @@ const HangingLamp: React.FC<{ isDark: boolean; onToggle: () => void }> = ({ isDa
     const onMouseMove = (e: MouseEvent) => handleMove(e.clientY);
     const onMouseUp = () => handleEnd();
     
-    // Explicitly prevent default on touch move to block "pull-to-refresh"
     const onTouchMove = (e: TouchEvent) => {
       if (isDragging) {
         if (e.cancelable) e.preventDefault(); 
@@ -87,7 +86,7 @@ const HangingLamp: React.FC<{ isDark: boolean; onToggle: () => void }> = ({ isDa
       {/* Short Cord Segment */}
       <div className="w-0.5 h-3 bg-slate-300 dark:bg-slate-700 transition-colors duration-500"></div>
       
-      {/* Lamp Head (Does not move, only bulb glows) */}
+      {/* Lamp Head */}
       <div className="relative pointer-events-auto">
         <svg width="42" height="34" viewBox="0 0 50 40" fill="none" xmlns="http://www.w3.org/2000/svg" className="drop-shadow-md transform scale-90 sm:scale-100">
           <path d="M5 35 L45 35 L38 5 L12 5 Z" fill={isDark ? "#1A1A1A" : "#334155"} className="transition-colors duration-500" />
@@ -104,7 +103,7 @@ const HangingLamp: React.FC<{ isDark: boolean; onToggle: () => void }> = ({ isDa
             top: '28px',
             height: `${60 + dragY}px`, 
             cursor: isDragging ? 'grabbing' : 'grab',
-            touchAction: 'none' // Critical for blocking system gestures
+            touchAction: 'none'
           }}
         >
           {/* Stretching Cord */}
