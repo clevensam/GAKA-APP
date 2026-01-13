@@ -1,9 +1,11 @@
+
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 
 interface NavbarProps {
   onLogoClick?: () => void;
   onHomeClick?: () => void;
   onDirectoryClick?: () => void;
+  onAdminClick?: () => void;
   isDark: boolean;
   onToggleDark: () => void;
 }
@@ -12,8 +14,8 @@ const HangingLamp: React.FC<{ isDark: boolean; onToggle: () => void }> = ({ isDa
   const [dragY, setDragY] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const startY = useRef(0);
-  const threshold = 70; // Point where toggle triggers
-  const maxPull = 120; // Maximum physical pull distance
+  const threshold = 70;
+  const maxPull = 120;
 
   const handleStart = (clientY: number) => {
     setIsDragging(true);
@@ -23,10 +25,7 @@ const HangingLamp: React.FC<{ isDark: boolean; onToggle: () => void }> = ({ isDa
   const handleMove = useCallback((clientY: number) => {
     if (!isDragging) return;
     const deltaY = clientY - startY.current;
-    
-    // Only allow pulling down
     if (deltaY > 0) {
-      // Apply elastic resistance: pull gets harder as you go
       const resistance = 0.6;
       const pull = deltaY * resistance;
       const dampenedPull = Math.min(pull, maxPull);
@@ -38,24 +37,17 @@ const HangingLamp: React.FC<{ isDark: boolean; onToggle: () => void }> = ({ isDa
 
   const handleEnd = useCallback(() => {
     if (!isDragging) return;
-    
-    // Check if threshold was met
     if (dragY >= threshold) {
       onToggle();
-      // Provide subtle vibration feedback if available
       if ('vibrate' in navigator) navigator.vibrate(12);
     }
-    
     setIsDragging(false);
     setDragY(0);
   }, [dragY, isDragging, onToggle]);
 
-  // Global listeners for smooth dragging outside element bounds
   useEffect(() => {
     const onMouseMove = (e: MouseEvent) => handleMove(e.clientY);
     const onMouseUp = () => handleEnd();
-    
-    // Explicitly prevent default on touch move to block "pull-to-refresh"
     const onTouchMove = (e: TouchEvent) => {
       if (isDragging) {
         if (e.cancelable) e.preventDefault(); 
@@ -81,13 +73,8 @@ const HangingLamp: React.FC<{ isDark: boolean; onToggle: () => void }> = ({ isDa
 
   return (
     <div className="absolute top-full right-6 sm:right-12 z-[100] pointer-events-none flex flex-col items-center">
-      {/* Base Connector */}
       <div className="w-4 h-1 bg-slate-200 dark:bg-slate-800 rounded-b-md mb-[-1px] transition-colors"></div>
-      
-      {/* Short Cord Segment */}
       <div className="w-0.5 h-3 bg-slate-300 dark:bg-slate-700 transition-colors duration-500"></div>
-      
-      {/* Lamp Head (Does not move, only bulb glows) */}
       <div className="relative pointer-events-auto">
         <svg width="42" height="34" viewBox="0 0 50 40" fill="none" xmlns="http://www.w3.org/2000/svg" className="drop-shadow-md transform scale-90 sm:scale-100">
           <path d="M5 35 L45 35 L38 5 L12 5 Z" fill={isDark ? "#1A1A1A" : "#334155"} className="transition-colors duration-500" />
@@ -95,7 +82,6 @@ const HangingLamp: React.FC<{ isDark: boolean; onToggle: () => void }> = ({ isDa
           <circle cx="25" cy="36" r="6" fill={isDark ? "#333333" : "#FCD34D"} className={`transition-all duration-500 ${!isDark ? 'lamp-glow' : ''}`} />
         </svg>
 
-        {/* Dynamic Pull Cord & Bead */}
         <div 
           onMouseDown={(e) => handleStart(e.clientY)}
           onTouchStart={(e) => handleStart(e.touches[0].clientY)}
@@ -104,16 +90,11 @@ const HangingLamp: React.FC<{ isDark: boolean; onToggle: () => void }> = ({ isDa
             top: '28px',
             height: `${60 + dragY}px`, 
             cursor: isDragging ? 'grabbing' : 'grab',
-            touchAction: 'none' // Critical for blocking system gestures
+            touchAction: 'none'
           }}
         >
-          {/* Stretching Cord */}
           <div className="w-[1.5px] bg-slate-400 dark:bg-slate-600 transition-colors flex-grow"></div>
-          
-          {/* Pull Bead */}
-          <div 
-            className={`w-3.5 h-7 bg-slate-800 dark:bg-emerald-600 rounded-full shadow-lg border border-white/10 dark:border-emerald-400/20 flex flex-col items-center justify-center space-y-1 py-1 -mt-0.5 transform transition-transform ${isDragging ? 'scale-110' : 'hover:scale-110'}`}
-          >
+          <div className={`w-3.5 h-7 bg-slate-800 dark:bg-emerald-600 rounded-full shadow-lg border border-white/10 dark:border-emerald-400/20 flex flex-col items-center justify-center space-y-1 py-1 -mt-0.5 transform transition-transform ${isDragging ? 'scale-110' : 'hover:scale-110'}`}>
              <div className={`w-1.5 h-px transition-colors ${dragY >= threshold ? 'bg-white' : 'bg-white/30'}`}></div>
              <div className={`w-1.5 h-px transition-colors ${dragY >= threshold ? 'bg-white' : 'bg-white/30'}`}></div>
           </div>
@@ -127,40 +108,25 @@ export const Navbar: React.FC<NavbarProps> = ({
   onLogoClick, 
   onHomeClick, 
   onDirectoryClick,
+  onAdminClick,
   isDark,
   onToggleDark
 }) => {
   return (
     <nav className="sticky top-0 z-50 glass px-4 py-3 sm:py-4 sm:px-8 transition-colors duration-500">
       <div className="max-w-7xl mx-auto flex justify-between items-center relative">
-        <button 
-          onClick={onLogoClick}
-          className="flex items-center space-x-2 sm:space-x-3 hover:opacity-80 transition-all active:scale-95 text-left group"
-        >
-          <div className="w-9 h-9 sm:w-11 sm:h-11 bg-emerald-600 dark:bg-emerald-500 rounded-xl sm:rounded-2xl flex items-center justify-center text-white font-extrabold text-lg sm:text-xl shadow-xl shadow-emerald-100 dark:shadow-emerald-900/40 transform group-hover:rotate-6 transition-transform">
-            G
-          </div>
-          <div>
-            <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-none">GAKA</h1>
-          </div>
+        <button onClick={onLogoClick} className="flex items-center space-x-2 sm:space-x-3 hover:opacity-80 transition-all active:scale-95 text-left group">
+          <div className="w-9 h-9 sm:w-11 sm:h-11 bg-emerald-600 dark:bg-emerald-500 rounded-xl sm:rounded-2xl flex items-center justify-center text-white font-extrabold text-lg sm:text-xl shadow-xl shadow-emerald-100 dark:shadow-emerald-900/40 transform group-hover:rotate-6 transition-transform">G</div>
+          <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-none">GAKA</h1>
         </button>
         
         <div className="flex items-center space-x-4 sm:space-x-8">
           <div className="flex items-center space-x-4 sm:space-x-8 text-[11px] sm:text-[12px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
-            <button 
-              onClick={onHomeClick} 
-              className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors py-2 relative group"
-            >
-              Home
-              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-emerald-500 transition-all group-hover:w-full"></span>
-            </button>
-            <button 
-              onClick={onDirectoryClick} 
-              className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors py-2 relative group"
-            >
-              Directory
-              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-emerald-500 transition-all group-hover:w-full"></span>
-            </button>
+            <button onClick={onHomeClick} className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors py-2 relative group">Home<span className="absolute bottom-0 left-0 w-0 h-0.5 bg-emerald-500 transition-all group-hover:w-full"></span></button>
+            <button onClick={onDirectoryClick} className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors py-2 relative group">Directory<span className="absolute bottom-0 left-0 w-0 h-0.5 bg-emerald-500 transition-all group-hover:w-full"></span></button>
+            {onAdminClick && (
+              <button onClick={onAdminClick} className="text-emerald-600 dark:text-emerald-400 hover:opacity-80 transition-all py-2 border-b-2 border-emerald-500">Admin</button>
+            )}
           </div>
         </div>
         <HangingLamp isDark={isDark} onToggle={onToggleDark} />

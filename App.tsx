@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
-import { createClient } from '@supabase/supabase-js';
+import { BrowserRouter as Router, Routes, Route, useNavigate, Navigate } from 'react-router-dom';
+import { createClient, Session } from '@supabase/supabase-js';
 import { Navbar } from './components/Navbar';
 import { Module, ResourceType, AcademicFile } from './types';
 import { Analytics } from '@vercel/analytics/react';
@@ -11,11 +11,13 @@ import HomePage from './pages/HomePage';
 import ModulesPage from './pages/ModulesPage';
 import ModuleDetailPage from './pages/ModuleDetailPage';
 import AboutPage from './pages/AboutPage';
+import AdminLoginPage from './pages/AdminLoginPage';
+import AdminDashboardPage from './pages/AdminDashboardPage';
 
 // --- SUPABASE CONFIGURATION ---
 const SUPABASE_URL = "https://tgnljtmvigschazflxis.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_nXfVOz8QEqs1mT0sxx_nYw_P8fmPVmI";
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const transformToDirectDownload = (url: string): string => {
   if (!url || url === '#') return '#';
@@ -42,6 +44,7 @@ const App: React.FC = () => {
   const [recentFiles, setRecentFiles] = useState<(AcademicFile & { moduleCode: string; moduleId: string })[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
 
   const [isDark, setIsDark] = useState(() => {
     const saved = localStorage.getItem('gaka-theme');
@@ -61,61 +64,76 @@ const App: React.FC = () => {
   }, [isDark]);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setIsLoading(true);
-        const { data: modulesData, error: modulesError } = await supabase
-          .from('modules')
-          .select('*')
-          .order('code', { ascending: true });
+    // Check initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+    });
 
-        if (modulesError) throw modulesError;
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
 
-        const { data: resourcesData, error: resourcesError } = await supabase
-          .from('resources')
-          .select('*, modules(code)')
-          .order('created_at', { ascending: false });
+    return () => subscription.unsubscribe();
+  }, []);
 
-        if (resourcesError) throw resourcesError;
+  const fetchData = async () => {
+    try {
+      setIsLoading(true);
+      const { data: modulesData, error: modulesError } = await supabase
+        .from('modules')
+        .select('*')
+        .order('code', { ascending: true });
 
-        const finalModules: Module[] = (modulesData || []).map(m => ({
-          id: m.id,
-          code: m.code,
-          name: m.name,
-          description: m.description || 'Verified academic resource module.',
-          resources: (resourcesData || [])
-            .filter(r => r.module_id === m.id)
-            .map(r => ({
-              id: r.id,
-              title: r.title,
-              type: r.type as ResourceType,
-              downloadUrl: r.download_url ? transformToDirectDownload(r.download_url) : '#',
-              viewUrl: r.view_url ? ensureViewUrl(r.view_url) : '#',
-              size: '---'
-            }))
-        }));
+      if (modulesError) throw modulesError;
 
-        setModules(finalModules);
+      const { data: resourcesData, error: resourcesError } = await supabase
+        .from('resources')
+        .select('*, modules(code)')
+        .order('created_at', { ascending: false });
 
-        const topRecent = (resourcesData || []).slice(0, 3).map(r => ({
-          id: r.id,
-          title: r.title,
-          type: r.type as ResourceType,
-          downloadUrl: transformToDirectDownload(r.download_url),
-          viewUrl: ensureViewUrl(r.view_url),
-          moduleCode: r.modules?.code || 'CS',
-          moduleId: r.module_id
-        }));
-        
-        setRecentFiles(topRecent);
-        setError(null);
-      } catch (err: any) {
-        console.error("Registry Sync Failure:", err);
-        setError("Unable to retrieve registered modules at this time.");
-      } finally {
-        setIsLoading(false);
-      }
-    };
+      if (resourcesError) throw resourcesError;
+
+      const finalModules: Module[] = (modulesData || []).map(m => ({
+        id: m.id,
+        code: m.code,
+        name: m.name,
+        description: m.description || 'Verified academic resource module.',
+        resources: (resourcesData || [])
+          .filter(r => r.module_id === m.id)
+          .map(r => ({
+            id: r.id,
+            title: r.title,
+            type: r.type as ResourceType,
+            downloadUrl: r.download_url ? transformToDirectDownload(r.download_url) : '#',
+            viewUrl: r.view_url ? ensureViewUrl(r.view_url) : '#',
+            size: '---'
+          }))
+      }));
+
+      setModules(finalModules);
+
+      const topRecent = (resourcesData || []).slice(0, 3).map(r => ({
+        id: r.id,
+        title: r.title,
+        type: r.type as ResourceType,
+        downloadUrl: transformToDirectDownload(r.download_url),
+        viewUrl: ensureViewUrl(r.view_url),
+        moduleCode: r.modules?.code || 'CS',
+        moduleId: r.module_id
+      }));
+      
+      setRecentFiles(topRecent);
+      setError(null);
+    } catch (err: any) {
+      console.error("Registry Sync Failure:", err);
+      setError("Unable to retrieve registered modules at this time.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchData();
   }, []);
 
@@ -135,7 +153,7 @@ const App: React.FC = () => {
   return (
     <Router>
       <div className={`min-h-screen flex flex-col selection:bg-emerald-100 selection:text-emerald-900 overflow-x-hidden transition-colors duration-500 ${isDark ? 'dark bg-black text-white/90' : 'bg-[#fcfdfe] text-slate-900'}`}>
-        <NavbarContent isDark={isDark} setIsDark={setIsDark} />
+        <NavbarContent isDark={isDark} setIsDark={setIsDark} isAdmin={!!session} />
         
         <main className="flex-grow container mx-auto max-w-7xl px-4 py-8 sm:py-12 sm:px-8 transition-colors duration-500">
           {error && (
@@ -147,7 +165,7 @@ const App: React.FC = () => {
                 </span>
                 <div className="flex flex-col"><p className="font-bold">Sync Error</p><p className="opacity-80">{error}</p></div>
               </div>
-              <button onClick={() => window.location.reload()} className="bg-white dark:bg-[#282828] px-6 py-2.5 rounded-full shadow-sm hover:shadow-md transition-all active:scale-95 text-amber-600 dark:text-amber-300 border border-amber-100 dark:border-white/5 font-semibold">Retry</button>
+              <button onClick={() => fetchData()} className="bg-white dark:bg-[#282828] px-6 py-2.5 rounded-full shadow-sm hover:shadow-md transition-all active:scale-95 text-amber-600 dark:text-amber-300 border border-amber-100 dark:border-white/5 font-semibold">Retry</button>
             </div>
           )}
 
@@ -156,6 +174,16 @@ const App: React.FC = () => {
             <Route path="/modules" element={<ModulesPage modules={modules} />} />
             <Route path="/module/:id" element={<ModuleDetailPage modules={modules} />} />
             <Route path="/about" element={<AboutPage />} />
+            
+            {/* Admin Routes */}
+            <Route 
+              path="/admin/login" 
+              element={session ? <Navigate to="/admin" /> : <AdminLoginPage />} 
+            />
+            <Route 
+              path="/admin" 
+              element={session ? <AdminDashboardPage modules={modules} onRefresh={fetchData} /> : <Navigate to="/admin/login" />} 
+            />
           </Routes>
         </main>
 
@@ -166,7 +194,7 @@ const App: React.FC = () => {
   );
 };
 
-const NavbarContent: React.FC<{ isDark: boolean; setIsDark: (val: boolean) => void }> = ({ isDark, setIsDark }) => {
+const NavbarContent: React.FC<{ isDark: boolean; setIsDark: (val: boolean) => void; isAdmin: boolean }> = ({ isDark, setIsDark, isAdmin }) => {
   const navigate = useNavigate();
   return (
     <Navbar 
@@ -175,6 +203,7 @@ const NavbarContent: React.FC<{ isDark: boolean; setIsDark: (val: boolean) => vo
       onDirectoryClick={() => navigate('/modules')}
       isDark={isDark}
       onToggleDark={() => setIsDark(!isDark)}
+      onAdminClick={isAdmin ? () => navigate('/admin') : undefined}
     />
   );
 };
