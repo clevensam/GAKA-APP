@@ -57,8 +57,15 @@ const App: React.FC = () => {
     return window.matchMedia('(prefers-color-scheme: dark)').matches;
   });
 
+  // Handle routing based on URL parameters (for shortcuts)
   useEffect(() => {
-    // Check if app is already running in standalone (installed) mode
+    const params = new URLSearchParams(window.location.search);
+    const viewParam = params.get('view');
+    if (viewParam === 'modules') setCurrentView('modules');
+    if (viewParam === 'about') setCurrentView('about');
+  }, []);
+
+  useEffect(() => {
     const checkStandalone = () => {
       const standalone = window.matchMedia('(display-mode: standalone)').matches 
         || (window.navigator as any).standalone 
@@ -72,17 +79,13 @@ const App: React.FC = () => {
     checkStandalone();
 
     const handleBeforeInstallPrompt = (e: Event) => {
-      // Prevents the browser's default bar, so we can show our premium "App" button
       e.preventDefault();
       setDeferredPrompt(e);
-      
-      // If not installed, show our high-end installation banner
       if (!isStandalone && !sessionStorage.getItem('gaka-native-install-dismissed')) {
         setTimeout(() => setShowInstallBanner(true), 3000);
       }
     };
 
-    // For iOS, manual instruction is needed as Apple blocks programmatic install
     if (appleDevice && !isStandalone && !sessionStorage.getItem('gaka-native-install-dismissed')) {
       setTimeout(() => setShowInstallBanner(true), 4000);
     }
@@ -104,17 +107,11 @@ const App: React.FC = () => {
   }, [isDark]);
 
   const handleNativeInstall = async () => {
-    if (isIOS) return; // User must use Safari share menu
+    if (isIOS) return;
     if (!deferredPrompt) return;
-    
-    // This triggers the official "Rich" installation dialog on Chrome/Android/Windows
     deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
-    
-    if (outcome === 'accepted') {
-      setShowInstallBanner(false);
-      console.log('User installed GAKA as a native app.');
-    }
+    if (outcome === 'accepted') setShowInstallBanner(false);
     setDeferredPrompt(null);
   };
 
@@ -185,6 +182,11 @@ const App: React.FC = () => {
   const navigateTo = (view: ViewState, module?: Module) => {
     if (module) setSelectedModule(module);
     setCurrentView(view);
+    // Sync the URL for clean refreshes if needed, though this is a state-based SPA
+    const url = new URL(window.location.href);
+    url.searchParams.delete('view');
+    if (view === 'modules' || view === 'about') url.searchParams.set('view', view);
+    window.history.replaceState({}, '', url.pathname + url.search);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 

@@ -4,7 +4,7 @@
   "name": "GAKA | Academic Portal",
   "short_name": "GAKA",
   "description": "The official standalone academic portal for Computer Science students. Access notes and papers offline.",
-  "start_url": "./?mode=standalone",
+  "start_url": "./?utm_source=pwa&mode=standalone",
   "display": "standalone",
   "display_override": ["window-controls-overlay", "minimal-ui"],
   "background_color": "#ffffff",
@@ -47,10 +47,16 @@
   ],
   "shortcuts": [
     {
-      "name": "Quick Search",
+      "name": "Search Modules",
       "short_name": "Search",
-      "url": "./modules",
+      "url": "./?view=modules",
       "icons": [{ "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23059669' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E", "sizes": "96x96" }]
+    },
+    {
+      "name": "About Gaka",
+      "short_name": "About",
+      "url": "./?view=about",
+      "icons": [{ "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23059669' stroke-width='2'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cline x1='12' y1='16' x2='12' y2='12'/%3E%3Cline x1='12' y1='8' x2='12.01' y2='8'/%3E%3C/svg%3E", "sizes": "96x96" }]
     }
   ]
 }
