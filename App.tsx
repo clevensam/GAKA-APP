@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { Navbar } from './components/Navbar';
@@ -46,6 +45,10 @@ const App: React.FC = () => {
   const [filterType, setFilterType] = useState<ResourceType | 'All'>('All');
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
+  // PWA Install State
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [showInstallBanner, setShowInstallBanner] = useState(false);
+
   const [isDark, setIsDark] = useState(() => {
     const saved = localStorage.getItem('gaka-theme');
     if (saved) return saved === 'dark';
@@ -63,6 +66,39 @@ const App: React.FC = () => {
       localStorage.setItem('gaka-theme', 'light');
     }
   }, [isDark]);
+
+  useEffect(() => {
+    // Listen for PWA install prompt
+    const handleBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      // Only show banner if not already dismissed this session
+      const dismissed = sessionStorage.getItem('pwa-banner-dismissed');
+      if (!dismissed) {
+        setShowInstallBanner(true);
+      }
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    console.log(`User response to install: ${outcome}`);
+    setDeferredPrompt(null);
+    setShowInstallBanner(false);
+  };
+
+  const dismissBanner = () => {
+    setShowInstallBanner(false);
+    sessionStorage.setItem('pwa-banner-dismissed', 'true');
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -396,6 +432,28 @@ const App: React.FC = () => {
           </div>
         )}
       </main>
+
+      {/* PWA Installation Prompt Banner */}
+      {showInstallBanner && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-md z-[100] animate-slide-in">
+          <div className="bg-white/80 dark:bg-[#1E1E1E]/80 backdrop-blur-xl border border-emerald-100/50 dark:border-white/5 p-5 rounded-[2rem] shadow-2xl flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-emerald-600 dark:bg-emerald-500 rounded-2xl flex items-center justify-center text-white font-black text-xl shadow-lg shadow-emerald-500/20">
+                G
+              </div>
+              <div>
+                <h4 className="font-bold text-slate-900 dark:text-white text-sm">Install GAKA App</h4>
+                <p className="text-slate-500 dark:text-white/40 text-[10px]">Access resources faster from home screen</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+               <button onClick={dismissBanner} className="px-3 py-2 text-[10px] font-bold text-slate-400 dark:text-white/20 uppercase tracking-widest hover:text-slate-600 dark:hover:text-white/40 transition-colors">Later</button>
+               <button onClick={handleInstallClick} className="px-6 py-2.5 bg-emerald-600 dark:bg-emerald-500 text-white rounded-xl text-[11px] font-black uppercase shadow-lg shadow-emerald-500/10 active:scale-95 transition-all">Install</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <footer className="bg-white dark:bg-black border-t border-slate-50 dark:border-white/5 py-12 transition-colors duration-500">
         <div className="container mx-auto px-6 sm:px-8 max-w-7xl text-center md:text-left">
           <div className="flex flex-col md:flex-row justify-between items-center md:items-start gap-10">
