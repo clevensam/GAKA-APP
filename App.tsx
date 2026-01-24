@@ -67,32 +67,40 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const checkStandalone = () => {
-      const standalone = window.matchMedia('(display-mode: standalone)').matches 
+      const isStandaloneMode = window.matchMedia('(display-mode: standalone)').matches 
         || (window.navigator as any).standalone 
         || document.referrer.includes('android-app://');
-      setIsStandalone(standalone);
+      setIsStandalone(isStandaloneMode);
+      return isStandaloneMode;
     };
 
     const appleDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
     setIsIOS(appleDevice);
 
-    checkStandalone();
+    const alreadyStandalone = checkStandalone();
 
+    // Capture the PWA install event
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e);
-      if (!isStandalone && !sessionStorage.getItem('gaka-native-install-dismissed')) {
-        setTimeout(() => setShowInstallBanner(true), 3000);
+      if (!alreadyStandalone && !sessionStorage.getItem('gaka-native-install-dismissed')) {
+        setShowInstallBanner(true);
       }
     };
 
-    if (appleDevice && !isStandalone && !sessionStorage.getItem('gaka-native-install-dismissed')) {
-      setTimeout(() => setShowInstallBanner(true), 4000);
-    }
+    // Fallback timer for iOS or if the event doesn't fire immediately
+    const timer = setTimeout(() => {
+      if (!alreadyStandalone && !sessionStorage.getItem('gaka-native-install-dismissed')) {
+        setShowInstallBanner(true);
+      }
+    }, 4000);
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-    return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-  }, [isStandalone]);
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      clearTimeout(timer);
+    };
+  }, []);
 
   useEffect(() => {
     if (isDark) {
@@ -108,11 +116,15 @@ const App: React.FC = () => {
 
   const handleNativeInstall = async () => {
     if (isIOS) return;
-    if (!deferredPrompt) return;
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    if (outcome === 'accepted') setShowInstallBanner(false);
-    setDeferredPrompt(null);
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') setShowInstallBanner(false);
+      setDeferredPrompt(null);
+    } else {
+      // Manual fallback instructions for non-Chrome/Android
+      alert("To install GAKA as a native app:\n1. Open your browser menu (⋮ or ≡)\n2. Tap 'Install App' or 'Add to Home Screen'");
+    }
   };
 
   const dismissInstall = () => {
@@ -456,40 +468,40 @@ const App: React.FC = () => {
         )}
       </main>
 
-      {/* Standalone Application Installation Prompter (Pinterest Style) */}
+      {/* Pinterest-Style Floating Install Banner */}
       {showInstallBanner && !isStandalone && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[92%] max-w-md z-[150] animate-slide-in">
-          <div className="bg-white/95 dark:bg-[#1E1E1E]/95 backdrop-blur-2xl border border-emerald-500/10 p-6 rounded-[2.5rem] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.5)] flex flex-col gap-5">
+        <div className="fixed bottom-10 left-1/2 -translate-x-1/2 w-[94%] max-w-md z-[200] animate-slide-in">
+          <div className="bg-white/95 dark:bg-[#1A1A1A]/95 backdrop-blur-3xl border border-emerald-500/20 p-6 rounded-[2.5rem] shadow-[0_40px_80px_-20px_rgba(0,0,0,0.6)] flex flex-col gap-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
-                <div className="w-16 h-16 bg-emerald-600 dark:bg-emerald-500 rounded-3xl flex items-center justify-center text-white font-black text-3xl shadow-xl shadow-emerald-500/20">
+                <div className="w-16 h-16 bg-emerald-600 dark:bg-emerald-500 rounded-3xl flex items-center justify-center text-white font-black text-3xl shadow-2xl shadow-emerald-500/30">
                   G
                 </div>
                 <div>
-                  <h4 className="font-bold text-slate-900 dark:text-white text-lg">GAKA App</h4>
-                  <p className="text-slate-500 dark:text-white/40 text-[11px] leading-snug">
-                    Install for native desktop/mobile experience and offline functionality.
+                  <h4 className="font-extrabold text-slate-900 dark:text-white text-xl">Install GAKA</h4>
+                  <p className="text-slate-500 dark:text-white/40 text-[11px] leading-tight font-medium max-w-[200px]">
+                    Access lecture notes and GAKA papers instantly from your home screen.
                   </p>
                 </div>
               </div>
               <button onClick={dismissInstall} className="p-2 text-slate-300 dark:text-white/10 hover:text-slate-500 transition-colors">
-                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </div>
             
             <div className="flex flex-col gap-3">
                {isIOS ? (
-                 <div className="bg-emerald-50 dark:bg-emerald-500/5 p-4 rounded-2xl border border-emerald-100/50 dark:border-emerald-500/10">
-                   <p className="text-[12px] font-medium text-emerald-800 dark:text-emerald-400 text-center">
-                     To Install: Tap <span className="inline-block mx-1"><svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" /></svg></span> then select <b>"Add to Home Screen"</b>
+                 <div className="bg-emerald-50 dark:bg-emerald-500/10 p-4 rounded-2xl border border-emerald-100 dark:border-emerald-500/20">
+                   <p className="text-[12px] font-bold text-emerald-800 dark:text-emerald-400 text-center leading-relaxed">
+                     Tap <span className="inline-block mx-1 align-middle"><svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" /></svg></span> then select <br/><b>"Add to Home Screen"</b>
                    </p>
                  </div>
                ) : (
                  <button 
                    onClick={handleNativeInstall} 
-                   className="w-full py-5 bg-emerald-600 dark:bg-emerald-500 text-white rounded-2xl font-black text-[13px] uppercase tracking-widest shadow-xl shadow-emerald-500/20 active:scale-95 transition-all hover:bg-emerald-700"
+                   className="w-full py-5 bg-emerald-600 dark:bg-emerald-500 text-white rounded-2xl font-black text-[13px] uppercase tracking-widest shadow-2xl shadow-emerald-500/40 active:scale-95 transition-all hover:bg-emerald-700 hover:shadow-emerald-500/60"
                  >
-                   Install GAKA App
+                   {deferredPrompt ? 'Install Application' : 'Get GAKA Portal'}
                  </button>
                )}
             </div>
