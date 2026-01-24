@@ -456,7 +456,7 @@ const App: React.FC = () => {
         )}
       </main>
 
-      {/* Standalone Installation Prompter */}
+      {/* Standalone Application Installation Prompter (Pinterest Style) */}
       {showInstallBanner && !isStandalone && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[92%] max-w-md z-[150] animate-slide-in">
           <div className="bg-white/95 dark:bg-[#1E1E1E]/95 backdrop-blur-2xl border border-emerald-500/10 p-6 rounded-[2.5rem] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.5)] flex flex-col gap-5">
@@ -466,9 +466,9 @@ const App: React.FC = () => {
                   G
                 </div>
                 <div>
-                  <h4 className="font-bold text-slate-900 dark:text-white text-lg">GAKA Portal</h4>
+                  <h4 className="font-bold text-slate-900 dark:text-white text-lg">GAKA App</h4>
                   <p className="text-slate-500 dark:text-white/40 text-[11px] leading-snug">
-                    Install as a standalone application for faster, offline-ready access.
+                    Install for native desktop/mobile experience and offline functionality.
                   </p>
                 </div>
               </div>

@@ -1,9 +1,9 @@
 
 {
-  "id": "gaka-portal-native-v1",
+  "id": "gaka-portal-pwa-standalone",
   "name": "GAKA | Academic Portal",
   "short_name": "GAKA",
-  "description": "The official standalone academic portal for Computer Science students. Access notes and papers offline.",
+  "description": "Standalone academic repository for MUST CS students. Access lecture materials and GAKA papers instantly.",
   "start_url": "./?utm_source=pwa&mode=standalone",
   "display": "standalone",
   "display_override": ["window-controls-overlay", "minimal-ui"],
