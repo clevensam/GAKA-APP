@@ -4,7 +4,7 @@ import { createClient } from '@supabase/supabase-js';
 import { Navbar } from './components/Navbar';
 import { ModuleCard } from './components/ModuleCard';
 import { AuthPage } from './components/AuthPage';
-import { SearchIcon, BackIcon, FileIcon, DownloadIcon, ShareIcon, ChevronRightIcon, ViewIcon } from './components/Icons';
+import { SearchIcon, BackIcon, FileIcon, DownloadIcon, ShareIcon, ChevronRightIcon, ViewIcon, PlusIcon, EditIcon, TrashIcon } from './components/Icons';
 import { Module, ResourceType, AcademicFile, Profile } from './types';
 import { Analytics } from '@vercel/analytics/react';
 
@@ -46,6 +46,15 @@ const App: React.FC = () => {
   const [filterType, setFilterType] = useState<ResourceType | 'All'>('All');
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
+  // Admin CRUD States
+  const [isResourceModalOpen, setIsResourceModalOpen] = useState(false);
+  const [editingResource, setEditingResource] = useState<AcademicFile | null>(null);
+  const [resourceFormData, setResourceFormData] = useState({
+    title: '',
+    type: 'Notes' as ResourceType,
+    url: ''
+  });
+
   const [profile, setProfile] = useState<Profile | null>(null);
 
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
@@ -83,6 +92,72 @@ const App: React.FC = () => {
       setProfile(null);
     }
   };
+
+  const fetchData = async () => {
+    try {
+      setIsLoading(true);
+      const { data: modulesData, error: modulesError } = await supabase
+        .from('modules')
+        .select('*')
+        .order('code', { ascending: true });
+
+      if (modulesError) throw modulesError;
+
+      const { data: resourcesData, error: resourcesError } = await supabase
+        .from('resources')
+        .select('*, modules(code)')
+        .order('created_at', { ascending: false });
+
+      if (resourcesError) throw resourcesError;
+
+      const finalModules: Module[] = (modulesData || []).map(m => ({
+        id: m.id,
+        code: m.code,
+        name: m.name,
+        description: m.description || 'Verified academic resource module.',
+        resources: (resourcesData || [])
+          .filter(r => r.module_id === m.id)
+          .map(r => ({
+            id: r.id,
+            title: r.title,
+            type: r.type as ResourceType,
+            downloadUrl: r.download_url ? transformToDirectDownload(r.download_url) : '#',
+            viewUrl: r.view_url ? ensureViewUrl(r.view_url) : '#',
+            size: '---'
+          }))
+      }));
+
+      setModules(finalModules);
+
+      // Update selected module if we are in detail view
+      if (selectedModule) {
+        const updatedSelected = finalModules.find(m => m.id === selectedModule.id);
+        if (updatedSelected) setSelectedModule(updatedSelected);
+      }
+
+      const topRecent = (resourcesData || []).slice(0, 3).map(r => ({
+        id: r.id,
+        title: r.title,
+        type: r.type as ResourceType,
+        downloadUrl: transformToDirectDownload(r.download_url),
+        viewUrl: ensureViewUrl(r.view_url),
+        moduleCode: r.modules?.code || 'CS',
+        moduleId: r.module_id
+      }));
+      
+      setRecentFiles(topRecent);
+      setError(null);
+    } catch (err: any) {
+      console.error("Registry Sync Failure:", err);
+      setError("Unable to sync with academic registry.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
 
   const handleLogin = async (username: string, pass: string) => {
     const { data, error } = await supabase
@@ -132,6 +207,75 @@ const App: React.FC = () => {
     localStorage.removeItem('gaka-session-id');
     setProfile(null);
     setCurrentView('home');
+  };
+
+  // --- Admin CRUD Handlers ---
+  const handleSaveResource = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedModule) return;
+    setLoading(true);
+
+    try {
+      const resourceData = {
+        title: resourceFormData.title,
+        type: resourceFormData.type,
+        download_url: resourceFormData.url,
+        view_url: resourceFormData.url,
+        module_id: selectedModule.id
+      };
+
+      if (editingResource) {
+        const { error } = await supabase
+          .from('resources')
+          .update(resourceData)
+          .eq('id', editingResource.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('resources')
+          .insert([resourceData]);
+        if (error) throw error;
+      }
+
+      setIsResourceModalOpen(false);
+      setEditingResource(null);
+      setResourceFormData({ title: '', type: 'Notes', url: '' });
+      await fetchData();
+    } catch (err: any) {
+      alert(err.message || "Failed to save resource.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteResource = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this resource?")) return;
+    try {
+      const { error } = await supabase
+        .from('resources')
+        .delete()
+        .eq('id', id);
+      if (error) throw error;
+      await fetchData();
+    } catch (err: any) {
+      alert(err.message || "Failed to delete resource.");
+    }
+  };
+
+  const openAddModal = () => {
+    setEditingResource(null);
+    setResourceFormData({ title: '', type: 'Notes', url: '' });
+    setIsResourceModalOpen(true);
+  };
+
+  const openEditModal = (resource: AcademicFile) => {
+    setEditingResource(resource);
+    setResourceFormData({
+      title: resource.title,
+      type: resource.type,
+      url: resource.viewUrl // Assume viewUrl is what they want to edit
+    });
+    setIsResourceModalOpen(true);
   };
 
   useEffect(() => {
@@ -201,65 +345,6 @@ const App: React.FC = () => {
     sessionStorage.setItem('gaka-native-install-dismissed', 'true');
   };
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setIsLoading(true);
-        const { data: modulesData, error: modulesError } = await supabase
-          .from('modules')
-          .select('*')
-          .order('code', { ascending: true });
-
-        if (modulesError) throw modulesError;
-
-        const { data: resourcesData, error: resourcesError } = await supabase
-          .from('resources')
-          .select('*, modules(code)')
-          .order('created_at', { ascending: false });
-
-        if (resourcesError) throw resourcesError;
-
-        const finalModules: Module[] = (modulesData || []).map(m => ({
-          id: m.id,
-          code: m.code,
-          name: m.name,
-          description: m.description || 'Verified academic resource module.',
-          resources: (resourcesData || [])
-            .filter(r => r.module_id === m.id)
-            .map(r => ({
-              id: r.id,
-              title: r.title,
-              type: r.type as ResourceType,
-              downloadUrl: r.download_url ? transformToDirectDownload(r.download_url) : '#',
-              viewUrl: r.view_url ? ensureViewUrl(r.view_url) : '#',
-              size: '---'
-            }))
-        }));
-
-        setModules(finalModules);
-
-        const topRecent = (resourcesData || []).slice(0, 3).map(r => ({
-          id: r.id,
-          title: r.title,
-          type: r.type as ResourceType,
-          downloadUrl: transformToDirectDownload(r.download_url),
-          viewUrl: ensureViewUrl(r.view_url),
-          moduleCode: r.modules?.code || 'CS',
-          moduleId: r.module_id
-        }));
-        
-        setRecentFiles(topRecent);
-        setError(null);
-      } catch (err: any) {
-        console.error("Registry Sync Failure:", err);
-        setError("Unable to sync with academic registry.");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchData();
-  }, []);
-
   const navigateTo = (view: ViewState, module?: Module) => {
     if (module) setSelectedModule(module);
     setCurrentView(view);
@@ -323,9 +408,20 @@ const App: React.FC = () => {
       </div>
       <div className="flex items-center justify-between sm:justify-end gap-3">
         <div className="flex items-center gap-2">
-          <button onClick={() => handleShare(file.title)} className="w-11 h-11 flex items-center justify-center text-slate-400 dark:text-white/30 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-black rounded-full transition-all active:scale-90 border border-transparent hover:border-emerald-100 dark:hover:border-emerald-500/20">
-            <ShareIcon className="w-5 h-5" />
-          </button>
+          {profile?.role === 'admin' ? (
+             <div className="flex items-center bg-slate-50 dark:bg-black/20 rounded-2xl p-1 border dark:border-white/5 mr-2">
+               <button onClick={() => openEditModal(file)} className="p-2.5 text-slate-400 hover:text-emerald-600 transition-colors" title="Edit Resource">
+                 <EditIcon className="w-4.5 h-4.5" />
+               </button>
+               <button onClick={() => handleDeleteResource(file.id)} className="p-2.5 text-slate-400 hover:text-red-500 transition-colors" title="Delete Resource">
+                 <TrashIcon className="w-4.5 h-4.5" />
+               </button>
+             </div>
+          ) : (
+            <button onClick={() => handleShare(file.title)} className="w-11 h-11 flex items-center justify-center text-slate-400 dark:text-white/30 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-black rounded-full transition-all active:scale-90 border border-transparent hover:border-emerald-100 dark:hover:border-emerald-500/20">
+              <ShareIcon className="w-5 h-5" />
+            </button>
+          )}
           <a href={file.viewUrl} target="_blank" rel="noopener noreferrer" className="w-11 h-11 flex items-center justify-center bg-slate-100 dark:bg-[#282828] text-slate-500 dark:text-white/40 hover:bg-slate-200 dark:hover:bg-[#333333] hover:text-slate-800 dark:hover:text-white/90 rounded-2xl transition-all active:scale-90">
             <ViewIcon className="w-5 h-5" />
           </a>
@@ -354,6 +450,8 @@ const App: React.FC = () => {
       ))}
     </div>
   );
+
+  const [loading, setLoading] = useState(false);
 
   if (isLoading) {
     return (
@@ -475,9 +573,20 @@ const App: React.FC = () => {
         {currentView === 'detail' && selectedModule && (
           <div className="animate-fade-in max-w-5xl mx-auto pb-20">
             <Breadcrumb items={[{ label: 'Home', view: 'home' }, { label: 'Modules', view: 'modules' }, { label: selectedModule.code, view: 'detail', module: selectedModule }]} />
-            <button onClick={() => navigateTo('modules')} className="flex items-center text-slate-800 dark:text-white/60 font-bold text-[13px] uppercase tracking-widest hover:text-emerald-600 mb-8 group transition-all">
-              <BackIcon className="mr-3 w-5 h-5 group-hover:-translate-x-2 transition-transform" /> Back to Directory
-            </button>
+            <div className="flex items-center justify-between mb-8">
+              <button onClick={() => navigateTo('modules')} className="flex items-center text-slate-800 dark:text-white/60 font-bold text-[13px] uppercase tracking-widest hover:text-emerald-600 group transition-all">
+                <BackIcon className="mr-3 w-5 h-5 group-hover:-translate-x-2 transition-transform" /> Back to Directory
+              </button>
+              {profile?.role === 'admin' && (
+                <button 
+                  onClick={openAddModal}
+                  className="flex items-center space-x-2 bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-3 rounded-2xl font-bold text-[11px] uppercase tracking-widest transition-all active:scale-95 shadow-xl shadow-emerald-600/20"
+                >
+                  <PlusIcon className="w-4 h-4" />
+                  <span>Upload Resource</span>
+                </button>
+              )}
+            </div>
             <div className="bg-emerald-600 dark:bg-emerald-700 p-8 sm:p-20 rounded-[2.5rem] text-white shadow-2xl mb-8 relative overflow-hidden">
                <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-32 -mt-32"></div>
                <span className="bg-white/10 px-4 py-1.5 rounded-full text-[10px] font-bold tracking-widest uppercase border border-white/10 mb-6 inline-block">{selectedModule.code}</span>
@@ -542,6 +651,77 @@ const App: React.FC = () => {
           </div>
         )}
       </main>
+
+      {/* Admin Resource Modal */}
+      {isResourceModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/40 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white dark:bg-[#0F0F0F] w-full max-w-lg rounded-[2.5rem] shadow-2xl overflow-hidden border dark:border-white/5 animate-slide-in">
+            <div className="p-8 sm:p-10">
+              <div className="flex justify-between items-center mb-8">
+                <h3 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+                  {editingResource ? 'Edit Resource' : 'Upload Resource'}
+                </h3>
+                <button onClick={() => setIsResourceModalOpen(false)} className="text-slate-400 hover:text-slate-600 transition-colors">
+                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+              </div>
+              <form onSubmit={handleSaveResource} className="space-y-6">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-1">Title</label>
+                  <input 
+                    type="text" 
+                    placeholder="e.g. Distributed Computing - Lec 1" 
+                    required 
+                    value={resourceFormData.title}
+                    onChange={(e) => setResourceFormData({...resourceFormData, title: e.target.value})}
+                    className="w-full px-6 py-4 bg-slate-50 dark:bg-black border border-slate-100 dark:border-white/5 rounded-2xl focus:ring-4 focus:ring-emerald-500/10 outline-none transition-all text-slate-900 dark:text-white font-medium" 
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-1">Type</label>
+                  <select 
+                    value={resourceFormData.type}
+                    onChange={(e) => setResourceFormData({...resourceFormData, type: e.target.value as ResourceType})}
+                    className="w-full px-6 py-4 bg-slate-50 dark:bg-black border border-slate-100 dark:border-white/5 rounded-2xl focus:ring-4 focus:ring-emerald-500/10 outline-none transition-all text-slate-900 dark:text-white font-medium appearance-none"
+                  >
+                    <option value="Notes">Lecture Note</option>
+                    <option value="Past Paper">Gaka (Past Paper)</option>
+                  </select>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-1">Google Drive Link</label>
+                  <input 
+                    type="url" 
+                    placeholder="Paste the shareable link here..." 
+                    required 
+                    value={resourceFormData.url}
+                    onChange={(e) => setResourceFormData({...resourceFormData, url: e.target.value})}
+                    className="w-full px-6 py-4 bg-slate-50 dark:bg-black border border-slate-100 dark:border-white/5 rounded-2xl focus:ring-4 focus:ring-emerald-500/10 outline-none transition-all text-slate-900 dark:text-white font-medium" 
+                  />
+                  <p className="text-[9px] text-slate-400 ml-1 font-medium">Link should be set to "Anyone with the link can view"</p>
+                </div>
+
+                <div className="flex gap-4 pt-4">
+                  <button 
+                    type="button" 
+                    onClick={() => setIsResourceModalOpen(false)}
+                    className="flex-1 py-4.5 bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-white font-bold text-[11px] uppercase tracking-widest rounded-2xl active:scale-95 transition-all"
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    type="submit"
+                    disabled={loading}
+                    className="flex-[2] py-4.5 bg-emerald-600 dark:bg-emerald-500 text-white rounded-2xl font-bold text-[11px] uppercase tracking-widest shadow-xl shadow-emerald-600/20 active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center"
+                  >
+                    {loading ? <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></div> : (editingResource ? 'Update Resource' : 'Save Resource')}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showInstallBanner && !isStandalone && (
         <div className="fixed bottom-10 left-1/2 -translate-x-1/2 w-[94%] max-w-md z-[200] animate-slide-in">
