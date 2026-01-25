@@ -3,7 +3,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { Navbar } from './components/Navbar';
 import { ModuleCard } from './components/ModuleCard';
-import { AuthModal } from './components/AuthModal';
+import { AuthPage } from './components/AuthPage';
 import { SearchIcon, BackIcon, FileIcon, DownloadIcon, ShareIcon, ChevronRightIcon, ViewIcon } from './components/Icons';
 import { Module, ResourceType, AcademicFile, Profile } from './types';
 import { Analytics } from '@vercel/analytics/react';
@@ -33,7 +33,7 @@ const ensureViewUrl = (url: string): string => {
   return url;
 };
 
-type ViewState = 'home' | 'modules' | 'detail' | 'about';
+type ViewState = 'home' | 'modules' | 'detail' | 'about' | 'auth';
 
 const App: React.FC = () => {
   const [modules, setModules] = useState<Module[]>([]);
@@ -48,7 +48,6 @@ const App: React.FC = () => {
 
   // Auth States
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
   // Native App Installation States
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
@@ -98,6 +97,7 @@ const App: React.FC = () => {
     const email = `${username.toLowerCase()}@gaka.local`;
     const { error } = await supabase.auth.signInWithPassword({ email, password: pass });
     if (error) throw error;
+    setCurrentView('home');
   };
 
   const handleSignup = async (username: string, pass: string, name: string) => {
@@ -110,7 +110,6 @@ const App: React.FC = () => {
 
     if (signUpError) throw signUpError;
     if (data.user) {
-      // Manual profile insert if trigger isn't ready
       const { error: profileError } = await supabase
         .from('profiles')
         .insert({
@@ -123,18 +122,20 @@ const App: React.FC = () => {
         console.warn("Profile creation handled by DB or failed:", profileError);
       }
     }
+    setCurrentView('home');
   };
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
+    setCurrentView('home');
   };
 
-  // PWA & Theme logic (existing)
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const viewParam = params.get('view');
     if (viewParam === 'modules') setCurrentView('modules');
     if (viewParam === 'about') setCurrentView('about');
+    if (viewParam === 'auth') setCurrentView('auth');
   }, []);
 
   useEffect(() => {
@@ -260,7 +261,7 @@ const App: React.FC = () => {
     setCurrentView(view);
     const url = new URL(window.location.href);
     url.searchParams.delete('view');
-    if (view === 'modules' || view === 'about') url.searchParams.set('view', view);
+    if (['modules', 'about', 'auth'].includes(view)) url.searchParams.set('view', view);
     window.history.replaceState({}, '', url.pathname + url.search);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -347,26 +348,33 @@ const App: React.FC = () => {
     );
   }
 
+  // Handle Full Page Auth separately
+  if (currentView === 'auth') {
+    return (
+      <div className={`min-h-screen selection:bg-emerald-100 transition-colors duration-500 ${isDark ? 'dark bg-black' : 'bg-[#fcfdfe]'}`}>
+        <AuthPage 
+          onLogin={handleLogin} 
+          onSignup={handleSignup} 
+          onBack={() => navigateTo('home')} 
+          isDark={isDark}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className={`min-h-screen flex flex-col selection:bg-emerald-100 selection:text-emerald-900 overflow-x-hidden transition-colors duration-500 ${isDark ? 'dark bg-black' : 'bg-[#fcfdfe]'}`}>
       <Navbar 
         onLogoClick={() => navigateTo('home')} 
         onHomeClick={() => navigateTo('home')} 
         onDirectoryClick={() => navigateTo('modules')}
-        onLoginClick={() => setIsAuthModalOpen(true)}
+        onLoginClick={() => navigateTo('auth')}
         onLogoutClick={handleLogout}
         isDark={isDark}
         onToggleDark={() => setIsDark(!isDark)}
         profile={profile}
       />
       
-      <AuthModal 
-        isOpen={isAuthModalOpen}
-        onClose={() => setIsAuthModalOpen(false)}
-        onLogin={handleLogin}
-        onSignup={handleSignup}
-      />
-
       <main className="flex-grow container mx-auto max-w-7xl px-4 py-8 sm:py-12 sm:px-8 transition-colors duration-500">
         {currentView !== 'home' && (
           <nav className="flex items-center space-x-2 text-[12px] sm:text-[14px] font-semibold uppercase tracking-wider text-slate-400 dark:text-white/30 mb-6 sm:mb-8 overflow-x-auto whitespace-nowrap pb-2 scrollbar-hide animate-fade-in px-1">
@@ -543,7 +551,7 @@ const App: React.FC = () => {
         )}
       </main>
 
-      {/* Pinterest-Style Floating Install Banner */}
+      {/* Floating Install Banner (Existing) */}
       {showInstallBanner && !isStandalone && (
         <div className="fixed bottom-10 left-1/2 -translate-x-1/2 w-[94%] max-w-md z-[200] animate-slide-in">
           <div className="bg-white/95 dark:bg-[#1A1A1A]/95 backdrop-blur-3xl border border-emerald-500/20 p-6 rounded-[2.5rem] shadow-[0_40px_80px_-20px_rgba(0,0,0,0.6)] flex flex-col gap-6">
