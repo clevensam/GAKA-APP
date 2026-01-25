@@ -384,7 +384,7 @@ const App: React.FC = () => {
   return (
     <div className={`min-h-screen flex flex-col selection:bg-emerald-100 selection:text-emerald-900 overflow-x-hidden transition-colors duration-500 ${isDark ? 'dark bg-black' : 'bg-[#fcfdfe]'}`}>
       <Navbar 
-        onLogoClick={() => navigateTo('home')} 
+        onHomeClick={() => navigateTo('home')} 
         onExploreClick={() => navigateTo('modules')}
         onAboutClick={() => navigateTo('about')}
         onLogoutClick={handleLogout}

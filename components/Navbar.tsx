@@ -4,7 +4,7 @@ import { UserIcon, LogoutIcon } from './Icons';
 import { Profile } from '../types';
 
 interface NavbarProps {
-  onLogoClick?: () => void;
+  onHomeClick?: () => void;
   onExploreClick?: () => void;
   onAboutClick?: () => void;
   onLogoutClick?: () => void;
@@ -77,7 +77,7 @@ const HangingLamp: React.FC<{ isDark: boolean; onToggle: () => void }> = ({ isDa
   }, [isDragging, handleMove, handleEnd]);
 
   return (
-    <div className="absolute top-full right-4 z-[100] pointer-events-none flex flex-col items-center">
+    <div className="absolute top-full right-0 z-[100] pointer-events-none flex flex-col items-center">
       <div className="w-4 h-1 bg-slate-200 dark:bg-slate-800 rounded-b-md mb-[-1px] transition-colors"></div>
       <div className="w-0.5 h-3 bg-slate-300 dark:bg-slate-700 transition-colors duration-500"></div>
       <div className="relative pointer-events-auto">
@@ -109,7 +109,7 @@ const HangingLamp: React.FC<{ isDark: boolean; onToggle: () => void }> = ({ isDa
 };
 
 export const Navbar: React.FC<NavbarProps> = ({ 
-  onLogoClick, 
+  onHomeClick,
   onExploreClick,
   onAboutClick,
   onLogoutClick,
@@ -124,7 +124,7 @@ export const Navbar: React.FC<NavbarProps> = ({
       <div className="max-w-7xl mx-auto flex justify-between items-center relative">
         <div className="flex items-center space-x-2 sm:space-x-8">
           <button 
-            onClick={onLogoClick}
+            onClick={onHomeClick}
             className="flex items-center space-x-2 sm:space-x-3 hover:opacity-80 transition-all active:scale-95 text-left group"
           >
             <div className="w-9 h-9 sm:w-11 sm:h-11 bg-emerald-600 dark:bg-emerald-500 rounded-xl sm:rounded-2xl flex items-center justify-center text-white font-extrabold text-lg sm:text-xl shadow-xl shadow-emerald-100 dark:shadow-emerald-900/40 transform group-hover:rotate-6 transition-transform">
@@ -135,8 +135,14 @@ export const Navbar: React.FC<NavbarProps> = ({
             </div>
           </button>
 
-          {/* Nav links positioned next to logo */}
+          {/* Left Primary Nav Links */}
           <div className="hidden md:flex items-center space-x-1">
+            <button 
+              onClick={onHomeClick}
+              className={`px-4 py-2 text-[10px] font-bold uppercase tracking-widest transition-all rounded-lg ${currentView === 'home' ? 'text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10' : 'text-slate-500 hover:text-emerald-600 dark:text-white/40 dark:hover:text-emerald-400'}`}
+            >
+              Home
+            </button>
             <button 
               onClick={onExploreClick}
               className={`px-4 py-2 text-[10px] font-bold uppercase tracking-widest transition-all rounded-lg ${currentView === 'modules' ? 'text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10' : 'text-slate-500 hover:text-emerald-600 dark:text-white/40 dark:hover:text-emerald-400'}`}
@@ -149,18 +155,10 @@ export const Navbar: React.FC<NavbarProps> = ({
             >
               About
             </button>
-            {!profile && (
-              <button 
-                onClick={() => onAuthClick?.('login')}
-                className={`px-4 py-2 text-[10px] font-bold uppercase tracking-widest transition-all rounded-lg ${currentView === 'auth' ? 'text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10' : 'text-slate-500 hover:text-emerald-600 dark:text-white/40 dark:hover:text-emerald-400'}`}
-              >
-                Sign In
-              </button>
-            )}
           </div>
         </div>
         
-        <div className="flex items-center space-x-3 sm:space-x-8">
+        <div className="flex items-center space-x-4 sm:space-x-8">
           {profile ? (
             <div className="flex items-center space-x-4">
               <div className="hidden sm:flex flex-col items-end">
@@ -180,17 +178,23 @@ export const Navbar: React.FC<NavbarProps> = ({
               </button>
             </div>
           ) : (
-            <div className="md:hidden flex items-center space-x-2">
+            <div className="flex items-center space-x-2 sm:space-x-4">
+              <button 
+                onClick={() => onAuthClick?.('login')}
+                className="hidden md:block px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-slate-500 hover:text-emerald-600 dark:text-white/40 dark:hover:text-emerald-400 transition-colors"
+              >
+                Sign In
+              </button>
               <button 
                 onClick={() => onAuthClick?.('signup')}
-                className="text-[10px] font-bold bg-emerald-600 dark:bg-emerald-500 text-white px-4 py-2 rounded-full uppercase tracking-widest shadow-lg shadow-emerald-100 dark:shadow-emerald-900/20 active:scale-95 transition-all"
+                className="text-[10px] font-bold bg-emerald-600 dark:bg-emerald-500 text-white px-4 sm:px-6 py-2 sm:py-2.5 rounded-full uppercase tracking-widest shadow-lg shadow-emerald-100 dark:shadow-emerald-900/20 active:scale-95 transition-all"
               >
                 Register
               </button>
             </div>
           )}
           
-          <div className="ml-1 sm:ml-2">
+          <div className="relative">
             <HangingLamp isDark={isDark} onToggle={onToggleDark} />
           </div>
         </div>
