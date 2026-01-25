@@ -91,17 +91,3 @@ export const TrashIcon = ({ className = "w-5 h-5" }) => (
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
   </svg>
 );
-
-// Added BookmarkIcon for saving resources
-export const BookmarkIcon = ({ className = "w-5 h-5" }) => (
-  <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" className={className}>
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-  </svg>
-);
-
-// Added BookmarkFilledIcon for saved resources state
-export const BookmarkFilledIcon = ({ className = "w-5 h-5" }) => (
-  <svg fill="currentColor" viewBox="0 0 24 24" className={className}>
-    <path d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-  </svg>
-);
