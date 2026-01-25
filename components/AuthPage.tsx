@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { UserIcon, LockIcon, BackIcon, ChevronRightIcon } from './Icons';
+import { UserIcon, LockIcon, BackIcon } from './Icons';
 
 interface AuthPageProps {
   onLogin: (username: string, pass: string) => Promise<void>;
@@ -10,7 +10,7 @@ interface AuthPageProps {
 }
 
 export const AuthPage: React.FC<AuthPageProps> = ({ onLogin, onSignup, onBack, isDark }) => {
-  const [isLogin, setIsLogin] = useState(true);
+  const [activeTab, setActiveTab] = useState<'login' | 'signup'>('login');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
@@ -22,7 +22,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin, onSignup, onBack, i
     setLoading(true);
     setError(null);
     try {
-      if (isLogin) {
+      if (activeTab === 'login') {
         await onLogin(username, password);
       } else {
         await onSignup(username, password, fullName);
@@ -35,143 +35,140 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin, onSignup, onBack, i
   };
 
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row overflow-hidden animate-fade-in">
-      {/* Illustration Side */}
-      <div className="relative lg:w-[45%] xl:w-[50%] bg-emerald-600 dark:bg-emerald-900 hidden lg:flex flex-col justify-between p-16 xl:p-24 overflow-hidden group">
-        <div className="absolute inset-0 bg-gradient-to-br from-emerald-500 to-emerald-800 opacity-90"></div>
-        
-        {/* Animated background elements */}
-        <div className="absolute -top-24 -right-24 w-96 h-96 bg-white/5 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-emerald-400/20 rounded-full blur-3xl animate-pulse delay-700"></div>
-
-        <div className="relative z-10">
-          <button 
-            onClick={onBack}
-            className="flex items-center space-x-3 text-white/70 hover:text-white font-bold text-sm uppercase tracking-[0.2em] transition-all group-hover:-translate-x-2"
-          >
-            <BackIcon className="w-6 h-6" />
-            <span>Back to Portal</span>
-          </button>
-        </div>
-
-        <div className="relative z-10 max-w-lg">
-          <div className="w-20 h-20 bg-white/10 backdrop-blur-md rounded-3xl flex items-center justify-center text-white text-4xl font-black mb-10 border border-white/20 shadow-2xl">
-            G
-          </div>
-          <h2 className="text-5xl xl:text-7xl font-black text-white leading-[1.1] mb-8 tracking-tighter">
-            Your Academic <br/> <span className="text-emerald-300">Hub.</span>
-          </h2>
-          <p className="text-emerald-50/80 text-xl font-medium leading-relaxed mb-12">
-            The most powerful repository for MUST Computer Science resources. One account, total efficiency.
-          </p>
-          
-          <div className="space-y-6">
-            <div className="flex items-center space-x-5 text-white/90">
-              <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center border border-white/10"><ChevronRightIcon className="w-6 h-6" /></div>
-              <span className="font-bold tracking-tight text-lg">Instant GAKA Paper Access</span>
-            </div>
-            <div className="flex items-center space-x-5 text-white/90">
-              <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center border border-white/10"><ChevronRightIcon className="w-6 h-6" /></div>
-              <span className="font-bold tracking-tight text-lg">Verified Lecture Materials</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="relative z-10">
-          <p className="text-[10px] font-black uppercase tracking-[0.4em] text-white/30">
-            &copy; {new Date().getFullYear()} SOFTLINK AFRICA | MUST ICT
-          </p>
-        </div>
+    <div className="min-h-screen flex flex-col items-center justify-center p-4 sm:p-8 relative overflow-hidden">
+      {/* Background Decorative Elements */}
+      <div className="absolute top-0 left-0 w-full h-full -z-10 pointer-events-none">
+        <div className="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] bg-emerald-500/10 blur-[120px] rounded-full animate-pulse"></div>
+        <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-teal-500/10 blur-[120px] rounded-full animate-pulse delay-700"></div>
       </div>
 
-      {/* Form Side */}
-      <div className="flex-1 flex flex-col justify-center items-center p-8 sm:p-12 lg:p-24 bg-white dark:bg-black relative overflow-y-auto">
+      {/* Back Navigation */}
+      <div className="absolute top-6 left-6 sm:top-12 sm:left-12">
         <button 
           onClick={onBack}
-          className="lg:hidden absolute top-8 left-8 text-slate-400 hover:text-emerald-600 transition-colors flex items-center gap-2 font-bold uppercase tracking-widest text-[10px]"
+          className="flex items-center space-x-3 text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 font-bold text-xs uppercase tracking-[0.2em] transition-all group"
         >
-          <BackIcon className="w-5 h-5" /> Back
+          <div className="w-10 h-10 rounded-xl bg-white dark:bg-white/5 flex items-center justify-center shadow-sm border border-slate-100 dark:border-white/5 group-hover:-translate-x-1 transition-transform">
+            <BackIcon className="w-5 h-5" />
+          </div>
+          <span className="hidden sm:inline">Back to Portal</span>
         </button>
+      </div>
 
-        <div className="w-full max-w-md animate-slide-in">
-          <div className="mb-12 text-center lg:text-left">
-            <div className="lg:hidden w-16 h-16 bg-emerald-600 rounded-3xl flex items-center justify-center text-white text-3xl font-black mx-auto mb-8 shadow-xl shadow-emerald-500/20">G</div>
-            <h2 className="text-4xl sm:text-5xl font-black text-slate-900 dark:text-white tracking-tight mb-4">
-              {isLogin ? 'Sign In' : 'Join Us'}
-            </h2>
-            <p className="text-slate-500 dark:text-white/40 text-lg font-medium leading-relaxed">
-              {isLogin ? 'Welcome back, student. Access your hub.' : 'Create an account to unlock premium MUST resources.'}
-            </p>
+      <div className="w-full max-w-[480px] animate-fade-in">
+        <div className="text-center mb-10">
+          <div className="w-20 h-20 bg-emerald-600 dark:bg-emerald-500 rounded-[2rem] flex items-center justify-center text-white text-4xl font-black mx-auto mb-8 shadow-2xl shadow-emerald-500/20 transform rotate-3 hover:rotate-0 transition-transform duration-500">
+            G
+          </div>
+          <h1 className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tight">Academic Portal</h1>
+          <p className="text-slate-500 dark:text-white/40 font-medium mt-2">Verified resources for MUST Computer Science.</p>
+        </div>
+
+        {/* Auth Card */}
+        <div className="bg-white dark:bg-[#121212] rounded-[2.5rem] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)] dark:shadow-[0_32px_64px_-16px_rgba(0,0,0,0.5)] border border-slate-100 dark:border-white/5 overflow-hidden">
+          {/* Tabs */}
+          <div className="flex p-2 bg-slate-50 dark:bg-black/40 border-b border-slate-100 dark:border-white/5">
+            <button 
+              onClick={() => { setActiveTab('login'); setError(null); }}
+              className={`flex-1 py-4 text-[11px] font-black uppercase tracking-widest rounded-2xl transition-all ${activeTab === 'login' ? 'bg-white dark:bg-[#1E1E1E] text-emerald-600 dark:text-emerald-400 shadow-sm' : 'text-slate-400 hover:text-slate-600 dark:hover:text-white/60'}`}
+            >
+              Sign In
+            </button>
+            <button 
+              onClick={() => { setActiveTab('signup'); setError(null); }}
+              className={`flex-1 py-4 text-[11px] font-black uppercase tracking-widest rounded-2xl transition-all ${activeTab === 'signup' ? 'bg-white dark:bg-[#1E1E1E] text-emerald-600 dark:text-emerald-400 shadow-sm' : 'text-slate-400 hover:text-slate-600 dark:hover:text-white/60'}`}
+            >
+              Create Account
+            </button>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {!isLogin && (
-              <div className="relative group">
-                <div className="absolute inset-y-0 left-6 flex items-center pointer-events-none">
-                  <UserIcon className="w-5 h-5 text-slate-300 dark:text-white/10 group-focus-within:text-emerald-500 transition-colors" />
+          <div className="p-8 sm:p-12">
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {activeTab === 'signup' && (
+                <div className="space-y-2 animate-fade-in">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-white/20 ml-2">Full Name</label>
+                  <div className="relative group">
+                    <div className="absolute inset-y-0 left-6 flex items-center pointer-events-none">
+                      <UserIcon className="w-5 h-5 text-slate-300 dark:text-white/10 group-focus-within:text-emerald-500 transition-colors" />
+                    </div>
+                    <input 
+                      type="text" 
+                      placeholder="e.g. John Doe" 
+                      required 
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                      className="w-full pl-16 pr-6 py-5 bg-slate-50 dark:bg-black/40 border border-transparent rounded-3xl focus:ring-8 focus:ring-emerald-500/5 outline-none transition-all text-slate-900 dark:text-white font-bold text-lg" 
+                    />
+                  </div>
                 </div>
-                <input 
-                  type="text" 
-                  placeholder="Full Name" 
-                  required 
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  className="w-full pl-16 pr-6 py-5 bg-slate-50 dark:bg-white/5 border border-transparent rounded-3xl focus:ring-8 focus:ring-emerald-500/5 outline-none transition-all text-slate-900 dark:text-white font-bold text-lg" 
-                />
+              )}
+              
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-white/20 ml-2">Username</label>
+                <div className="relative group">
+                  <div className="absolute inset-y-0 left-6 flex items-center pointer-events-none">
+                    <UserIcon className="w-5 h-5 text-slate-300 dark:text-white/10 group-focus-within:text-emerald-500 transition-colors" />
+                  </div>
+                  <input 
+                    type="text" 
+                    placeholder="student_id" 
+                    required 
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    className="w-full pl-16 pr-6 py-5 bg-slate-50 dark:bg-black/40 border border-transparent rounded-3xl focus:ring-8 focus:ring-emerald-500/5 outline-none transition-all text-slate-900 dark:text-white font-bold text-lg" 
+                  />
+                </div>
               </div>
-            )}
-            
-            <div className="relative group">
-              <div className="absolute inset-y-0 left-6 flex items-center pointer-events-none">
-                <UserIcon className="w-5 h-5 text-slate-300 dark:text-white/10 group-focus-within:text-emerald-500 transition-colors" />
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-white/20 ml-2">Secure Password</label>
+                <div className="relative group">
+                  <div className="absolute inset-y-0 left-6 flex items-center pointer-events-none">
+                    <LockIcon className="w-5 h-5 text-slate-300 dark:text-white/10 group-focus-within:text-emerald-500 transition-colors" />
+                  </div>
+                  <input 
+                    type="password" 
+                    placeholder="••••••••" 
+                    required 
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full pl-16 pr-6 py-5 bg-slate-50 dark:bg-black/40 border border-transparent rounded-3xl focus:ring-8 focus:ring-emerald-500/5 outline-none transition-all text-slate-900 dark:text-white font-bold text-lg" 
+                  />
+                </div>
               </div>
-              <input 
-                type="text" 
-                placeholder="Username" 
-                required 
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                className="w-full pl-16 pr-6 py-5 bg-slate-50 dark:bg-white/5 border border-transparent rounded-3xl focus:ring-8 focus:ring-emerald-500/5 outline-none transition-all text-slate-900 dark:text-white font-bold text-lg" 
-              />
-            </div>
 
-            <div className="relative group">
-              <div className="absolute inset-y-0 left-6 flex items-center pointer-events-none">
-                <LockIcon className="w-5 h-5 text-slate-300 dark:text-white/10 group-focus-within:text-emerald-500 transition-colors" />
-              </div>
-              <input 
-                type="password" 
-                placeholder="Password" 
-                required 
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full pl-16 pr-6 py-5 bg-slate-50 dark:bg-white/5 border border-transparent rounded-3xl focus:ring-8 focus:ring-emerald-500/5 outline-none transition-all text-slate-900 dark:text-white font-bold text-lg" 
-              />
-            </div>
+              {error && (
+                <div className="p-4 bg-red-50 dark:bg-red-500/5 rounded-2xl border border-red-100 dark:border-red-500/20 animate-pulse">
+                  <p className="text-red-500 text-[11px] font-black text-center uppercase tracking-widest">{error}</p>
+                </div>
+              )}
 
-            {error && <p className="text-red-500 text-[12px] font-bold text-center bg-red-50 dark:bg-red-500/5 py-4 rounded-2xl border border-red-100 dark:border-red-500/20">{error}</p>}
+              <button 
+                disabled={loading}
+                className="w-full py-6 bg-emerald-600 dark:bg-emerald-500 text-white rounded-3xl font-black text-sm uppercase tracking-[0.2em] shadow-2xl shadow-emerald-500/20 hover:bg-emerald-700 dark:hover:bg-emerald-600 active:scale-95 transition-all disabled:opacity-50 disabled:scale-100 flex items-center justify-center space-x-3"
+              >
+                {loading ? (
+                  <div className="w-6 h-6 border-3 border-white/20 border-t-white rounded-full animate-spin"></div>
+                ) : (
+                  <>
+                    <span>{activeTab === 'login' ? 'Authenticate Account' : 'Register Profile'}</span>
+                  </>
+                )}
+              </button>
+            </form>
 
-            <button 
-              disabled={loading}
-              className="w-full py-6 bg-emerald-600 dark:bg-emerald-500 text-white rounded-3xl font-black text-sm uppercase tracking-[0.2em] shadow-2xl shadow-emerald-500/20 hover:bg-emerald-700 dark:hover:bg-emerald-600 active:scale-95 transition-all disabled:opacity-50 disabled:scale-100"
-            >
-              {loading ? <div className="w-6 h-6 border-3 border-white/20 border-t-white rounded-full animate-spin mx-auto"></div> : isLogin ? 'Authenticate' : 'Get Started'}
-            </button>
-          </form>
-
-          <div className="mt-12 text-center lg:text-left">
-            <p className="text-slate-400 dark:text-white/20 font-bold uppercase tracking-widest text-[10px] mb-4">
-              {isLogin ? "New here?" : "Joined already?"}
+            <p className="mt-8 text-[10px] text-center text-slate-400 dark:text-white/20 font-bold uppercase tracking-widest leading-relaxed">
+              By continuing, you agree to access <br className="hidden sm:block"/> MUST academic resources responsibly.
             </p>
-            <button 
-              onClick={() => setIsLogin(!isLogin)}
-              className="px-8 py-4 border-2 border-slate-100 dark:border-white/5 rounded-2xl text-slate-700 dark:text-white font-black text-[12px] uppercase tracking-widest hover:bg-slate-50 dark:hover:bg-white/5 transition-all active:scale-95"
-            >
-              {isLogin ? "Create Student Account" : "Sign into Account"}
-            </button>
           </div>
         </div>
       </div>
+
+      <footer className="mt-12 text-center opacity-40">
+        <p className="text-[9px] font-black uppercase tracking-[0.4em] text-slate-500 dark:text-white/60">
+          &copy; {new Date().getFullYear()} SOFTLINK AFRICA | MUST ICT
+        </p>
+      </footer>
     </div>
   );
 };
