@@ -6,6 +6,7 @@ import { Profile } from '../types';
 interface NavbarProps {
   onHomeClick?: () => void;
   onExploreClick?: () => void;
+  onSavedClick?: () => void;
   onAboutClick?: () => void;
   onLogoutClick?: () => void;
   onAuthClick?: (tab: 'login' | 'signup') => void;
@@ -111,6 +112,7 @@ const HangingLamp: React.FC<{ isDark: boolean; onToggle: () => void }> = ({ isDa
 export const Navbar: React.FC<NavbarProps> = ({ 
   onHomeClick,
   onExploreClick,
+  onSavedClick,
   onAboutClick,
   onLogoutClick,
   onAuthClick,
@@ -135,7 +137,6 @@ export const Navbar: React.FC<NavbarProps> = ({
             </div>
           </button>
 
-          {/* Navigation Links - Beside Logo */}
           <div className="hidden md:flex items-center space-x-2">
             <button 
               onClick={onHomeClick}
@@ -149,6 +150,14 @@ export const Navbar: React.FC<NavbarProps> = ({
             >
               Explore
             </button>
+            {profile && (
+              <button 
+                onClick={onSavedClick}
+                className={`px-5 py-2.5 text-[11px] font-black uppercase tracking-widest transition-all rounded-xl ${currentView === 'saved' ? 'text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10' : 'text-slate-500 hover:text-emerald-600 dark:text-white/40 dark:hover:text-emerald-400'}`}
+              >
+                Saved
+              </button>
+            )}
             <button 
               onClick={onAboutClick}
               className={`px-5 py-2.5 text-[11px] font-black uppercase tracking-widest transition-all rounded-xl ${currentView === 'about' ? 'text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10' : 'text-slate-500 hover:text-emerald-600 dark:text-white/40 dark:hover:text-emerald-400'}`}

@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
-import { UserIcon, LockIcon, MailIcon, BackIcon, ChevronRightIcon } from './Icons';
+// Fix: Removed non-existent icon imports LockIcon and MailIcon, and unused imports UserIcon and ChevronRightIcon
+import { BackIcon } from './Icons';
 
 interface AuthPageProps {
   onLogin: (username: string, pass: string) => Promise<void>;
