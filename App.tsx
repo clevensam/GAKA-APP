@@ -3,8 +3,9 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { Navbar } from './components/Navbar';
 import { ModuleCard } from './components/ModuleCard';
+import { AuthModal } from './components/AuthModal';
 import { SearchIcon, BackIcon, FileIcon, DownloadIcon, ShareIcon, ChevronRightIcon, ViewIcon } from './components/Icons';
-import { Module, ResourceType, AcademicFile } from './types';
+import { Module, ResourceType, AcademicFile, Profile } from './types';
 import { Analytics } from '@vercel/analytics/react';
 
 // --- SUPABASE CONFIGURATION ---
@@ -45,6 +46,10 @@ const App: React.FC = () => {
   const [filterType, setFilterType] = useState<ResourceType | 'All'>('All');
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
+  // Auth States
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+
   // Native App Installation States
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [showInstallBanner, setShowInstallBanner] = useState(false);
@@ -57,7 +62,74 @@ const App: React.FC = () => {
     return window.matchMedia('(prefers-color-scheme: dark)').matches;
   });
 
-  // Handle routing based on URL parameters (for PWA shortcuts)
+  // Handle Authentication State
+  useEffect(() => {
+    const checkUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        fetchProfile(session.user.id);
+      }
+    };
+
+    checkUser();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        fetchProfile(session.user.id);
+      } else {
+        setProfile(null);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const fetchProfile = async (userId: string) => {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .single();
+    
+    if (data) setProfile(data as Profile);
+  };
+
+  const handleLogin = async (username: string, pass: string) => {
+    const email = `${username.toLowerCase()}@gaka.local`;
+    const { error } = await supabase.auth.signInWithPassword({ email, password: pass });
+    if (error) throw error;
+  };
+
+  const handleSignup = async (username: string, pass: string, name: string) => {
+    const email = `${username.toLowerCase()}@gaka.local`;
+    const { data, error: signUpError } = await supabase.auth.signUp({
+      email,
+      password: pass,
+      options: { data: { full_name: name, username } }
+    });
+
+    if (signUpError) throw signUpError;
+    if (data.user) {
+      // Manual profile insert if trigger isn't ready
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .insert({
+          id: data.user.id,
+          username,
+          full_name: name,
+          role: 'student'
+        });
+      if (profileError && !profileError.message.includes('duplicate')) {
+        console.warn("Profile creation handled by DB or failed:", profileError);
+      }
+    }
+  };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+  };
+
+  // PWA & Theme logic (existing)
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const viewParam = params.get('view');
@@ -73,13 +145,14 @@ const App: React.FC = () => {
       setIsStandalone(isStandaloneMode);
       return isStandaloneMode;
     };
-
     const appleDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
     setIsIOS(appleDevice);
-
     const alreadyStandalone = checkStandalone();
-
-    // Capture the PWA install event
+    const timer = setTimeout(() => {
+      if (!alreadyStandalone && !sessionStorage.getItem('gaka-native-install-dismissed')) {
+        setShowInstallBanner(true);
+      }
+    }, 4000);
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e);
@@ -87,14 +160,6 @@ const App: React.FC = () => {
         setShowInstallBanner(true);
       }
     };
-
-    // Fallback timer for iOS or if the event doesn't fire immediately
-    const timer = setTimeout(() => {
-      if (!alreadyStandalone && !sessionStorage.getItem('gaka-native-install-dismissed')) {
-        setShowInstallBanner(true);
-      }
-    }, 4000);
-
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
@@ -122,7 +187,6 @@ const App: React.FC = () => {
       if (outcome === 'accepted') setShowInstallBanner(false);
       setDeferredPrompt(null);
     } else {
-      // Manual fallback instructions for non-Chrome/Android
       alert("To install GAKA as a native app:\n1. Open your browser menu (⋮ or ≡)\n2. Tap 'Install App' or 'Add to Home Screen'");
     }
   };
@@ -289,9 +353,20 @@ const App: React.FC = () => {
         onLogoClick={() => navigateTo('home')} 
         onHomeClick={() => navigateTo('home')} 
         onDirectoryClick={() => navigateTo('modules')}
+        onLoginClick={() => setIsAuthModalOpen(true)}
+        onLogoutClick={handleLogout}
         isDark={isDark}
         onToggleDark={() => setIsDark(!isDark)}
+        profile={profile}
       />
+      
+      <AuthModal 
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        onLogin={handleLogin}
+        onSignup={handleSignup}
+      />
+
       <main className="flex-grow container mx-auto max-w-7xl px-4 py-8 sm:py-12 sm:px-8 transition-colors duration-500">
         {currentView !== 'home' && (
           <nav className="flex items-center space-x-2 text-[12px] sm:text-[14px] font-semibold uppercase tracking-wider text-slate-400 dark:text-white/30 mb-6 sm:mb-8 overflow-x-auto whitespace-nowrap pb-2 scrollbar-hide animate-fade-in px-1">

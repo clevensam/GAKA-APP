@@ -1,4 +1,13 @@
+
 export type ResourceType = 'Notes' | 'Past Paper';
+export type UserRole = 'admin' | 'student';
+
+export interface Profile {
+  id: string;
+  username: string;
+  full_name: string;
+  role: UserRole;
+}
 
 export interface AcademicFile {
   id: string;
