@@ -46,10 +46,8 @@ const App: React.FC = () => {
   const [filterType, setFilterType] = useState<ResourceType | 'All'>('All');
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
-  // Auth States (Manual Implementation)
   const [profile, setProfile] = useState<Profile | null>(null);
 
-  // Native App Installation States
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [showInstallBanner, setShowInstallBanner] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
@@ -61,7 +59,6 @@ const App: React.FC = () => {
     return window.matchMedia('(prefers-color-scheme: dark)').matches;
   });
 
-  // Handle Authentication State (Custom Table Logic)
   useEffect(() => {
     const checkUser = async () => {
       const savedUserId = localStorage.getItem('gaka-session-id');
@@ -137,7 +134,6 @@ const App: React.FC = () => {
     setCurrentView('home');
   };
 
-  // --- UI PERSISTENCE ---
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const viewParam = params.get('view');
@@ -343,6 +339,22 @@ const App: React.FC = () => {
     </div>
   );
 
+  const Breadcrumb: React.FC<{ items: { label: string; view: ViewState; module?: Module }[] }> = ({ items }) => (
+    <div className="flex items-center space-x-2 text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-6">
+      {items.map((item, idx) => (
+        <React.Fragment key={idx}>
+          <button 
+            onClick={() => navigateTo(item.view, item.module)}
+            className={`hover:text-emerald-600 transition-colors ${idx === items.length - 1 ? 'text-slate-800 dark:text-white' : ''}`}
+          >
+            {item.label}
+          </button>
+          {idx < items.length - 1 && <span>/</span>}
+        </React.Fragment>
+      ))}
+    </div>
+  );
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-white dark:bg-black transition-colors duration-500">
@@ -373,11 +385,14 @@ const App: React.FC = () => {
     <div className={`min-h-screen flex flex-col selection:bg-emerald-100 selection:text-emerald-900 overflow-x-hidden transition-colors duration-500 ${isDark ? 'dark bg-black' : 'bg-[#fcfdfe]'}`}>
       <Navbar 
         onLogoClick={() => navigateTo('home')} 
+        onExploreClick={() => navigateTo('modules')}
+        onAboutClick={() => navigateTo('about')}
         onLogoutClick={handleLogout}
-        onAuthClick={() => navigateTo('auth')}
+        onAuthClick={(tab) => navigateTo('auth')}
         isDark={isDark}
         onToggleDark={() => setIsDark(!isDark)}
         profile={profile}
+        currentView={currentView}
       />
       
       <main className="flex-grow container mx-auto max-w-7xl px-4 py-8 sm:py-12 sm:px-8 transition-colors duration-500">
@@ -394,17 +409,9 @@ const App: React.FC = () => {
                <p className="text-base sm:text-2xl text-slate-500 dark:text-white/60 max-w-3xl mx-auto mb-12 font-normal leading-relaxed px-4 text-center">
                  Verified lecture materials, modules, and past examination papers for Computer Science students.
                </p>
-               <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto px-6 justify-center">
-                 <button onClick={() => navigateTo('modules')} className="group flex items-center justify-center px-10 py-5 sm:px-16 sm:py-6 bg-emerald-600 dark:bg-emerald-500 text-white rounded-full font-bold text-sm sm:text-base shadow-2xl shadow-emerald-200 dark:shadow-emerald-900/10 hover:bg-emerald-700 dark:hover:bg-emerald-600 hover:scale-[1.03] transition-all duration-300 active:scale-95">
-                   Explore Repository <ChevronRightIcon className="ml-3 w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                 </button>
-                 {!profile && (
-                    <button onClick={() => navigateTo('auth')} className="px-10 py-5 sm:px-16 sm:py-6 bg-white dark:bg-[#1E1E1E] text-slate-700 dark:text-white/80 border border-slate-200 dark:border-white/5 rounded-full font-bold text-sm sm:text-base hover:bg-slate-50 dark:hover:bg-[#282828] hover:border-slate-300 dark:hover:border-white/10 transition-all duration-300 shadow-sm active:scale-95">
-                      Sign In / Register
-                    </button>
-                 )}
-                 <button onClick={() => navigateTo('about')} className="px-10 py-5 sm:px-16 sm:py-6 bg-transparent text-slate-400 dark:text-white/30 rounded-full font-bold text-sm sm:text-base hover:text-emerald-600 transition-all duration-300 active:scale-95">
-                   About Gaka
+               <div className="flex justify-center">
+                 <button onClick={() => navigateTo('modules')} className="group flex items-center justify-center px-12 py-5 sm:px-20 sm:py-6 bg-emerald-600 dark:bg-emerald-500 text-white rounded-full font-bold text-sm sm:text-lg shadow-2xl shadow-emerald-200 dark:shadow-emerald-900/10 hover:bg-emerald-700 dark:hover:bg-emerald-600 hover:scale-[1.03] transition-all duration-300 active:scale-95">
+                   Explore Resources <ChevronRightIcon className="ml-3 w-5 h-5 group-hover:translate-x-1 transition-transform" />
                  </button>
                </div>
              </div>
@@ -447,6 +454,7 @@ const App: React.FC = () => {
 
         {currentView === 'modules' && (
            <div className="animate-fade-in">
+             <Breadcrumb items={[{ label: 'Home', view: 'home' }, { label: 'Modules', view: 'modules' }]} />
              <div className="flex flex-col lg:flex-row lg:items-end justify-between mb-10 sm:mb-16 gap-8">
                <div className="space-y-3 px-1">
                  <h2 className="text-4xl sm:text-5xl font-extrabold text-slate-900 dark:text-white/90 tracking-tight">Modules</h2>
@@ -466,8 +474,9 @@ const App: React.FC = () => {
 
         {currentView === 'detail' && selectedModule && (
           <div className="animate-fade-in max-w-5xl mx-auto pb-20">
+            <Breadcrumb items={[{ label: 'Home', view: 'home' }, { label: 'Modules', view: 'modules' }, { label: selectedModule.code, view: 'detail', module: selectedModule }]} />
             <button onClick={() => navigateTo('modules')} className="flex items-center text-slate-800 dark:text-white/60 font-bold text-[13px] uppercase tracking-widest hover:text-emerald-600 mb-8 group transition-all">
-              <BackIcon className="mr-3 w-6 h-6 group-hover:-translate-x-2 transition-transform" /> Back to Directory
+              <BackIcon className="mr-3 w-5 h-5 group-hover:-translate-x-2 transition-transform" /> Back to Directory
             </button>
             <div className="bg-emerald-600 dark:bg-emerald-700 p-8 sm:p-20 rounded-[2.5rem] text-white shadow-2xl mb-8 relative overflow-hidden">
                <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-32 -mt-32"></div>
@@ -506,6 +515,7 @@ const App: React.FC = () => {
 
         {currentView === 'about' && (
           <div className="animate-fade-in max-w-5xl mx-auto py-4 sm:py-12">
+            <Breadcrumb items={[{ label: 'Home', view: 'home' }, { label: 'About', view: 'about' }]} />
             <div className="bg-white dark:bg-[#1E1E1E] rounded-[2rem] sm:rounded-[3.5rem] p-8 sm:p-24 shadow-sm border border-slate-100 dark:border-white/5 relative overflow-hidden">
                <div className="absolute top-0 right-0 w-48 h-48 sm:w-64 sm:h-64 bg-emerald-50 dark:bg-emerald-400/5 rounded-full -mr-24 -mt-24 sm:-mr-32 sm:-mt-32 opacity-50 transition-colors"></div>
                <h2 className="text-3xl sm:text-7xl font-extrabold text-slate-900 dark:text-white/90 mb-8 sm:mb-12 leading-tight tracking-tight relative break-words">Academic <span className="gradient-text">Efficiency.</span></h2>
