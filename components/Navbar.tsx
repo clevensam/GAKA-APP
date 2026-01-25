@@ -5,9 +5,6 @@ import { Profile } from '../types';
 
 interface NavbarProps {
   onLogoClick?: () => void;
-  onHomeClick?: () => void;
-  onDirectoryClick?: () => void;
-  onLoginClick?: () => void;
   onLogoutClick?: () => void;
   isDark: boolean;
   onToggleDark: () => void;
@@ -109,9 +106,6 @@ const HangingLamp: React.FC<{ isDark: boolean; onToggle: () => void }> = ({ isDa
 
 export const Navbar: React.FC<NavbarProps> = ({ 
   onLogoClick, 
-  onHomeClick, 
-  onDirectoryClick,
-  onLoginClick,
   onLogoutClick,
   isDark,
   onToggleDark,
@@ -132,45 +126,29 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
         </button>
         
-        <div className="flex items-center space-x-3 sm:space-x-8">
-          <div className="flex items-center space-x-3 sm:space-x-8 text-[10px] sm:text-[12px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
-            <button onClick={onHomeClick} className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors py-2 relative group">
-              Home
-              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-emerald-500 transition-all group-hover:w-full"></span>
-            </button>
-            <button onClick={onDirectoryClick} className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors py-2 relative group">
-              Directory
-              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-emerald-500 transition-all group-hover:w-full"></span>
-            </button>
-          </div>
-
-          <div className="h-6 w-px bg-slate-200 dark:bg-white/10 hidden sm:block"></div>
-
-          {profile ? (
-            <div className="flex items-center space-x-3">
-              <div className="flex flex-col items-end hidden sm:flex">
-                <span className="text-[10px] font-bold text-slate-900 dark:text-white leading-none">{profile.full_name}</span>
-                <span className="text-[8px] font-black uppercase tracking-tighter text-emerald-600 dark:text-emerald-400">{profile.role}</span>
+        <div className="flex items-center space-x-4 sm:space-x-8">
+          {profile && (
+            <div className="flex items-center space-x-4">
+              <div className="flex flex-col items-end">
+                <span className="text-[10px] sm:text-[11px] font-bold text-slate-900 dark:text-white leading-none">
+                  {profile.username}
+                </span>
+                <span className="text-[8px] font-black uppercase tracking-tighter text-emerald-600 dark:text-emerald-400 opacity-70">
+                  {profile.role}
+                </span>
               </div>
               <button 
                 onClick={onLogoutClick}
-                className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-400 hover:text-red-500 dark:hover:text-red-400 transition-all active:scale-95"
+                className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-400 hover:text-red-500 dark:hover:text-red-400 transition-all active:scale-95 border border-transparent hover:border-red-500/10"
                 title="Logout"
               >
                 <LogoutIcon className="w-5 h-5" />
               </button>
             </div>
-          ) : (
-            <button 
-              onClick={onLoginClick}
-              className="flex items-center space-x-2 px-4 py-2 sm:px-5 sm:py-2.5 bg-emerald-600 dark:bg-emerald-500 text-white rounded-xl font-bold text-[10px] sm:text-[12px] uppercase tracking-widest shadow-lg shadow-emerald-500/10 hover:bg-emerald-700 dark:hover:bg-emerald-600 transition-all active:scale-95"
-            >
-              <UserIcon className="w-4 h-4" />
-              <span>Login</span>
-            </button>
           )}
+          
+          <HangingLamp isDark={isDark} onToggle={onToggleDark} />
         </div>
-        <HangingLamp isDark={isDark} onToggle={onToggleDark} />
       </div>
     </nav>
   );
