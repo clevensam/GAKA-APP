@@ -6,6 +6,7 @@ import { Profile } from '../types';
 interface NavbarProps {
   onLogoClick?: () => void;
   onLogoutClick?: () => void;
+  onAuthClick?: (tab: 'login' | 'signup') => void;
   isDark: boolean;
   onToggleDark: () => void;
   profile: Profile | null;
@@ -107,6 +108,7 @@ const HangingLamp: React.FC<{ isDark: boolean; onToggle: () => void }> = ({ isDa
 export const Navbar: React.FC<NavbarProps> = ({ 
   onLogoClick, 
   onLogoutClick,
+  onAuthClick,
   isDark,
   onToggleDark,
   profile
@@ -126,8 +128,8 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
         </button>
         
-        <div className="flex items-center space-x-4 sm:space-x-8">
-          {profile && (
+        <div className="flex items-center space-x-3 sm:space-x-8">
+          {profile ? (
             <div className="flex items-center space-x-4">
               <div className="flex flex-col items-end">
                 <span className="text-[10px] sm:text-[11px] font-bold text-slate-900 dark:text-white leading-none">
@@ -145,9 +147,26 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <LogoutIcon className="w-5 h-5" />
               </button>
             </div>
+          ) : (
+            <div className="flex items-center space-x-2 sm:space-x-4">
+              <button 
+                onClick={() => onAuthClick?.('login')}
+                className="text-[10px] sm:text-xs font-bold text-slate-600 dark:text-white/60 hover:text-emerald-600 dark:hover:text-emerald-400 uppercase tracking-widest px-2 sm:px-4 py-2 transition-colors"
+              >
+                Sign In
+              </button>
+              <button 
+                onClick={() => onAuthClick?.('signup')}
+                className="text-[10px] sm:text-xs font-bold bg-emerald-600 dark:bg-emerald-500 text-white px-4 sm:px-6 py-2 sm:py-2.5 rounded-full uppercase tracking-widest shadow-lg shadow-emerald-100 dark:shadow-emerald-900/20 active:scale-95 transition-all"
+              >
+                Register
+              </button>
+            </div>
           )}
           
-          <HangingLamp isDark={isDark} onToggle={onToggleDark} />
+          <div className="ml-1 sm:ml-2">
+            <HangingLamp isDark={isDark} onToggle={onToggleDark} />
+          </div>
         </div>
       </div>
     </nav>

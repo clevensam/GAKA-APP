@@ -374,6 +374,7 @@ const App: React.FC = () => {
       <Navbar 
         onLogoClick={() => navigateTo('home')} 
         onLogoutClick={handleLogout}
+        onAuthClick={() => navigateTo('auth')}
         isDark={isDark}
         onToggleDark={() => setIsDark(!isDark)}
         profile={profile}
