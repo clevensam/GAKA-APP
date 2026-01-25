@@ -61,6 +61,10 @@ body.dark {
   .pl-18 {
     padding-left: 4.5rem;
   }
+  .py-4.5 {
+    padding-top: 1.125rem;
+    padding-bottom: 1.125rem;
+  }
   .py-5.5 {
     padding-top: 1.375rem;
     padding-bottom: 1.375rem;
