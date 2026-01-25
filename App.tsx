@@ -69,6 +69,57 @@ const App: React.FC = () => {
     return window.matchMedia('(prefers-color-scheme: dark)').matches;
   });
 
+  // Sync theme with localStorage and document body
+  useEffect(() => {
+    localStorage.setItem('gaka-theme', isDark ? 'dark' : 'light');
+    if (isDark) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [isDark]);
+
+  // PWA Logic: Detect standalone, iOS, and handle install prompt
+  useEffect(() => {
+    const isStandaloneMode = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone;
+    setIsStandalone(!!isStandaloneMode);
+
+    const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+    setIsIOS(isIOSDevice);
+
+    const handleBeforeInstallPrompt = (e: any) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      // Show banner if not standalone and not dismissed in this session
+      if (!isStandaloneMode && !sessionStorage.getItem('gaka-install-dismissed')) {
+        setShowInstallBanner(true);
+      }
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    // For iOS, manual banner logic
+    if (isIOSDevice && !isStandaloneMode && !sessionStorage.getItem('gaka-install-dismissed')) {
+      setShowInstallBanner(true);
+    }
+
+    return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+  }, []);
+
+  const dismissInstall = () => {
+    setShowInstallBanner(false);
+    sessionStorage.setItem('gaka-install-dismissed', 'true');
+  };
+
+  const handleNativeInstall = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    console.log(`User response to install prompt: ${outcome}`);
+    setDeferredPrompt(null);
+    setShowInstallBanner(false);
+  };
+
   useEffect(() => {
     const checkUser = async () => {
       const savedUserId = localStorage.getItem('gaka-session-id');
@@ -436,6 +487,7 @@ const App: React.FC = () => {
                <h2 className="text-5xl sm:text-[100px] font-black text-slate-900 dark:text-white mb-10 max-w-6xl mx-auto leading-[1] tracking-tighter break-words px-2 text-center">
                  Centralized <span className="gradient-text">Academic</span> <br className="hidden sm:block"/> Repository.
                </h2>
+               <h1 className="sr-only">GAKA Academic Portal</h1>
                <p className="text-lg sm:text-2xl text-slate-500 dark:text-white/50 max-w-3xl mx-auto mb-16 font-medium leading-relaxed px-4 text-center">
                  Verified lecture materials, course modules, and GAKA examination papers for Computer Science students.
                </p>
