@@ -6,6 +6,7 @@
 CREATE TABLE IF NOT EXISTS public.portal_users (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   username TEXT UNIQUE NOT NULL,
+  email TEXT NOT NULL,
   password TEXT NOT NULL, -- Note: For production, these should be hashed.
   full_name TEXT NOT NULL,
   role TEXT DEFAULT 'student' CHECK (role IN ('admin', 'student')),
@@ -31,6 +32,6 @@ CREATE POLICY "Users can update their own data"
   ON public.portal_users FOR UPDATE USING (id::text = auth.uid()::text OR true); -- Simplifying for the 'Simple Auth' request
 
 -- 4. Initial Admin (Optional)
--- INSERT INTO public.portal_users (username, password, full_name, role) 
--- VALUES ('admin', 'admin123', 'System Administrator', 'admin')
+-- INSERT INTO public.portal_users (username, password, full_name, role, email) 
+-- VALUES ('admin', 'admin123', 'System Administrator', 'admin', 'admin@must.ac.tz')
 -- ON CONFLICT (username) DO NOTHING;

@@ -105,23 +105,24 @@ const App: React.FC = () => {
     setCurrentView('home');
   };
 
-  const handleSignup = async (username: string, pass: string, name: string) => {
-    // Check if username exists
+  const handleSignup = async (username: string, pass: string, name: string, email: string) => {
+    // Check if username or email exists
     const { data: existing } = await supabase
       .from('portal_users')
-      .select('username')
-      .eq('username', username)
+      .select('username, email')
+      .or(`username.eq.${username},email.eq.${email}`)
       .maybeSingle();
 
     if (existing) {
-      throw new Error("This username is already registered.");
+      if (existing.username === username) throw new Error("This username is already registered.");
+      if (existing.email === email) throw new Error("This email is already registered.");
     }
 
     // Direct insertion
     const { data, error } = await supabase
       .from('portal_users')
       .insert([
-        { username, password: pass, full_name: name, role: 'student' }
+        { username, password: pass, full_name: name, email, role: 'student' }
       ])
       .select()
       .single();

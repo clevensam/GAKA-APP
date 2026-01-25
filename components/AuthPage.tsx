@@ -1,10 +1,10 @@
 
 import React, { useState } from 'react';
-import { UserIcon, LockIcon, BackIcon, ChevronRightIcon } from './Icons';
+import { UserIcon, LockIcon, MailIcon, BackIcon, ChevronRightIcon } from './Icons';
 
 interface AuthPageProps {
   onLogin: (username: string, pass: string) => Promise<void>;
-  onSignup: (username: string, pass: string, name: string) => Promise<void>;
+  onSignup: (username: string, pass: string, name: string, email: string) => Promise<void>;
   onBack: () => void;
   isDark: boolean;
 }
@@ -12,6 +12,7 @@ interface AuthPageProps {
 export const AuthPage: React.FC<AuthPageProps> = ({ onLogin, onSignup, onBack, isDark }) => {
   const [activeTab, setActiveTab] = useState<'login' | 'signup'>('login');
   const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [fullName, setFullName] = useState('');
@@ -25,6 +26,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin, onSignup, onBack, i
     
     if (activeTab === 'signup') {
       if (fullName.trim().length < 2) return "Please enter your full student name.";
+      if (!email.includes('@')) return "Please enter a valid email address.";
       if (password !== confirmPassword) return "Passwords do not match.";
     }
     return null;
@@ -44,7 +46,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin, onSignup, onBack, i
       if (activeTab === 'login') {
         await onLogin(username, password);
       } else {
-        await onSignup(username, password, fullName);
+        await onSignup(username, password, fullName, email);
       }
     } catch (err: any) {
       console.error("Auth Failure:", err);
@@ -85,7 +87,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin, onSignup, onBack, i
             G
           </div>
           <h1 className="text-5xl font-black text-slate-900 dark:text-white tracking-tighter mb-3">Portal Authentication</h1>
-          <p className="text-slate-400 dark:text-white/20 font-bold uppercase tracking-[0.4em] text-[10px] px-4 max-w-xs mx-auto leading-relaxed">Secure Access Protocol • Computer Science Repository</p>
+          <p className="text-slate-400 dark:text-white/20 font-bold uppercase tracking-[0.4em] text-[10px] px-4 max-w-xs mx-auto leading-relaxed text-center">Secure Access Protocol • Computer Science Repository</p>
         </div>
 
         {/* Glass Card */}
@@ -116,25 +118,44 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin, onSignup, onBack, i
             </div>
           </div>
 
-          <div className="p-12 sm:p-16">
-            <form onSubmit={handleSubmit} className="space-y-8">
+          <div className="p-10 sm:p-14">
+            <form onSubmit={handleSubmit} className="space-y-6 sm:space-y-8">
               {activeTab === 'signup' && (
-                <div className="space-y-3 animate-fade-in">
-                  <label className="text-[11px] font-black uppercase tracking-[0.4em] text-slate-400 dark:text-white/10 ml-5">Official Full Name</label>
-                  <div className="relative group">
-                    <div className="absolute inset-y-0 left-8 flex items-center pointer-events-none">
-                      <UserIcon className="w-6 h-6 text-slate-300 dark:text-white/10 group-focus-within:text-emerald-500 transition-colors" />
+                <>
+                  <div className="space-y-3 animate-fade-in">
+                    <label className="text-[11px] font-black uppercase tracking-[0.4em] text-slate-400 dark:text-white/10 ml-5">Official Full Name</label>
+                    <div className="relative group">
+                      <div className="absolute inset-y-0 left-8 flex items-center pointer-events-none">
+                        <UserIcon className="w-6 h-6 text-slate-300 dark:text-white/10 group-focus-within:text-emerald-500 transition-colors" />
+                      </div>
+                      <input 
+                        type="text" 
+                        placeholder="e.g. Cleven Samwel" 
+                        required 
+                        value={fullName}
+                        onChange={(e) => setFullName(e.target.value)}
+                        className="w-full pl-18 pr-8 py-5 sm:py-6 bg-slate-50/40 dark:bg-black/60 border border-slate-100 dark:border-white/5 rounded-[2.2rem] focus:ring-8 focus:ring-emerald-500/5 outline-none transition-all text-slate-900 dark:text-white font-bold text-lg placeholder:opacity-30 placeholder:font-medium tracking-tight" 
+                      />
                     </div>
-                    <input 
-                      type="text" 
-                      placeholder="e.g. Cleven Samwel" 
-                      required 
-                      value={fullName}
-                      onChange={(e) => setFullName(e.target.value)}
-                      className="w-full pl-18 pr-8 py-5.5 bg-slate-50/40 dark:bg-black/60 border border-slate-100 dark:border-white/5 rounded-[2rem] focus:ring-8 focus:ring-emerald-500/5 outline-none transition-all text-slate-900 dark:text-white font-bold text-lg placeholder:opacity-30 placeholder:font-medium tracking-tight" 
-                    />
                   </div>
-                </div>
+
+                  <div className="space-y-3 animate-fade-in">
+                    <label className="text-[11px] font-black uppercase tracking-[0.4em] text-slate-400 dark:text-white/10 ml-5">Institutional Email</label>
+                    <div className="relative group">
+                      <div className="absolute inset-y-0 left-8 flex items-center pointer-events-none">
+                        <MailIcon className="w-6 h-6 text-slate-300 dark:text-white/10 group-focus-within:text-emerald-500 transition-colors" />
+                      </div>
+                      <input 
+                        type="email" 
+                        placeholder="student@must.ac.tz" 
+                        required 
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="w-full pl-18 pr-8 py-5 sm:py-6 bg-slate-50/40 dark:bg-black/60 border border-slate-100 dark:border-white/5 rounded-[2.2rem] focus:ring-8 focus:ring-emerald-500/5 outline-none transition-all text-slate-900 dark:text-white font-bold text-lg placeholder:opacity-30 placeholder:font-medium tracking-tight" 
+                      />
+                    </div>
+                  </div>
+                </>
               )}
               
               <div className="space-y-3">
@@ -149,7 +170,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin, onSignup, onBack, i
                     required 
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
-                    className="w-full pl-18 pr-8 py-5.5 bg-slate-50/40 dark:bg-black/60 border border-slate-100 dark:border-white/5 rounded-[2rem] focus:ring-8 focus:ring-emerald-500/5 outline-none transition-all text-slate-900 dark:text-white font-bold text-lg placeholder:opacity-30 placeholder:font-medium tracking-tight" 
+                    className="w-full pl-18 pr-8 py-5 sm:py-6 bg-slate-50/40 dark:bg-black/60 border border-slate-100 dark:border-white/5 rounded-[2.2rem] focus:ring-8 focus:ring-emerald-500/5 outline-none transition-all text-slate-900 dark:text-white font-bold text-lg placeholder:opacity-30 placeholder:font-medium tracking-tight" 
                   />
                 </div>
               </div>
@@ -166,7 +187,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin, onSignup, onBack, i
                     required 
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full pl-18 pr-8 py-5.5 bg-slate-50/40 dark:bg-black/60 border border-slate-100 dark:border-white/5 rounded-[2rem] focus:ring-8 focus:ring-emerald-500/5 outline-none transition-all text-slate-900 dark:text-white font-bold text-lg" 
+                    className="w-full pl-18 pr-8 py-5 sm:py-6 bg-slate-50/40 dark:bg-black/60 border border-slate-100 dark:border-white/5 rounded-[2.2rem] focus:ring-8 focus:ring-emerald-500/5 outline-none transition-all text-slate-900 dark:text-white font-bold text-lg" 
                   />
                 </div>
               </div>
@@ -184,7 +205,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin, onSignup, onBack, i
                       required 
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
-                      className="w-full pl-18 pr-8 py-5.5 bg-slate-50/40 dark:bg-black/60 border border-slate-100 dark:border-white/5 rounded-[2rem] focus:ring-8 focus:ring-emerald-500/5 outline-none transition-all text-slate-900 dark:text-white font-bold text-lg" 
+                      className="w-full pl-18 pr-8 py-5 sm:py-6 bg-slate-50/40 dark:bg-black/60 border border-slate-100 dark:border-white/5 rounded-[2.2rem] focus:ring-8 focus:ring-emerald-500/5 outline-none transition-all text-slate-900 dark:text-white font-bold text-lg" 
                     />
                   </div>
                 </div>
@@ -201,13 +222,13 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin, onSignup, onBack, i
               <button 
                 type="submit"
                 disabled={loading}
-                className="group w-full py-6 bg-emerald-600 dark:bg-emerald-500 text-white rounded-[2rem] font-black text-[13px] uppercase tracking-[0.4em] shadow-2xl shadow-emerald-500/20 hover:shadow-emerald-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:scale-100 flex items-center justify-center space-x-4"
+                className="group w-full py-6 sm:py-7 bg-emerald-600 dark:bg-emerald-500 text-white rounded-[2.2rem] font-black text-[13px] uppercase tracking-[0.4em] shadow-2xl shadow-emerald-500/20 hover:shadow-emerald-500/40 hover:scale-[1.01] active:scale-[0.98] transition-all disabled:opacity-50 disabled:scale-100 flex items-center justify-center space-x-4"
               >
                 {loading ? (
                   <div className="w-6 h-6 border-3 border-white/20 border-t-white rounded-full animate-spin"></div>
                 ) : (
                   <>
-                    <span>{activeTab === 'login' ? 'Authorize' : 'Finalize Registration'}</span>
+                    <span>{activeTab === 'login' ? 'Authorize' : 'Complete Setup'}</span>
                     <ChevronRightIcon className="w-5 h-5 group-hover:translate-x-2 transition-transform" />
                   </>
                 )}
