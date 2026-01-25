@@ -46,7 +46,7 @@ const App: React.FC = () => {
   const [filterType, setFilterType] = useState<ResourceType | 'All'>('All');
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
-  // Auth States
+  // Auth States (Manual Implementation)
   const [profile, setProfile] = useState<Profile | null>(null);
 
   // Native App Installation States
@@ -61,63 +61,85 @@ const App: React.FC = () => {
     return window.matchMedia('(prefers-color-scheme: dark)').matches;
   });
 
-  // Handle Authentication State
+  // Handle Authentication State (Custom Table Logic)
   useEffect(() => {
     const checkUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        fetchProfile(session.user.id);
+      const savedUserId = localStorage.getItem('gaka-session-id');
+      if (savedUserId) {
+        fetchProfile(savedUserId);
       }
     };
-
     checkUser();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.user) {
-        fetchProfile(session.user.id);
-      } else {
-        setProfile(null);
-      }
-    });
-
-    return () => subscription.unsubscribe();
   }, []);
 
   const fetchProfile = async (userId: string) => {
     const { data, error } = await supabase
-      .from('profiles')
+      .from('portal_users')
       .select('*')
       .eq('id', userId)
       .single();
     
-    if (data) setProfile(data as Profile);
+    if (data) {
+      setProfile(data as Profile);
+    } else {
+      localStorage.removeItem('gaka-session-id');
+      setProfile(null);
+    }
   };
 
   const handleLogin = async (username: string, pass: string) => {
-    const email = `${username.toLowerCase()}@gaka.local`;
-    const { error } = await supabase.auth.signInWithPassword({ email, password: pass });
-    if (error) throw error;
+    // Direct table query for "Simple Auth"
+    const { data, error } = await supabase
+      .from('portal_users')
+      .select('*')
+      .eq('username', username)
+      .eq('password', pass)
+      .single();
+
+    if (error || !data) {
+      throw new Error("Invalid username or password.");
+    }
+
+    setProfile(data as Profile);
+    localStorage.setItem('gaka-session-id', data.id);
     setCurrentView('home');
   };
 
   const handleSignup = async (username: string, pass: string, name: string) => {
-    const email = `${username.toLowerCase()}@gaka.local`;
-    const { data, error: signUpError } = await supabase.auth.signUp({
-      email,
-      password: pass,
-      options: { data: { full_name: name, username } }
-    });
+    // Check if username exists
+    const { data: existing } = await supabase
+      .from('portal_users')
+      .select('username')
+      .eq('username', username)
+      .maybeSingle();
 
-    if (signUpError) throw signUpError;
-    // Profile creation is handled by the SQL trigger on_auth_user_created_sync
+    if (existing) {
+      throw new Error("This username is already registered.");
+    }
+
+    // Direct insertion
+    const { data, error } = await supabase
+      .from('portal_users')
+      .insert([
+        { username, password: pass, full_name: name, role: 'student' }
+      ])
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    setProfile(data as Profile);
+    localStorage.setItem('gaka-session-id', data.id);
     setCurrentView('home');
   };
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
+    localStorage.removeItem('gaka-session-id');
+    setProfile(null);
     setCurrentView('home');
   };
 
+  // --- UI PERSISTENCE ---
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const viewParam = params.get('view');

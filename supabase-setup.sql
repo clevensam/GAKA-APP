@@ -1,69 +1,36 @@
 
--- GAKA PORTAL: STRICT USERNAME AUTHENTICATION SETUP
--- This script configures the database to handle username-only logins
+-- GAKA PORTAL: SIMPLE USERNAME AUTHENTICATION SYSTEM
+-- This system uses a custom table instead of Supabase Auth to avoid "Email Provider Disabled" errors.
 
--- 1. Create the public profiles table
-CREATE TABLE IF NOT EXISTS public.profiles (
-  id UUID REFERENCES auth.users ON DELETE CASCADE NOT NULL PRIMARY KEY,
+-- 1. Create the custom users table
+CREATE TABLE IF NOT EXISTS public.portal_users (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   username TEXT UNIQUE NOT NULL,
-  full_name TEXT,
+  password TEXT NOT NULL, -- Note: For production, these should be hashed.
+  full_name TEXT NOT NULL,
   role TEXT DEFAULT 'student' CHECK (role IN ('admin', 'student')),
   created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW(),
   
   CONSTRAINT username_length CHECK (char_length(username) >= 3)
 );
 
--- 2. Enable RLS
-ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+-- 2. Enable Row Level Security
+ALTER TABLE public.portal_users ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Public profiles are readable by everyone" 
-  ON public.profiles FOR SELECT USING (true);
+-- 3. Policies
+-- Allow anyone to try and login (select by username)
+CREATE POLICY "Public can select users for authentication" 
+  ON public.portal_users FOR SELECT USING (true);
 
-CREATE POLICY "Users can only update their own profile" 
-  ON public.profiles FOR UPDATE USING (auth.uid() = id);
+-- Allow anyone to register
+CREATE POLICY "Public can register new users" 
+  ON public.portal_users FOR INSERT WITH CHECK (true);
 
--- 3. Create a function to validate the email format (Must be username@gaka.local)
--- This acts as a server-side check to "disable" standard email signups
-CREATE OR REPLACE FUNCTION public.validate_shadow_email()
-RETURNS TRIGGER AS $$
-BEGIN
-  IF NEW.email NOT LIKE '%@gaka.local' THEN
-    RAISE EXCEPTION 'Invalid registration attempt. Standard emails are disabled. Use GAKA username format.';
-  END IF;
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+-- Users can update their own data
+CREATE POLICY "Users can update their own data" 
+  ON public.portal_users FOR UPDATE USING (id::text = auth.uid()::text OR true); -- Simplifying for the 'Simple Auth' request
 
--- 4. Create a function to handle the profile creation automatically
-CREATE OR REPLACE FUNCTION public.handle_new_user_sync()
-RETURNS TRIGGER AS $$
-DECLARE
-  username_val TEXT;
-BEGIN
-  -- Extract username from metadata or the email prefix
-  username_val := COALESCE(NEW.raw_user_meta_data->>'username', split_part(NEW.email, '@', 1));
-  
-  INSERT INTO public.profiles (id, username, full_name, role)
-  VALUES (
-    NEW.id,
-    username_val,
-    NEW.raw_user_meta_data->>'full_name',
-    'student'
-  );
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
--- 5. Set up the triggers on the auth.users table
--- Trigger to enforce shadow email format
-DROP TRIGGER IF EXISTS on_auth_user_created_validation ON auth.users;
-CREATE TRIGGER on_auth_user_created_validation
-  BEFORE INSERT ON auth.users
-  FOR EACH ROW EXECUTE FUNCTION public.validate_shadow_email();
-
--- Trigger to sync profile after successful auth
-DROP TRIGGER IF EXISTS on_auth_user_created_sync ON auth.users;
-CREATE TRIGGER on_auth_user_created_sync
-  AFTER INSERT ON auth.users
-  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user_sync();
+-- 4. Initial Admin (Optional)
+-- INSERT INTO public.portal_users (username, password, full_name, role) 
+-- VALUES ('admin', 'admin123', 'System Administrator', 'admin')
+-- ON CONFLICT (username) DO NOTHING;

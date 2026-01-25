@@ -16,7 +16,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin, onSignup, onBack, i
   const [confirmPassword, setConfirmPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<{ message: string; isConfig?: boolean } | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const validate = () => {
     if (username.length < 3) return "Username must be at least 3 characters.";
@@ -34,7 +34,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin, onSignup, onBack, i
     e.preventDefault();
     const validationError = validate();
     if (validationError) {
-      setError({ message: validationError });
+      setError(validationError);
       return;
     }
 
@@ -47,22 +47,8 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin, onSignup, onBack, i
         await onSignup(username, password, fullName);
       }
     } catch (err: any) {
-      console.error("Auth Failure Details:", err);
-      const msg = err.message?.toLowerCase() || '';
-      
-      // Specific handling for common Supabase configuration hurdles
-      if (msg.includes('email provider is disabled') || msg.includes('email disabled')) {
-        setError({ 
-          message: "System Configuration Required: The 'Email' provider must be ENABLED in your Supabase Dashboard (Authentication -> Providers) to support username login.",
-          isConfig: true
-        });
-      } else if (msg.includes('invalid login credentials')) {
-        setError({ message: "Invalid username or password. Please try again." });
-      } else if (msg.includes('user already exists')) {
-        setError({ message: "This username is already taken. Please choose another one." });
-      } else {
-        setError({ message: err.message || "An unexpected error occurred. Please check your connection." });
-      }
+      console.error("Auth Failure:", err);
+      setError(err.message || "Authentication failed. Please check your credentials.");
     } finally {
       setLoading(false);
     }
@@ -98,7 +84,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin, onSignup, onBack, i
           >
             G
           </div>
-          <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter mb-2">Academic Access</h1>
+          <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter mb-2">Portal Access</h1>
           <p className="text-slate-400 dark:text-white/20 font-medium uppercase tracking-[0.3em] text-[10px] px-4">Secure Gateway for MUST Computer Science</p>
         </div>
 
@@ -125,7 +111,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin, onSignup, onBack, i
                 onClick={() => { setActiveTab('signup'); setError(null); }}
                 className={`relative flex-1 py-4 text-[11px] font-black uppercase tracking-[0.25em] transition-all duration-500 z-10 ${activeTab === 'signup' ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400 dark:text-white/20'}`}
               >
-                Join Repository
+                Join Now
               </button>
             </div>
           </div>
@@ -187,7 +173,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin, onSignup, onBack, i
 
               {activeTab === 'signup' && (
                 <div className="space-y-2 animate-fade-in">
-                  <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 dark:text-white/20 ml-4">Confirm Security Key</label>
+                  <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 dark:text-white/20 ml-4">Verify Security Key</label>
                   <div className="relative group">
                     <div className="absolute inset-y-0 left-6 flex items-center pointer-events-none">
                       <LockIcon className="w-5 h-5 text-slate-300 dark:text-white/10 group-focus-within:text-emerald-500 transition-colors" />
@@ -205,17 +191,10 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin, onSignup, onBack, i
               )}
 
               {error && (
-                <div className={`p-6 rounded-[1.5rem] border ${error.isConfig ? 'bg-amber-500/5 border-amber-500/20' : 'bg-red-500/5 border-red-500/20'} animate-pulse`}>
-                  <p className={`${error.isConfig ? 'text-amber-600 dark:text-amber-400' : 'text-red-500'} text-[11px] font-black text-center uppercase tracking-widest leading-relaxed`}>
-                    {error.message}
+                <div className="p-4 bg-red-500/5 rounded-[1.2rem] border border-red-500/10">
+                  <p className="text-red-500 text-[10px] font-black text-center uppercase tracking-widest leading-relaxed">
+                    {error}
                   </p>
-                  {error.isConfig && (
-                    <div className="mt-4 pt-4 border-t border-amber-500/10">
-                      <p className="text-[9px] font-medium text-slate-500 dark:text-white/30 text-center leading-relaxed italic">
-                        The shadow-email authentication engine requires the Email provider to be enabled even for username logins.
-                      </p>
-                    </div>
-                  )}
                 </div>
               )}
 
@@ -228,7 +207,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin, onSignup, onBack, i
                   <div className="w-5 h-5 border-3 border-white/20 border-t-white rounded-full animate-spin"></div>
                 ) : (
                   <>
-                    <span>{activeTab === 'login' ? 'Authenticate' : 'Register Profile'}</span>
+                    <span>{activeTab === 'login' ? 'Authenticate' : 'Complete Setup'}</span>
                     <ChevronRightIcon className="w-4 h-4 group-hover:translate-x-1.5 transition-transform" />
                   </>
                 )}
