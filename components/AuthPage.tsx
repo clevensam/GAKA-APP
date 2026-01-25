@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { UserIcon, LockIcon, BackIcon, ChevronRightIcon } from './Icons';
 
 interface AuthPageProps {
@@ -47,7 +47,13 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin, onSignup, onBack, i
         await onSignup(username, password, fullName);
       }
     } catch (err: any) {
-      setError(err.message || "Authentication failed. Please check your credentials.");
+      console.error("Auth Error:", err);
+      // Handle the common "Email provider is disabled" error specifically
+      if (err.message?.toLowerCase().includes('email provider is disabled') || err.message?.toLowerCase().includes('email disabled')) {
+        setError("Database Configuration Error: Please ensure the 'Email' provider is ENABLED in your Supabase Dashboard (Auth -> Providers).");
+      } else {
+        setError(err.message || "Authentication failed. Please check your credentials.");
+      }
     } finally {
       setLoading(false);
     }
@@ -55,78 +61,73 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin, onSignup, onBack, i
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-6 sm:p-12 relative font-lexend overflow-hidden selection:bg-emerald-500/30">
-      {/* Premium Mesh Gradient Background */}
-      <div className="fixed inset-0 -z-10 pointer-events-none overflow-hidden bg-slate-50 dark:bg-[#050505] transition-colors duration-700">
-        <div className="absolute top-[-10%] left-[-5%] w-[70%] h-[70%] bg-emerald-500/10 dark:bg-emerald-600/5 blur-[140px] rounded-full animate-float"></div>
-        <div className="absolute bottom-[-15%] right-[-5%] w-[60%] h-[60%] bg-teal-500/10 dark:bg-teal-600/5 blur-[140px] rounded-full animate-float" style={{ animationDelay: '-2s' }}></div>
-        <div className="absolute top-[30%] left-[40%] w-[30%] h-[30%] bg-indigo-500/5 dark:bg-indigo-600/5 blur-[100px] rounded-full animate-pulse"></div>
+      {/* Dynamic Mesh Background */}
+      <div className="fixed inset-0 -z-10 pointer-events-none overflow-hidden bg-white dark:bg-[#050505] transition-colors duration-700">
+        <div className="absolute top-[-10%] left-[-5%] w-[80%] h-[80%] bg-emerald-500/5 dark:bg-emerald-600/5 blur-[120px] rounded-full animate-float"></div>
+        <div className="absolute bottom-[-15%] right-[-5%] w-[70%] h-[70%] bg-teal-500/5 dark:bg-teal-600/5 blur-[120px] rounded-full animate-float" style={{ animationDelay: '-3s' }}></div>
       </div>
 
-      {/* Top Navigation - Home Link */}
+      {/* Top Left Navigation */}
       <div className="absolute top-8 left-8 sm:top-12 sm:left-12 z-50">
         <button 
           onClick={onBack}
-          className="group flex items-center space-x-4 text-slate-500 dark:text-white/40 hover:text-emerald-600 dark:hover:text-emerald-400 font-bold text-xs uppercase tracking-[0.3em] transition-all"
+          className="group flex items-center space-x-4 text-slate-400 dark:text-white/20 hover:text-emerald-600 dark:hover:text-emerald-400 font-black text-[10px] uppercase tracking-[0.4em] transition-all"
         >
-          <div className="w-12 h-12 rounded-2xl bg-white/60 dark:bg-white/5 backdrop-blur-xl flex items-center justify-center shadow-lg border border-white dark:border-white/5 group-hover:scale-110 group-hover:bg-white dark:group-hover:bg-white/10 transition-all">
-            <BackIcon className="w-6 h-6 group-hover:-translate-x-1 transition-transform" />
+          <div className="w-10 h-10 rounded-2xl bg-white/40 dark:bg-white/5 backdrop-blur-xl flex items-center justify-center shadow-sm border border-slate-100 dark:border-white/5 group-hover:scale-110 transition-all">
+            <BackIcon className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
           </div>
-          <span className="hidden sm:inline-block">Back to Hub</span>
+          <span className="hidden sm:inline-block">Portal Hub</span>
         </button>
       </div>
 
-      <div className="w-full max-w-[500px] animate-fade-in relative z-10">
-        {/* Modern Branding Header */}
-        <div className="text-center mb-12">
-          <div className="relative inline-block mb-6">
-            <div className="absolute inset-0 bg-emerald-500 blur-2xl opacity-20 dark:opacity-40 animate-pulse"></div>
-            <div 
-              className="relative w-24 h-24 bg-gradient-to-br from-emerald-500 to-emerald-700 dark:from-emerald-400 dark:to-emerald-600 rounded-[2.5rem] flex items-center justify-center text-white text-5xl font-black shadow-2xl shadow-emerald-500/20 transform hover:scale-105 hover:rotate-3 transition-all duration-500 cursor-pointer"
-              onClick={onBack}
-            >
-              G
-            </div>
+      <div className="w-full max-w-[480px] animate-fade-in relative z-10">
+        {/* Branding */}
+        <div className="text-center mb-10">
+          <div 
+            className="w-20 h-20 bg-emerald-600 dark:bg-emerald-500 rounded-[2rem] flex items-center justify-center text-white text-4xl font-black shadow-2xl shadow-emerald-500/20 mx-auto mb-8 transform hover:rotate-6 transition-transform cursor-pointer"
+            onClick={onBack}
+          >
+            G
           </div>
-          <h1 className="text-4xl sm:text-5xl font-black text-slate-900 dark:text-white tracking-tight mb-3">Portal Access</h1>
-          <p className="text-slate-500 dark:text-white/30 font-medium text-base">Mbeya University of Science & Technology</p>
+          <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter mb-2">Gatekeeper Access</h1>
+          <p className="text-slate-400 dark:text-white/20 font-medium uppercase tracking-[0.2em] text-[10px]">MUST Computer Science Repository</p>
         </div>
 
-        {/* Central Auth Card with Glassmorphism */}
-        <div className="bg-white/70 dark:bg-[#0f0f0f]/80 backdrop-blur-[32px] rounded-[3.5rem] shadow-[0_40px_120px_-30px_rgba(0,0,0,0.12)] dark:shadow-[0_40px_120px_-30px_rgba(0,0,0,0.8)] border border-white/80 dark:border-white/5 overflow-hidden ring-1 ring-slate-200/50 dark:ring-white/5">
+        {/* Auth Glass Card */}
+        <div className="bg-white/80 dark:bg-[#0f0f0f]/80 backdrop-blur-[40px] rounded-[3rem] shadow-2xl border border-white dark:border-white/5 overflow-hidden ring-1 ring-slate-200/50 dark:ring-white/5">
           
-          {/* Advanced Tab Switcher */}
-          <div className="flex p-3 bg-slate-100/40 dark:bg-black/40 border-b border-slate-100 dark:border-white/5">
-            <div className="relative flex w-full">
-              {/* Background Highlight for Active Tab */}
+          {/* Tab Slider */}
+          <div className="flex p-2 bg-slate-50/50 dark:bg-black/40 border-b dark:border-white/5">
+            <div className="relative flex w-full h-14">
               <div 
-                className="absolute top-0 bottom-0 w-1/2 bg-white dark:bg-[#1E1E1E] rounded-2xl shadow-md transition-all duration-500 ease-[cubic-bezier(0.19,1,0.22,1)]"
+                className="absolute top-0 bottom-0 w-1/2 bg-white dark:bg-[#1A1A1A] rounded-[1.25rem] shadow-sm transition-all duration-500 ease-[cubic-bezier(0.19,1,0.22,1)]"
                 style={{ left: activeTab === 'login' ? '0%' : '50%' }}
               ></div>
               
               <button 
                 type="button"
                 onClick={() => { setActiveTab('login'); setError(null); }}
-                className={`relative flex-1 py-4 text-[12px] font-black uppercase tracking-[0.2em] transition-all duration-500 z-10 ${activeTab === 'login' ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400 hover:text-slate-600 dark:hover:text-white/40'}`}
+                className={`relative flex-1 py-4 text-[11px] font-black uppercase tracking-[0.25em] transition-all duration-500 z-10 ${activeTab === 'login' ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400 dark:text-white/20'}`}
               >
                 Sign In
               </button>
               <button 
                 type="button"
                 onClick={() => { setActiveTab('signup'); setError(null); }}
-                className={`relative flex-1 py-4 text-[12px] font-black uppercase tracking-[0.2em] transition-all duration-500 z-10 ${activeTab === 'signup' ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400 hover:text-slate-600 dark:hover:text-white/40'}`}
+                className={`relative flex-1 py-4 text-[11px] font-black uppercase tracking-[0.25em] transition-all duration-500 z-10 ${activeTab === 'signup' ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400 dark:text-white/20'}`}
               >
-                Join GAKA
+                Sign Up
               </button>
             </div>
           </div>
 
-          <div className="p-10 sm:p-14">
+          <div className="p-8 sm:p-12">
             <form onSubmit={handleSubmit} className="space-y-6">
               {activeTab === 'signup' && (
                 <div className="space-y-2 animate-fade-in">
-                  <label className="text-[11px] font-black uppercase tracking-[0.25em] text-slate-400 dark:text-white/20 ml-3">Full Student Name</label>
+                  <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 dark:text-white/20 ml-4">Full Student Name</label>
                   <div className="relative group">
-                    <div className="absolute inset-y-0 left-7 flex items-center pointer-events-none">
+                    <div className="absolute inset-y-0 left-6 flex items-center pointer-events-none">
                       <UserIcon className="w-5 h-5 text-slate-300 dark:text-white/10 group-focus-within:text-emerald-500 transition-colors" />
                     </div>
                     <input 
@@ -135,16 +136,16 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin, onSignup, onBack, i
                       required 
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
-                      className="w-full pl-16 pr-8 py-5 bg-slate-50/50 dark:bg-black/60 border border-transparent rounded-[2rem] focus:ring-[12px] focus:ring-emerald-500/5 outline-none transition-all text-slate-900 dark:text-white font-bold text-lg placeholder:font-normal placeholder:opacity-30" 
+                      className="w-full pl-14 pr-8 py-4.5 bg-slate-50 dark:bg-black/60 border border-transparent rounded-2xl focus:ring-8 focus:ring-emerald-500/5 outline-none transition-all text-slate-900 dark:text-white font-bold" 
                     />
                   </div>
                 </div>
               )}
               
               <div className="space-y-2">
-                <label className="text-[11px] font-black uppercase tracking-[0.25em] text-slate-400 dark:text-white/20 ml-3">Username</label>
+                <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 dark:text-white/20 ml-4">Username</label>
                 <div className="relative group">
-                  <div className="absolute inset-y-0 left-7 flex items-center pointer-events-none">
+                  <div className="absolute inset-y-0 left-6 flex items-center pointer-events-none">
                     <UserIcon className="w-5 h-5 text-slate-300 dark:text-white/10 group-focus-within:text-emerald-500 transition-colors" />
                   </div>
                   <input 
@@ -153,15 +154,15 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin, onSignup, onBack, i
                     required 
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
-                    className="w-full pl-16 pr-8 py-5 bg-slate-50/50 dark:bg-black/60 border border-transparent rounded-[2rem] focus:ring-[12px] focus:ring-emerald-500/5 outline-none transition-all text-slate-900 dark:text-white font-bold text-lg placeholder:font-normal placeholder:opacity-30" 
+                    className="w-full pl-14 pr-8 py-4.5 bg-slate-50 dark:bg-black/60 border border-transparent rounded-2xl focus:ring-8 focus:ring-emerald-500/5 outline-none transition-all text-slate-900 dark:text-white font-bold" 
                   />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <label className="text-[11px] font-black uppercase tracking-[0.25em] text-slate-400 dark:text-white/20 ml-3">{activeTab === 'login' ? 'Password' : 'Create Password'}</label>
+                <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 dark:text-white/20 ml-4">{activeTab === 'login' ? 'Password' : 'Create Password'}</label>
                 <div className="relative group">
-                  <div className="absolute inset-y-0 left-7 flex items-center pointer-events-none">
+                  <div className="absolute inset-y-0 left-6 flex items-center pointer-events-none">
                     <LockIcon className="w-5 h-5 text-slate-300 dark:text-white/10 group-focus-within:text-emerald-500 transition-colors" />
                   </div>
                   <input 
@@ -170,16 +171,16 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin, onSignup, onBack, i
                     required 
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full pl-16 pr-8 py-5 bg-slate-50/50 dark:bg-black/60 border border-transparent rounded-[2rem] focus:ring-[12px] focus:ring-emerald-500/5 outline-none transition-all text-slate-900 dark:text-white font-bold text-lg" 
+                    className="w-full pl-14 pr-8 py-4.5 bg-slate-50 dark:bg-black/60 border border-transparent rounded-2xl focus:ring-8 focus:ring-emerald-500/5 outline-none transition-all text-slate-900 dark:text-white font-bold" 
                   />
                 </div>
               </div>
 
               {activeTab === 'signup' && (
                 <div className="space-y-2 animate-fade-in">
-                  <label className="text-[11px] font-black uppercase tracking-[0.25em] text-slate-400 dark:text-white/20 ml-3">Confirm Password</label>
+                  <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 dark:text-white/20 ml-4">Verify Password</label>
                   <div className="relative group">
-                    <div className="absolute inset-y-0 left-7 flex items-center pointer-events-none">
+                    <div className="absolute inset-y-0 left-6 flex items-center pointer-events-none">
                       <LockIcon className="w-5 h-5 text-slate-300 dark:text-white/10 group-focus-within:text-emerald-500 transition-colors" />
                     </div>
                     <input 
@@ -188,48 +189,40 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin, onSignup, onBack, i
                       required 
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
-                      className="w-full pl-16 pr-8 py-5 bg-slate-50/50 dark:bg-black/60 border border-transparent rounded-[2rem] focus:ring-[12px] focus:ring-emerald-500/5 outline-none transition-all text-slate-900 dark:text-white font-bold text-lg" 
+                      className="w-full pl-14 pr-8 py-4.5 bg-slate-50 dark:bg-black/60 border border-transparent rounded-2xl focus:ring-8 focus:ring-emerald-500/5 outline-none transition-all text-slate-900 dark:text-white font-bold" 
                     />
                   </div>
                 </div>
               )}
 
               {error && (
-                <div className="p-5 bg-red-500/5 rounded-[2rem] border border-red-500/20 animate-pulse">
-                  <p className="text-red-500 text-[11px] font-black text-center uppercase tracking-widest leading-relaxed">{error}</p>
+                <div className="p-4 bg-red-500/5 rounded-2xl border border-red-500/20">
+                  <p className="text-red-500 text-[10px] font-black text-center uppercase tracking-widest leading-relaxed">
+                    {error}
+                  </p>
                 </div>
               )}
 
               <button 
                 type="submit"
                 disabled={loading}
-                className="group w-full py-6 bg-gradient-to-r from-emerald-600 to-emerald-700 dark:from-emerald-500 dark:to-emerald-600 text-white rounded-[2rem] font-black text-[14px] uppercase tracking-[0.25em] shadow-2xl shadow-emerald-500/30 hover:shadow-emerald-500/50 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:scale-100 flex items-center justify-center space-x-3 overflow-hidden relative"
+                className="group w-full py-5 bg-emerald-600 dark:bg-emerald-500 text-white rounded-2xl font-black text-[11px] uppercase tracking-[0.3em] shadow-xl shadow-emerald-500/10 hover:shadow-emerald-500/30 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:scale-100 flex items-center justify-center space-x-3"
               >
                 {loading ? (
-                  <div className="w-6 h-6 border-4 border-white/20 border-t-white rounded-full animate-spin"></div>
+                  <div className="w-5 h-5 border-3 border-white/20 border-t-white rounded-full animate-spin"></div>
                 ) : (
                   <>
-                    <span>{activeTab === 'login' ? 'Authenticate' : 'Register Now'}</span>
-                    <ChevronRightIcon className="w-5 h-5 group-hover:translate-x-1.5 transition-transform" />
+                    <span>{activeTab === 'login' ? 'Authorize' : 'Join Repository'}</span>
+                    <ChevronRightIcon className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                   </>
                 )}
-                {/* Visual gloss effect */}
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out"></div>
               </button>
             </form>
           </div>
         </div>
 
-        {/* Improved Footer */}
-        <div className="mt-12 text-center animate-fade-in" style={{ animationDelay: '300ms' }}>
-          <p className="text-[10px] text-slate-400 dark:text-white/20 font-black uppercase tracking-[0.5em] mb-6">
-            SOFTLINK AFRICA SYSTEM &copy; {new Date().getFullYear()}
-          </p>
-          <div className="flex justify-center space-x-2">
-            <div className="w-1 h-1 rounded-full bg-emerald-500 opacity-20"></div>
-            <div className="w-1 h-1 rounded-full bg-emerald-500 opacity-40"></div>
-            <div className="w-1 h-1 rounded-full bg-emerald-500 opacity-20"></div>
-          </div>
+        <div className="mt-12 text-center text-[9px] font-black text-slate-300 dark:text-white/5 uppercase tracking-[0.5em]">
+          &copy; {new Date().getFullYear()} SOFTLINK AFRICA • SECURE PORTAL
         </div>
       </div>
     </div>

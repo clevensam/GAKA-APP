@@ -109,19 +109,7 @@ const App: React.FC = () => {
     });
 
     if (signUpError) throw signUpError;
-    if (data.user) {
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .insert({
-          id: data.user.id,
-          username,
-          full_name: name,
-          role: 'student'
-        });
-      if (profileError && !profileError.message.includes('duplicate')) {
-        console.warn("Profile creation handled by DB or failed:", profileError);
-      }
-    }
+    // Profile creation is handled by the SQL trigger on_auth_user_created_sync
     setCurrentView('home');
   };
 
@@ -393,7 +381,7 @@ const App: React.FC = () => {
         )}
         
         {error && (
-          <div className="mb-12 p-6 bg-amber-50/50 dark:bg-[#1E1E1E] border border-amber-100 dark:border-amber-900/30 rounded-3xl text-amber-800 dark:text-amber-400 text-sm font-medium flex flex-col sm:flex-row items-center justify-between animate-fade-in gap-4 shadow-sm">
+          <div className="mb-12 p-6 bg-amber-500/5 dark:bg-[#1E1E1E] border border-amber-500/20 rounded-3xl text-amber-800 dark:text-amber-400 text-sm font-medium flex flex-col sm:flex-row items-center justify-between animate-fade-in gap-4 shadow-sm">
             <div className="flex items-center">
               <span className="relative flex h-3 w-3 mr-4">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
@@ -551,7 +539,7 @@ const App: React.FC = () => {
         )}
       </main>
 
-      {/* Floating Install Banner (Existing) */}
+      {/* Floating Install Banner */}
       {showInstallBanner && !isStandalone && (
         <div className="fixed bottom-10 left-1/2 -translate-x-1/2 w-[94%] max-w-md z-[200] animate-slide-in">
           <div className="bg-white/95 dark:bg-[#1A1A1A]/95 backdrop-blur-3xl border border-emerald-500/20 p-6 rounded-[2.5rem] shadow-[0_40px_80px_-20px_rgba(0,0,0,0.6)] flex flex-col gap-6">
