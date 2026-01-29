@@ -42,7 +42,7 @@ export const ModuleCard: React.FC<Props> = ({ module, onClick }) => {
         </p>
         
         <div className="flex items-center text-emerald-600 dark:text-emerald-400 font-black text-[10px] uppercase tracking-widest group-hover:translate-x-1 transition-transform duration-500">
-          View Repository
+          Open Repository
           <ChevronRightIcon className="ml-1.5 w-3.5 h-3.5" />
         </div>
       </div>

@@ -30,7 +30,7 @@ const App: React.FC = () => {
   const [filterType, setFilterType] = useState<ResourceType | 'All'>('All');
   const [isProcessing, setIsProcessing] = useState(false);
 
-  // User Saved Resources State (Persistent locally)
+  // User Saved Resources State
   const [savedResourceIds, setSavedResourceIds] = useState<string[]>(() => {
     const saved = localStorage.getItem('gaka-saved-resources');
     return saved ? JSON.parse(saved) : [];
@@ -53,14 +53,12 @@ const App: React.FC = () => {
     return window.matchMedia('(prefers-color-scheme: dark)').matches;
   });
 
-  // Sync theme
   useEffect(() => {
     localStorage.setItem('gaka-theme', isDark ? 'dark' : 'light');
     if (isDark) document.documentElement.classList.add('dark');
     else document.documentElement.classList.remove('dark');
   }, [isDark]);
 
-  // Sync saved resources
   useEffect(() => {
     localStorage.setItem('gaka-saved-resources', JSON.stringify(savedResourceIds));
   }, [savedResourceIds]);
@@ -164,7 +162,6 @@ const App: React.FC = () => {
       }
       setIsResourceModalOpen(false);
       await fetchData();
-      // Update selected module resources locally to avoid re-navigation
       const updatedModule = modules.find(m => m.id === selectedModule.id);
       if (updatedModule) setSelectedModule(updatedModule);
     } catch (err: any) {
@@ -179,10 +176,6 @@ const App: React.FC = () => {
     try {
       await supabase.from('resources').delete().eq('id', id);
       await fetchData();
-      if (selectedModule) {
-        const updatedModule = modules.find(m => m.id === selectedModule.id);
-        if (updatedModule) setSelectedModule(updatedModule);
-      }
     } catch (err) {
       alert("Failed to delete.");
     }
@@ -249,7 +242,7 @@ const App: React.FC = () => {
         className="group flex flex-col sm:flex-row sm:items-center justify-between p-4 sm:p-5 bg-white dark:bg-[#111] border border-slate-100 dark:border-white/5 rounded-2xl sm:rounded-3xl transition-all duration-500 animate-fade-in"
         style={{ animationDelay: `${delay}ms` }}
       >
-        <div className="flex items-center space-x-3 sm:space-x-5 mb-4 sm:mb-0 min-w-0">
+        <div className="flex items-center space-x-3 sm:space-x-5 mb-4 sm:mb-0 min-w-0 flex-1">
           <div className={`w-10 h-10 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl flex items-center justify-center flex-shrink-0 transition-transform duration-500 group-hover:scale-105 ${
             file.type === 'Notes' ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : 'bg-teal-50 dark:bg-teal-500/10 text-teal-600 dark:text-teal-400'
           }`}>
@@ -295,14 +288,15 @@ const App: React.FC = () => {
               </>
             )}
           </div>
+          {/* Optimized "Get" button width and height */}
           <a 
             href={file.downloadUrl} 
             onClick={onDownload}
-            className={`flex-1 sm:flex-none flex items-center justify-center space-x-2 px-5 py-2.5 sm:px-6 sm:py-3 font-black text-[9px] sm:text-[10px] uppercase tracking-widest rounded-xl shadow-md active:scale-95 transition-all w-full sm:w-32 ${
+            className={`flex items-center justify-center space-x-1.5 w-24 sm:w-28 h-10 sm:h-11 font-black text-[9px] sm:text-[10px] uppercase tracking-widest rounded-xl shadow-md active:scale-95 transition-all flex-shrink-0 ${
               isDownloading ? 'bg-slate-800 dark:bg-black text-white' : 'bg-emerald-600 dark:bg-emerald-500 text-white hover:bg-emerald-700'
             }`}
           >
-            {isDownloading ? <div className="w-3 h-3 border-2 border-white/20 border-t-white rounded-full animate-spin"></div> : <><DownloadIcon className="w-3.5 h-3.5" /><span>Get</span></>}
+            {isDownloading ? <div className="w-3.5 h-3.5 border-2 border-white/20 border-t-white rounded-full animate-spin"></div> : <><DownloadIcon className="w-3.5 h-3.5" /><span>Get</span></>}
           </a>
         </div>
       </div>
@@ -341,12 +335,12 @@ const App: React.FC = () => {
             <div className="flex flex-col items-center text-center pt-6 pb-12 sm:pt-12 sm:pb-20 lg:pt-20">
               <div className="inline-flex items-center space-x-2 bg-emerald-50 dark:bg-[#1E1E1E] px-4 py-1.5 rounded-full mb-6 border border-emerald-100/50 dark:border-white/5">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                <span className="text-[9px] font-black uppercase tracking-widest text-emerald-800 dark:text-emerald-400">Portal v2.5</span>
+                <span className="text-[9px] font-black uppercase tracking-widest text-emerald-800 dark:text-emerald-400">Portal v2.6</span>
               </div>
               <h2 className="text-4xl sm:text-6xl md:text-7xl lg:text-[85px] font-black mb-6 tracking-tighter leading-[1.05] max-w-4xl px-2">
                 Centralized <span className="gradient-text">Academic</span> Hub.
               </h2>
-              <p className="text-sm sm:text-xl md:text-2xl text-slate-500 dark:text-white/40 max-w-2xl mb-10 font-medium px-6 leading-relaxed">Verified Computer Science materials, accessible everywhere.</p>
+              <p className="text-sm sm:text-xl md:text-2xl text-slate-500 dark:text-white/40 max-w-2xl mb-10 font-medium px-6 leading-relaxed">Verified Computer Science materials for MUST students, instantly accessible.</p>
               <button onClick={() => navigateTo('modules')} className="group flex items-center px-8 py-4 sm:px-20 sm:py-6 bg-emerald-600 dark:bg-emerald-500 text-white rounded-full font-black text-xs sm:text-lg shadow-xl hover:scale-105 active:scale-95 transition-all">
                 Explore Repository <ChevronRightIcon className="ml-3 w-4 h-4 sm:w-6 sm:h-6 group-hover:translate-x-1.5 transition-transform" />
               </button>
@@ -375,7 +369,7 @@ const App: React.FC = () => {
             <div className="flex flex-col lg:flex-row lg:items-end justify-between mb-10 sm:mb-16 gap-6 px-1">
               <div className="space-y-2">
                 <h2 className="text-4xl sm:text-7xl font-black tracking-tighter">Modules</h2>
-                <p className="text-slate-400 dark:text-white/30 font-semibold text-sm sm:text-lg">MUST Course Directory.</p>
+                <p className="text-slate-400 dark:text-white/30 font-semibold text-sm sm:text-lg">Curated MUST CS Course Directory.</p>
               </div>
               <div className="relative w-full lg:w-[450px]">
                 <div className="absolute inset-y-0 left-5 flex items-center pointer-events-none"><SearchIcon className="w-5 h-5 text-slate-300 dark:text-white/20" /></div>
@@ -387,7 +381,7 @@ const App: React.FC = () => {
               {filteredModules.map((m, i) => <div key={m.id} className="animate-fade-in" style={{ animationDelay: `${i * 30}ms` }}><ModuleCard module={m} onClick={() => navigateTo('detail', m)} /></div>)}
               {filteredModules.length === 0 && (
                 <div className="col-span-full py-20 text-center bg-slate-50 dark:bg-white/5 rounded-3xl border-2 border-dashed border-slate-100 dark:border-white/5">
-                   <p className="text-slate-400 text-sm font-bold uppercase tracking-widest">No matching modules.</p>
+                   <p className="text-slate-400 text-sm font-bold uppercase tracking-widest">No matching modules found.</p>
                 </div>
               )}
             </div>
@@ -409,7 +403,7 @@ const App: React.FC = () => {
                <p className="text-emerald-50/70 max-w-2xl font-semibold text-xs sm:text-lg">{selectedModule.description}</p>
             </div>
 
-            {/* Filter Tabs - UI Consistent */}
+            {/* Filter Tabs */}
             <div className="flex items-center space-x-1 mb-8 bg-slate-100/50 dark:bg-white/5 p-1 rounded-2xl w-fit mx-1">
               {(['All', 'Notes', 'Past Paper'] as (ResourceType | 'All')[]).map(type => (
                 <button
@@ -437,7 +431,7 @@ const App: React.FC = () => {
           <div className="animate-fade-in max-w-4xl mx-auto pb-24">
             <div className="mb-8 sm:mb-12 px-1">
               <h2 className="text-3xl sm:text-6xl font-black tracking-tighter mb-2">My Library</h2>
-              <p className="text-slate-400 dark:text-white/30 font-semibold text-sm sm:text-lg">Saved resources for offline view.</p>
+              <p className="text-slate-400 dark:text-white/30 font-semibold text-sm sm:text-lg">Personally saved resources for offline access.</p>
             </div>
             <div className="space-y-4 px-1">
               {savedResources.map((f, i) => <ResourceItem key={f.id} file={f} moduleCode={f.moduleCode} delay={i * 40} />)}
@@ -457,18 +451,18 @@ const App: React.FC = () => {
                <h2 className="text-3xl sm:text-6xl font-black mb-8 sm:mb-12 tracking-tighter leading-none">Engineering <br/><span className="gradient-text">Efficiency.</span></h2>
                <div className="space-y-10 sm:space-y-14">
                 <section>
-                  <h3 className="text-[9px] font-black text-emerald-600 uppercase tracking-[0.3em] mb-4">GAKA Mission</h3>
-                  <p className="text-xl sm:text-3xl font-bold text-slate-800 dark:text-white tracking-tight leading-snug">Empowering Computer Science students through open access to institutional academic heritage.</p>
+                  <h3 className="text-[9px] font-black text-emerald-600 uppercase tracking-[0.3em] mb-4">The Initiative</h3>
+                  <p className="text-xl sm:text-3xl font-bold text-slate-800 dark:text-white tracking-tight leading-snug">GAKA bridges the gap between students and course materials through institutional academic digitization.</p>
                 </section>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="bg-slate-50 dark:bg-black/40 p-6 sm:p-8 rounded-xl sm:rounded-2xl border dark:border-white/5">
-                    <h4 className="text-[8px] font-black text-slate-400 uppercase mb-2 tracking-widest">Team</h4>
-                    <p className="text-slate-900 dark:text-white font-black text-xl sm:text-2xl">Softlink Africa</p>
+                    <h4 className="text-[8px] font-black text-slate-400 uppercase mb-2 tracking-widest">Powered By</h4>
+                    <p className="text-slate-900 dark:text-white font-black text-xl sm:text-2xl">Softlink Africa Team</p>
                   </div>
                   <div className="bg-emerald-600 p-6 sm:p-8 rounded-xl sm:rounded-2xl text-white shadow-xl">
-                    <h4 className="text-[8px] font-black text-emerald-100 uppercase mb-2 tracking-widest">Lead Dev</h4>
+                    <h4 className="text-[8px] font-black text-emerald-100 uppercase mb-2 tracking-widest">Lead</h4>
                     <p className="font-black text-xl sm:text-2xl mb-6">Cleven Samwel</p>
-                    <a href="https://wa.me/255685208576" className="inline-flex items-center px-6 py-3 bg-white/20 rounded-full font-black text-[9px] uppercase tracking-widest hover:bg-white/30 transition-all">Contact <ChevronRightIcon className="ml-2 w-4 h-4" /></a>
+                    <a href="https://wa.me/255685208576" className="inline-flex items-center px-6 py-3 bg-white/20 rounded-full font-black text-[9px] uppercase tracking-widest hover:bg-white/30 transition-all">Connect <ChevronRightIcon className="ml-2 w-4 h-4" /></a>
                   </div>
                 </div>
               </div>
@@ -487,7 +481,7 @@ const App: React.FC = () => {
                   <h3 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white leading-none tracking-tight">
                     {editingResource ? 'Edit Resource' : 'New Publication'}
                   </h3>
-                  <p className="text-[9px] font-black text-emerald-600 uppercase tracking-[0.3em] mt-2">MUST Registry</p>
+                  <p className="text-[9px] font-black text-emerald-600 uppercase tracking-[0.3em] mt-2">MUST Registry Admin</p>
                 </div>
                 <button onClick={() => setIsResourceModalOpen(false)} className="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-white/5 text-slate-400 transition-all hover:text-slate-900 dark:hover:text-white">
                   <CloseIcon className="w-6 h-6" />
@@ -496,7 +490,7 @@ const App: React.FC = () => {
               <form onSubmit={handleSaveResource} className="space-y-6">
                 <div className="space-y-2">
                   <label className="text-[10px] font-black uppercase text-slate-400 ml-2">Title</label>
-                  <input type="text" placeholder="Lecture 01 - Basics" required value={resourceFormData.title} onChange={e => setResourceFormData({...resourceFormData, title: e.target.value})} className="w-full px-5 py-4 bg-slate-50 dark:bg-black/50 border border-slate-200 dark:border-white/10 rounded-xl focus:border-emerald-500 outline-none text-slate-900 dark:text-white font-bold text-sm" />
+                  <input type="text" placeholder="Lecture 01 - Foundations" required value={resourceFormData.title} onChange={e => setResourceFormData({...resourceFormData, title: e.target.value})} className="w-full px-5 py-4 bg-slate-50 dark:bg-black/50 border border-slate-200 dark:border-white/10 rounded-xl focus:border-emerald-500 outline-none text-slate-900 dark:text-white font-bold text-sm" />
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
@@ -508,15 +502,15 @@ const App: React.FC = () => {
                   </div>
                   <div className="space-y-2">
                     <label className="text-[10px] font-black uppercase text-slate-400 ml-2">View URL</label>
-                    <input type="url" placeholder="Drive preview" required value={resourceFormData.viewUrl} onChange={e => setResourceFormData({...resourceFormData, viewUrl: e.target.value})} className="w-full px-5 py-4 bg-slate-50 dark:bg-black/50 border border-slate-200 dark:border-white/10 rounded-xl focus:border-emerald-500 outline-none text-slate-900 dark:text-white font-bold text-xs" />
+                    <input type="url" placeholder="Drive preview link" required value={resourceFormData.viewUrl} onChange={e => setResourceFormData({...resourceFormData, viewUrl: e.target.value})} className="w-full px-5 py-4 bg-slate-50 dark:bg-black/50 border border-slate-200 dark:border-white/10 rounded-xl focus:border-emerald-500 outline-none text-slate-900 dark:text-white font-bold text-xs" />
                   </div>
                 </div>
                 <div className="space-y-2">
                   <label className="text-[10px] font-black uppercase text-slate-400 ml-2">Download URL</label>
-                  <input type="url" placeholder="Direct link" required value={resourceFormData.downloadUrl} onChange={e => setResourceFormData({...resourceFormData, downloadUrl: e.target.value})} className="w-full px-5 py-4 bg-slate-50 dark:bg-black/50 border border-slate-200 dark:border-white/10 rounded-xl focus:border-emerald-500 outline-none text-slate-900 dark:text-white font-bold text-xs" />
+                  <input type="url" placeholder="Direct download link" required value={resourceFormData.downloadUrl} onChange={e => setResourceFormData({...resourceFormData, downloadUrl: e.target.value})} className="w-full px-5 py-4 bg-slate-50 dark:bg-black/50 border border-slate-200 dark:border-white/10 rounded-xl focus:border-emerald-500 outline-none text-slate-900 dark:text-white font-bold text-xs" />
                 </div>
                 <div className="flex gap-4 pt-2">
-                  <button type="button" onClick={() => setIsResourceModalOpen(false)} className="flex-1 py-4 bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-white/60 font-black text-[10px] uppercase rounded-xl transition-all active:scale-95">Discard</button>
+                  <button type="button" onClick={() => setIsResourceModalOpen(false)} className="flex-1 py-4 bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-white/60 font-black text-[10px] uppercase rounded-xl transition-all active:scale-95">Cancel</button>
                   <button type="submit" disabled={isProcessing} className="flex-[2] py-4 bg-emerald-600 text-white rounded-xl font-black text-[10px] uppercase tracking-widest shadow-xl disabled:opacity-50 transition-all active:scale-95">
                     {isProcessing ? "Processing..." : editingResource ? 'Save Changes' : 'Publish File'}
                   </button>
@@ -528,7 +522,7 @@ const App: React.FC = () => {
       )}
 
       <footer className="py-12 px-6 border-t border-slate-50 dark:border-white/5 text-center opacity-30">
-         <p className="text-[8px] sm:text-[9px] font-black text-slate-400 dark:text-white/20 uppercase tracking-[0.4em] leading-relaxed">&copy; {new Date().getFullYear()} SOFTLINK AFRICA • INNOVATION IN ENGINEERING</p>
+         <p className="text-[8px] sm:text-[9px] font-black text-slate-400 dark:text-white/20 uppercase tracking-[0.4em] leading-relaxed">&copy; {new Date().getFullYear()} SOFTLINK AFRICA • MUST ENGINEERING COMMUNITY</p>
       </footer>
       <Analytics />
     </div>
