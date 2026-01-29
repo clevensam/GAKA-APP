@@ -239,7 +239,7 @@ const App: React.FC = () => {
 
     return (
       <div 
-        className="group flex flex-col sm:flex-row sm:items-center justify-between p-4 sm:p-5 bg-white dark:bg-[#111] border border-slate-100 dark:border-white/5 rounded-2xl sm:rounded-3xl transition-all duration-500 animate-fade-in"
+        className="group flex flex-col sm:flex-row sm:items-center justify-between p-4 sm:p-5 bg-white dark:bg-[#111] border border-slate-100 dark:border-white/5 rounded-2xl sm:rounded-3xl transition-all duration-500 animate-fade-in shadow-sm hover:shadow-md"
         style={{ animationDelay: `${delay}ms` }}
       >
         <div className="flex items-center space-x-3 sm:space-x-5 mb-4 sm:mb-0 min-w-0 flex-1">
@@ -288,15 +288,15 @@ const App: React.FC = () => {
               </>
             )}
           </div>
-          {/* Optimized "Get" button width and height */}
+          {/* Optimized "Download" button: Reduced width, increased height for standard UX/UI feel */}
           <a 
             href={file.downloadUrl} 
             onClick={onDownload}
-            className={`flex items-center justify-center space-x-1.5 w-24 sm:w-28 h-10 sm:h-11 font-black text-[9px] sm:text-[10px] uppercase tracking-widest rounded-xl shadow-md active:scale-95 transition-all flex-shrink-0 ${
+            className={`flex items-center justify-center space-x-1.5 w-28 sm:w-32 h-11 sm:h-12 font-black text-[9px] sm:text-[10px] uppercase tracking-widest rounded-xl shadow-md active:scale-95 transition-all flex-shrink-0 ${
               isDownloading ? 'bg-slate-800 dark:bg-black text-white' : 'bg-emerald-600 dark:bg-emerald-500 text-white hover:bg-emerald-700'
             }`}
           >
-            {isDownloading ? <div className="w-3.5 h-3.5 border-2 border-white/20 border-t-white rounded-full animate-spin"></div> : <><DownloadIcon className="w-3.5 h-3.5" /><span>Get</span></>}
+            {isDownloading ? <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></div> : <><DownloadIcon className="w-4 h-4" /><span>Download</span></>}
           </a>
         </div>
       </div>
