@@ -30,13 +30,11 @@ const App: React.FC = () => {
   const [filterType, setFilterType] = useState<ResourceType | 'All'>('All');
   const [isProcessing, setIsProcessing] = useState(false);
 
-  // User Saved Resources State
   const [savedResourceIds, setSavedResourceIds] = useState<string[]>(() => {
     const saved = localStorage.getItem('gaka-saved-resources');
     return saved ? JSON.parse(saved) : [];
   });
 
-  // Admin CRUD States
   const [isResourceModalOpen, setIsResourceModalOpen] = useState(false);
   const [editingResource, setEditingResource] = useState<AcademicFile | null>(null);
   const [resourceFormData, setResourceFormData] = useState({
@@ -288,7 +286,6 @@ const App: React.FC = () => {
               </>
             )}
           </div>
-          {/* Optimized "Download" button: Reduced width, increased height for standard UX/UI feel */}
           <a 
             href={file.downloadUrl} 
             onClick={onDownload}
@@ -346,7 +343,6 @@ const App: React.FC = () => {
               </button>
             </div>
 
-            {/* Recently Uploaded Section */}
             <div className="max-w-4xl mx-auto mt-8 sm:mt-16 px-1">
                <div className="flex items-center justify-between mb-8">
                   <h3 className="text-xl sm:text-2xl font-black tracking-tight">Recently <span className="text-emerald-600">Uploaded</span></h3>
@@ -403,7 +399,6 @@ const App: React.FC = () => {
                <p className="text-emerald-50/70 max-w-2xl font-semibold text-xs sm:text-lg">{selectedModule.description}</p>
             </div>
 
-            {/* Filter Tabs */}
             <div className="flex items-center space-x-1 mb-8 bg-slate-100/50 dark:bg-white/5 p-1 rounded-2xl w-fit mx-1">
               {(['All', 'Notes', 'Past Paper'] as (ResourceType | 'All')[]).map(type => (
                 <button
@@ -471,48 +466,57 @@ const App: React.FC = () => {
         )}
       </main>
 
-      {/* Admin Operations Modal */}
+      {/* Admin Operations Modal - Optimized for Mobile */}
       {isResourceModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-slate-900/70 backdrop-blur-xl animate-fade-in">
-          <div className="bg-white dark:bg-[#0A0A0A] w-full max-w-lg rounded-2xl sm:rounded-3xl shadow-3xl border border-slate-100 dark:border-white/10 animate-slide-in relative max-h-[90vh] overflow-y-auto">
-            <div className="p-6 sm:p-10">
-              <div className="flex justify-between items-center mb-8">
-                <div className="flex flex-col">
-                  <h3 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white leading-none tracking-tight">
-                    {editingResource ? 'Edit Resource' : 'New Publication'}
-                  </h3>
-                  <p className="text-[9px] font-black text-emerald-600 uppercase tracking-[0.3em] mt-2">MUST Registry Admin</p>
-                </div>
-                <button onClick={() => setIsResourceModalOpen(false)} className="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-white/5 text-slate-400 transition-all hover:text-slate-900 dark:hover:text-white">
-                  <CloseIcon className="w-6 h-6" />
-                </button>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-slate-900/80 backdrop-blur-xl animate-fade-in">
+          <div className="bg-white dark:bg-[#0A0A0A] w-full max-w-lg rounded-2xl sm:rounded-[2.5rem] shadow-3xl border border-slate-100 dark:border-white/10 animate-slide-in relative max-h-[95vh] flex flex-col overflow-hidden">
+            {/* Modal Header */}
+            <div className="px-6 py-6 sm:px-10 sm:py-8 border-b dark:border-white/5 flex justify-between items-center bg-white dark:bg-[#0A0A0A] shrink-0">
+              <div className="flex flex-col">
+                <h3 className="text-xl sm:text-3xl font-black text-slate-900 dark:text-white leading-none tracking-tight">
+                  {editingResource ? 'Edit Resource' : 'New Publication'}
+                </h3>
+                <p className="text-[9px] font-black text-emerald-600 uppercase tracking-[0.3em] mt-2">MUST Registry Admin</p>
               </div>
+              <button onClick={() => setIsResourceModalOpen(false)} className="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-white/5 text-slate-400 transition-all hover:text-slate-900 dark:hover:text-white active:scale-90">
+                <CloseIcon className="w-6 h-6" />
+              </button>
+            </div>
+            
+            {/* Modal Content - Scrollable area */}
+            <div className="overflow-y-auto px-6 py-8 sm:px-10 pb-10">
               <form onSubmit={handleSaveResource} className="space-y-6">
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase text-slate-400 ml-2">Title</label>
-                  <input type="text" placeholder="Lecture 01 - Foundations" required value={resourceFormData.title} onChange={e => setResourceFormData({...resourceFormData, title: e.target.value})} className="w-full px-5 py-4 bg-slate-50 dark:bg-black/50 border border-slate-200 dark:border-white/10 rounded-xl focus:border-emerald-500 outline-none text-slate-900 dark:text-white font-bold text-sm" />
+                  <label className="text-[10px] font-black uppercase text-slate-400 ml-2">Resource Title</label>
+                  <input type="text" placeholder="e.g. Lecture 01 - Algorithms Foundations" required value={resourceFormData.title} onChange={e => setResourceFormData({...resourceFormData, title: e.target.value})} className="w-full px-5 py-4 bg-slate-50 dark:bg-black/50 border border-slate-200 dark:border-white/10 rounded-xl focus:border-emerald-500 outline-none text-slate-900 dark:text-white font-bold text-sm transition-all focus:ring-4 focus:ring-emerald-500/10" />
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   <div className="space-y-2">
                     <label className="text-[10px] font-black uppercase text-slate-400 ml-2">Type</label>
-                    <select value={resourceFormData.type} onChange={e => setResourceFormData({...resourceFormData, type: e.target.value as ResourceType})} className="w-full px-5 py-4 bg-slate-50 dark:bg-black/50 border border-slate-200 dark:border-white/10 rounded-xl focus:border-emerald-500 outline-none text-slate-900 dark:text-white font-black text-xs appearance-none">
-                      <option value="Notes">Lecture Note</option>
-                      <option value="Past Paper">Gaka Exam</option>
-                    </select>
+                    <div className="relative">
+                      <select value={resourceFormData.type} onChange={e => setResourceFormData({...resourceFormData, type: e.target.value as ResourceType})} className="w-full px-5 py-4 bg-slate-50 dark:bg-black/50 border border-slate-200 dark:border-white/10 rounded-xl focus:border-emerald-500 outline-none text-slate-900 dark:text-white font-black text-xs appearance-none">
+                        <option value="Notes">Lecture Note</option>
+                        <option value="Past Paper">Gaka Exam</option>
+                      </select>
+                      <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none text-slate-400"><ChevronRightIcon className="w-4 h-4 rotate-90" /></div>
+                    </div>
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase text-slate-400 ml-2">View URL</label>
-                    <input type="url" placeholder="Drive preview link" required value={resourceFormData.viewUrl} onChange={e => setResourceFormData({...resourceFormData, viewUrl: e.target.value})} className="w-full px-5 py-4 bg-slate-50 dark:bg-black/50 border border-slate-200 dark:border-white/10 rounded-xl focus:border-emerald-500 outline-none text-slate-900 dark:text-white font-bold text-xs" />
+                    <label className="text-[10px] font-black uppercase text-slate-400 ml-2">Preview (View) URL</label>
+                    <input type="url" placeholder="Google Drive preview link" required value={resourceFormData.viewUrl} onChange={e => setResourceFormData({...resourceFormData, viewUrl: e.target.value})} className="w-full px-5 py-4 bg-slate-50 dark:bg-black/50 border border-slate-200 dark:border-white/10 rounded-xl focus:border-emerald-500 outline-none text-slate-900 dark:text-white font-bold text-xs" />
                   </div>
                 </div>
+
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase text-slate-400 ml-2">Download URL</label>
-                  <input type="url" placeholder="Direct download link" required value={resourceFormData.downloadUrl} onChange={e => setResourceFormData({...resourceFormData, downloadUrl: e.target.value})} className="w-full px-5 py-4 bg-slate-50 dark:bg-black/50 border border-slate-200 dark:border-white/10 rounded-xl focus:border-emerald-500 outline-none text-slate-900 dark:text-white font-bold text-xs" />
+                  <label className="text-[10px] font-black uppercase text-slate-400 ml-2">Direct Download Link</label>
+                  <input type="url" placeholder="Direct link to file" required value={resourceFormData.downloadUrl} onChange={e => setResourceFormData({...resourceFormData, downloadUrl: e.target.value})} className="w-full px-5 py-4 bg-slate-50 dark:bg-black/50 border border-slate-200 dark:border-white/10 rounded-xl focus:border-emerald-500 outline-none text-slate-900 dark:text-white font-bold text-xs" />
                 </div>
-                <div className="flex gap-4 pt-2">
-                  <button type="button" onClick={() => setIsResourceModalOpen(false)} className="flex-1 py-4 bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-white/60 font-black text-[10px] uppercase rounded-xl transition-all active:scale-95">Cancel</button>
-                  <button type="submit" disabled={isProcessing} className="flex-[2] py-4 bg-emerald-600 text-white rounded-xl font-black text-[10px] uppercase tracking-widest shadow-xl disabled:opacity-50 transition-all active:scale-95">
-                    {isProcessing ? "Processing..." : editingResource ? 'Save Changes' : 'Publish File'}
+                
+                <div className="flex flex-col sm:flex-row gap-3 pt-6">
+                  <button type="button" onClick={() => setIsResourceModalOpen(false)} className="order-2 sm:order-1 flex-1 py-4 bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-white/60 font-black text-[10px] uppercase rounded-xl transition-all active:scale-95">Discard</button>
+                  <button type="submit" disabled={isProcessing} className="order-1 sm:order-2 flex-[2] py-4 bg-emerald-600 text-white rounded-xl font-black text-[10px] uppercase tracking-widest shadow-xl disabled:opacity-50 transition-all active:scale-95">
+                    {isProcessing ? "Syncing..." : editingResource ? 'Update Publication' : 'Publish Resource'}
                   </button>
                 </div>
               </form>
