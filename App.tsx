@@ -4,6 +4,7 @@ import { createClient } from '@supabase/supabase-js';
 import { Navbar } from './components/Navbar';
 import { ModuleCard } from './components/ModuleCard';
 import { AuthPage } from './components/AuthPage';
+import { Chatbot } from './components/Chatbot';
 import { 
   SearchIcon, BackIcon, FileIcon, DownloadIcon, 
   ShareIcon, ChevronRightIcon, ViewIcon, PlusIcon, 
@@ -528,6 +529,7 @@ const App: React.FC = () => {
       <footer className="py-12 px-6 border-t border-slate-50 dark:border-white/5 text-center opacity-30">
          <p className="text-[8px] sm:text-[9px] font-black text-slate-400 dark:text-white/20 uppercase tracking-[0.4em] leading-relaxed">&copy; {new Date().getFullYear()} SOFTLINK AFRICA • MUST ENGINEERING COMMUNITY</p>
       </footer>
+      <Chatbot modules={modules} onNavigate={navigateTo} />
       <Analytics />
     </div>
   );
