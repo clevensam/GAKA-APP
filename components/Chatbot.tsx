@@ -2,12 +2,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { MessageCircle, X, Send, Bot, User, Loader2, Sparkles } from 'lucide-react';
-import { GoogleGenAI, Type, FunctionDeclaration } from "@google/genai";
+import OpenAI from 'openai';
 import { Module } from '../types';
 
 interface Message {
-  role: 'user' | 'model';
-  text: string;
+  role: 'user' | 'assistant';
+  content: string;
 }
 
 interface ChatbotProps {
@@ -19,7 +19,7 @@ export const Chatbot: React.FC<ChatbotProps> = ({ modules, onNavigate }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<Message[]>([
-    { role: 'model', text: "Hello! I'm Juliana, your academic assistant. How can I help you today? 😊" }
+    { role: 'assistant', content: "Hello! I'm Juliana, your academic assistant. How can I help you today? 😊" }
   ]);
   const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -49,21 +49,24 @@ export const Chatbot: React.FC<ChatbotProps> = ({ modules, onNavigate }) => {
 
     const userMessage = input.trim();
     setInput('');
-    setMessages(prev => [...prev, { role: 'user', text: userMessage }]);
+    setMessages(prev => [...prev, { role: 'user', content: userMessage }]);
     setIsLoading(true);
 
     try {
-      const apiKey = process.env.GEMINI_API_KEY;
+      const apiKey = process.env.DEEPSEEK_API_KEY;
       if (!apiKey) {
-        console.error("GEMINI_API_KEY is missing. Please set it in your environment variables.");
-        setMessages(prev => [...prev, { role: 'model', text: "I'm sorry, my connection to the AI service isn't configured yet. Please check the environment variables! 🛠️" }]);
+        console.error("DEEPSEEK_API_KEY is missing.");
+        setMessages(prev => [...prev, { role: 'assistant', content: "I'm sorry, my DeepSeek connection isn't configured yet. Please check the environment variables! 🛠️" }]);
         setIsLoading(false);
         return;
       }
 
-      const ai = new GoogleGenAI({ apiKey });
-      const model = "gemini-3-flash-preview";
-      
+      const openai = new OpenAI({
+        apiKey,
+        baseURL: 'https://api.deepseek.com',
+        dangerouslyAllowBrowser: true
+      });
+
       const systemInstruction = `
         You are Juliana, a polite, helpful, and instructor-like female academic assistant for GAKA (Academic Resource Hub).
         Your personality: Professional, encouraging, and clear. Use emojis to keep the conversation friendly.
@@ -82,82 +85,88 @@ export const Chatbot: React.FC<ChatbotProps> = ({ modules, onNavigate }) => {
         7. Keep responses concise but helpful.
       `;
 
-      const navigateToModuleFn: FunctionDeclaration = {
-        name: "navigateToModule",
-        description: "Navigate the user to a specific module detail page using its code (e.g., CS101).",
-        parameters: {
-          type: Type.OBJECT,
-          properties: {
-            moduleCode: {
-              type: Type.STRING,
-              description: "The unique code of the module to navigate to."
+      const tools: OpenAI.Chat.ChatCompletionTool[] = [
+        {
+          type: 'function',
+          function: {
+            name: "navigateToModule",
+            description: "Navigate the user to a specific module detail page using its code (e.g., CS101).",
+            parameters: {
+              type: "object",
+              properties: {
+                moduleCode: {
+                  type: "string",
+                  description: "The unique code of the module to navigate to."
+                }
+              },
+              required: ["moduleCode"]
             }
-          },
-          required: ["moduleCode"]
-        }
-      };
-
-      const navigateToSavedFn: FunctionDeclaration = {
-        name: "navigateToSaved",
-        description: "Navigate the user to their saved resources library.",
-        parameters: {
-          type: Type.OBJECT,
-          properties: {
-            placeholder: { type: Type.STRING, description: "Not used" }
           }
-        }
-      };
-
-      const navigateToAboutFn: FunctionDeclaration = {
-        name: "navigateToAbout",
-        description: "Navigate the user to the about page to learn more about GAKA and its creators.",
-        parameters: {
-          type: Type.OBJECT,
-          properties: {
-            placeholder: { type: Type.STRING, description: "Not used" }
-          }
-        }
-      };
-
-      const response = await ai.models.generateContent({
-        model,
-        contents: { parts: [{ text: userMessage }] },
-        config: {
-          systemInstruction,
-          tools: [{ functionDeclarations: [navigateToModuleFn, navigateToSavedFn, navigateToAboutFn] }],
         },
+        {
+          type: 'function',
+          function: {
+            name: "navigateToSaved",
+            description: "Navigate the user to their saved resources library.",
+            parameters: { type: "object", properties: {} }
+          }
+        },
+        {
+          type: 'function',
+          function: {
+            name: "navigateToAbout",
+            description: "Navigate the user to the about page to learn more about GAKA and its creators.",
+            parameters: { type: "object", properties: {} }
+          }
+        }
+      ];
+
+      const response = await openai.chat.completions.create({
+        model: "deepseek-chat",
+        messages: [
+          { role: 'system', content: systemInstruction },
+          ...messages.map(m => ({ role: m.role, content: m.content })),
+          { role: 'user', content: userMessage }
+        ],
+        tools,
+        tool_choice: 'auto'
       });
 
-      const functionCalls = response.functionCalls;
-      if (functionCalls) {
-        for (const call of functionCalls) {
-          if (call.name === "navigateToModule") {
-            const { moduleCode } = call.args as { moduleCode: string };
-            const module = modules.find(m => m.code.toLowerCase() === moduleCode.toLowerCase());
-            if (module) {
-              onNavigate('detail', module);
-              setMessages(prev => [...prev, { role: 'model', text: `Certainly! I've taken you to the ${module.name} page. You can find all the resources there! 📚✨` }]);
+      const choice = response.choices[0];
+      const toolCalls = choice.message.tool_calls;
+
+      if (toolCalls && toolCalls.length > 0) {
+        for (const call of toolCalls) {
+          if (call.type === 'function') {
+            const args = JSON.parse(call.function.arguments);
+            if (call.function.name === "navigateToModule") {
+              const { moduleCode } = args;
+              const module = modules.find(m => m.code.toLowerCase() === moduleCode.toLowerCase());
+              if (module) {
+                onNavigate('detail', module);
+                setMessages(prev => [...prev, { role: 'assistant', content: `Certainly! I've taken you to the ${module.name} page. You can find all the resources there! 📚✨` }]);
+                setIsOpen(false);
+              } else {
+                setMessages(prev => [...prev, { role: 'assistant', content: `I'm sorry, I couldn't find a module with the code ${moduleCode}. Please check the code and try again! 🔍` }]);
+              }
+            } else if (call.function.name === "navigateToSaved") {
+              onNavigate('saved');
+              setMessages(prev => [...prev, { role: 'assistant', content: "Of course! Here is your personal library of saved resources. 📖✨" }]);
               setIsOpen(false);
-            } else {
-              setMessages(prev => [...prev, { role: 'model', text: `I'm sorry, I couldn't find a module with the code ${moduleCode}. Please check the code and try again! 🔍` }]);
+            } else if (call.function.name === "navigateToAbout") {
+              onNavigate('about');
+              setMessages(prev => [...prev, { role: 'assistant', content: "I've navigated you to the About page. You can learn all about GAKA and the team here! 🤝✨" }]);
+              setIsOpen(false);
             }
-          } else if (call.name === "navigateToSaved") {
-            onNavigate('saved');
-            setMessages(prev => [...prev, { role: 'model', text: "Of course! Here is your personal library of saved resources. 📖✨" }]);
-            setIsOpen(false);
-          } else if (call.name === "navigateToAbout") {
-            onNavigate('about');
-            setMessages(prev => [...prev, { role: 'model', text: "I've navigated you to the About page. You can learn all about GAKA and the team here! 🤝✨" }]);
-            setIsOpen(false);
           }
         }
       } else {
-        const botResponse = response.text || "I'm sorry, I couldn't process that. Could you try again? 😅";
-        setMessages(prev => [...prev, { role: 'model', text: botResponse }]);
+        const botResponse = choice.message.content || "I'm sorry, I couldn't process that. Could you try again? 😅";
+        setMessages(prev => [...prev, { role: 'assistant', content: botResponse }]);
       }
     } catch (error) {
       console.error("Chat Error:", error);
-      setMessages(prev => [...prev, { role: 'model', text: "Oh dear, I'm having a bit of trouble connecting right now. Please try again in a moment! 🛠️" }]);
+      setMessages(prev => [...prev, { role: 'assistant', content: "Oh dear, I'm having a bit of trouble connecting right now. Please try again in a moment! 🛠️" }]);
     } finally {
       setIsLoading(false);
     }
@@ -211,7 +220,7 @@ export const Chatbot: React.FC<ChatbotProps> = ({ modules, onNavigate }) => {
                         ? 'bg-emerald-600 text-white rounded-tr-none' 
                         : 'bg-slate-100 dark:bg-white/5 text-slate-800 dark:text-white/90 rounded-tl-none'
                     }`}>
-                      {msg.text}
+                      {msg.content}
                     </div>
                   </div>
                 </div>
@@ -246,7 +255,7 @@ export const Chatbot: React.FC<ChatbotProps> = ({ modules, onNavigate }) => {
                 </button>
               </div>
               <p className="text-[9px] text-center mt-3 font-bold text-slate-400 uppercase tracking-widest flex items-center justify-center">
-                <Sparkles className="w-3 h-3 mr-1 text-emerald-500" /> Powered by Gemini AI
+                <Sparkles className="w-3 h-3 mr-1 text-emerald-500" /> Powered by DeepSeek AI
               </p>
             </div>
           </motion.div>
