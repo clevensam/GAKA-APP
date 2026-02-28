@@ -53,7 +53,15 @@ export const Chatbot: React.FC<ChatbotProps> = ({ modules, onNavigate }) => {
     setIsLoading(true);
 
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
+      const apiKey = process.env.GEMINI_API_KEY;
+      if (!apiKey) {
+        console.error("GEMINI_API_KEY is missing. Please set it in your environment variables.");
+        setMessages(prev => [...prev, { role: 'model', text: "I'm sorry, my connection to the AI service isn't configured yet. Please check the environment variables! 🛠️" }]);
+        setIsLoading(false);
+        return;
+      }
+
+      const ai = new GoogleGenAI({ apiKey });
       const model = "gemini-3-flash-preview";
       
       const systemInstruction = `
