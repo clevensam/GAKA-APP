@@ -93,7 +93,15 @@ export const Chatbot: React.FC<ChatbotProps> = ({ modules, onNavigate }) => {
 
     } catch (error: any) {
       console.error("Chat Error:", error);
-      setMessages(prev => [...prev, { role: 'assistant', content: "Oh dear, I'm having a bit of trouble connecting to my brain right now. Please try again in a moment! 🛠️" }]);
+      let errorMessage = "Oh dear, I'm having a bit of trouble connecting to my brain right now. Please try again in a moment! 🛠️";
+      
+      if (error.message?.includes('API_KEY_INVALID') || error.message?.includes('API key not found')) {
+        errorMessage = "It seems my API key is missing or invalid. Please ensure GEMINI_API_KEY is set in the environment variables! 🔑";
+      } else if (error.message?.includes('Failed to fetch')) {
+        errorMessage = "I'm having trouble reaching the network. Please check your internet connection! 🌐";
+      }
+      
+      setMessages(prev => [...prev, { role: 'assistant', content: errorMessage }]);
     } finally {
       setIsLoading(false);
     }

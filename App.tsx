@@ -111,8 +111,12 @@ const App: React.FC = () => {
         moduleId: r.module_id
       }));
       setRecentFiles(topRecent);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Sync failure.", err);
+      // Optional: Add a toast or notification here if you have a library
+      if (err.message?.includes('Failed to fetch')) {
+        console.warn("Connection issue detected. Please check if your Supabase URL is correct and if CORS is configured for this origin.");
+      }
     } finally {
       setIsLoading(false);
     }
