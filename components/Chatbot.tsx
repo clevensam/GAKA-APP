@@ -2,8 +2,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { MessageCircle, X, Send, Bot, User, Loader2, Sparkles } from 'lucide-react';
-import OpenAI from 'openai';
 import { Module } from '../types';
+import { GoogleGenAI } from "@google/genai";
 
 interface Message {
   role: 'user' | 'assistant';
@@ -53,20 +53,6 @@ export const Chatbot: React.FC<ChatbotProps> = ({ modules, onNavigate }) => {
     setIsLoading(true);
 
     try {
-      const apiKey = process.env.DEEPSEEK_API_KEY;
-      if (!apiKey) {
-        console.error("DEEPSEEK_API_KEY is missing.");
-        setMessages(prev => [...prev, { role: 'assistant', content: "I'm sorry, my DeepSeek connection isn't configured yet. Please check the environment variables! 🛠️" }]);
-        setIsLoading(false);
-        return;
-      }
-
-      const openai = new OpenAI({
-        apiKey,
-        baseURL: 'https://api.deepseek.com',
-        dangerouslyAllowBrowser: true
-      });
-
       const systemInstruction = `
         You are Juliana, a polite, helpful, and instructor-like female academic assistant for GAKA (Academic Resource Hub).
         Your personality: Professional, encouraging, and clear. Use emojis to keep the conversation friendly.
@@ -77,96 +63,37 @@ export const Chatbot: React.FC<ChatbotProps> = ({ modules, onNavigate }) => {
         
         Instructions:
         1. Answer questions based on the provided module and resource data.
-        2. If a student asks for a specific module, you can use the 'navigateToModule' tool.
-        3. If a student asks for their saved resources, use 'navigateToSaved'.
-        4. If a student asks about the project or Cleven, use 'navigateToAbout'.
-        5. Always be polite and use a "teacher-like" tone.
-        6. If you don't know the answer, politely say so and suggest they explore the 'Modules' section.
-        7. Keep responses concise but helpful.
+        2. If a student asks for a specific module, you can mention its code (e.g., CS101).
+        3. If a student asks for their saved resources, mention the 'Saved' section.
+        4. Always be polite and use a "teacher-like" tone.
+        5. If you don't know the answer, politely say so and suggest they explore the 'Modules' section.
+        6. Keep responses concise but helpful.
       `;
 
-      const tools: OpenAI.Chat.ChatCompletionTool[] = [
-        {
-          type: 'function',
-          function: {
-            name: "navigateToModule",
-            description: "Navigate the user to a specific module detail page using its code (e.g., CS101).",
-            parameters: {
-              type: "object",
-              properties: {
-                moduleCode: {
-                  type: "string",
-                  description: "The unique code of the module to navigate to."
-                }
-              },
-              required: ["moduleCode"]
-            }
-          }
-        },
-        {
-          type: 'function',
-          function: {
-            name: "navigateToSaved",
-            description: "Navigate the user to their saved resources library.",
-            parameters: { type: "object", properties: {} }
-          }
-        },
-        {
-          type: 'function',
-          function: {
-            name: "navigateToAbout",
-            description: "Navigate the user to the about page to learn more about GAKA and its creators.",
-            parameters: { type: "object", properties: {} }
-          }
-        }
-      ];
+      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+      
+      const chatHistory = messages.map(m => ({
+        role: m.role === 'assistant' ? 'model' : 'user',
+        parts: [{ text: m.content }]
+      }));
 
-      const response = await openai.chat.completions.create({
-        model: "deepseek-chat",
-        messages: [
-          { role: 'system', content: systemInstruction },
-          ...messages.map(m => ({ role: m.role, content: m.content })),
-          { role: 'user', content: userMessage }
+      const response = await ai.models.generateContent({
+        model: "gemini-3-flash-preview",
+        contents: [
+          ...chatHistory,
+          { role: 'user', parts: [{ text: userMessage }] }
         ],
-        tools,
-        tool_choice: 'auto'
+        config: {
+          systemInstruction: systemInstruction,
+        }
       });
 
-      const choice = response.choices[0];
-      const toolCalls = choice.message.tool_calls;
+      const botResponse = response.text || "I'm sorry, I couldn't process that. Could you try again? 😅";
+      setMessages(prev => [...prev, { role: 'assistant', content: botResponse }]);
 
-      if (toolCalls && toolCalls.length > 0) {
-        for (const call of toolCalls) {
-          if (call.type === 'function') {
-            const args = JSON.parse(call.function.arguments);
-            if (call.function.name === "navigateToModule") {
-              const { moduleCode } = args;
-              const module = modules.find(m => m.code.toLowerCase() === moduleCode.toLowerCase());
-              if (module) {
-                onNavigate('detail', module);
-                setMessages(prev => [...prev, { role: 'assistant', content: `Certainly! I've taken you to the ${module.name} page. You can find all the resources there! 📚✨` }]);
-                setIsOpen(false);
-              } else {
-                setMessages(prev => [...prev, { role: 'assistant', content: `I'm sorry, I couldn't find a module with the code ${moduleCode}. Please check the code and try again! 🔍` }]);
-              }
-            } else if (call.function.name === "navigateToSaved") {
-              onNavigate('saved');
-              setMessages(prev => [...prev, { role: 'assistant', content: "Of course! Here is your personal library of saved resources. 📖✨" }]);
-              setIsOpen(false);
-            } else if (call.function.name === "navigateToAbout") {
-              onNavigate('about');
-              setMessages(prev => [...prev, { role: 'assistant', content: "I've navigated you to the About page. You can learn all about GAKA and the team here! 🤝✨" }]);
-              setIsOpen(false);
-            }
-          }
-        }
-      } else {
-        const botResponse = choice.message.content || "I'm sorry, I couldn't process that. Could you try again? 😅";
-        setMessages(prev => [...prev, { role: 'assistant', content: botResponse }]);
-      }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Chat Error:", error);
-      setMessages(prev => [...prev, { role: 'assistant', content: "Oh dear, I'm having a bit of trouble connecting right now. Please try again in a moment! 🛠️" }]);
+      setMessages(prev => [...prev, { role: 'assistant', content: "Oh dear, I'm having a bit of trouble connecting to my brain right now. Please try again in a moment! 🛠️" }]);
     } finally {
       setIsLoading(false);
     }
@@ -255,7 +182,7 @@ export const Chatbot: React.FC<ChatbotProps> = ({ modules, onNavigate }) => {
                 </button>
               </div>
               <p className="text-[9px] text-center mt-3 font-bold text-slate-400 uppercase tracking-widest flex items-center justify-center">
-                <Sparkles className="w-3 h-3 mr-1 text-emerald-500" /> Powered by DeepSeek AI
+                <Sparkles className="w-3 h-3 mr-1 text-emerald-500" /> Powered by Gemini AI
               </p>
             </div>
           </motion.div>
