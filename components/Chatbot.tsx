@@ -88,12 +88,21 @@ export const Chatbot: React.FC<ChatbotProps> = ({ modules, onNavigate }) => {
         }),
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error?.message || `API request failed with status ${response.status}`);
+      const contentType = response.headers.get("content-type");
+      let data;
+      
+      if (contentType && contentType.includes("application/json")) {
+        data = await response.json();
+      } else {
+        const text = await response.text();
+        console.error("Non-JSON response:", text);
+        throw new Error(`Server returned non-JSON response (${response.status}). Body: ${text.slice(0, 50)}...`);
       }
 
-      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error?.message || `API request failed with status ${response.status}`);
+      }
+
       const botResponse = data.text || "I'm sorry, I couldn't process that. Could you try again? 😅";
       
       setMessages(prev => [...prev, { role: 'assistant', content: botResponse }]);
