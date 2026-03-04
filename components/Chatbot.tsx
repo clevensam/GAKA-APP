@@ -71,9 +71,9 @@ export const Chatbot: React.FC<ChatbotProps> = ({ modules, onNavigate }) => {
 
       // API Key placeholder - uses environment variable exposed via vite.config.ts
       const API_KEY = process.env.GEMINI_API_KEY;
-      const MODEL = "gemini-3-flash-preview"; // Using a permitted stable model
+      const MODEL = "gemini-3-flash-preview"; 
       
-      if (!API_KEY) {
+      if (!API_KEY || API_KEY === 'undefined') {
         throw new Error("GEMINI_API_KEY is not defined in environment variables.");
       }
 
@@ -117,8 +117,8 @@ export const Chatbot: React.FC<ChatbotProps> = ({ modules, onNavigate }) => {
       const errorStr = error.message || String(error);
       let errorMessage = `I encountered an error: "${errorStr}". 🛠️`;
 
-      if (!process.env.GEMINI_API_KEY) {
-        errorMessage = "The GEMINI_API_KEY is missing from the environment variables. Please add it to the platform settings! 🔑";
+      if (!process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY === 'undefined') {
+        errorMessage = "The GEMINI_API_KEY is missing. If you're on Vercel, please add it to 'Environment Variables' in your project settings and REDEPLOY! 🔑";
       } else if (errorStr.includes('API_KEY_INVALID') || errorStr.includes('API key not found')) {
         errorMessage = "The provided Gemini API key is invalid. Please double-check it in your settings! 🔑";
       } else if (errorStr.includes('Failed to fetch')) {
