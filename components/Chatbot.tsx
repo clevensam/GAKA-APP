@@ -69,37 +69,24 @@ export const Chatbot: React.FC<ChatbotProps> = ({ modules, onNavigate }) => {
         6. Keep responses concise but helpful.
       `;
 
-      // API Key placeholder - uses environment variable exposed via vite.config.ts
-      const API_KEY = process.env.GEMINI_API_KEY;
-      const MODEL = "gemini-3-flash-preview"; 
-      
-      if (!API_KEY || API_KEY === 'undefined') {
-        throw new Error("GEMINI_API_KEY is not defined in environment variables.");
-      }
-
       const chatHistory = messages.map(m => ({
         role: m.role === 'assistant' ? 'model' : 'user',
         parts: [{ text: m.content }]
       }));
 
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${API_KEY}`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            contents: [
-              ...chatHistory,
-              { role: 'user', parts: [{ text: userMessage }] }
-            ],
-            systemInstruction: {
-              parts: [{ text: systemInstruction }]
-            }
-          }),
-        }
-      );
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          messages: [
+            ...chatHistory,
+            { role: 'user', parts: [{ text: userMessage }] }
+          ],
+          systemInstruction: systemInstruction
+        }),
+      });
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -107,7 +94,7 @@ export const Chatbot: React.FC<ChatbotProps> = ({ modules, onNavigate }) => {
       }
 
       const data = await response.json();
-      const botResponse = data.candidates?.[0]?.content?.parts?.[0]?.text || "I'm sorry, I couldn't process that. Could you try again? 😅";
+      const botResponse = data.text || "I'm sorry, I couldn't process that. Could you try again? 😅";
       
       setMessages(prev => [...prev, { role: 'assistant', content: botResponse }]);
 
@@ -117,12 +104,12 @@ export const Chatbot: React.FC<ChatbotProps> = ({ modules, onNavigate }) => {
       const errorStr = error.message || String(error);
       let errorMessage = `I encountered an error: "${errorStr}". 🛠️`;
 
-      if (!process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY === 'undefined') {
-        errorMessage = "The GEMINI_API_KEY is missing. If you're on Vercel, please add it to 'Environment Variables' in your project settings and REDEPLOY! 🔑";
+      if (errorStr.includes('GEMINI_API_KEY is not configured')) {
+        errorMessage = "The GEMINI_API_KEY is missing from the server environment. Please add it to your project settings! 🔑";
       } else if (errorStr.includes('API_KEY_INVALID') || errorStr.includes('API key not found')) {
         errorMessage = "The provided Gemini API key is invalid. Please double-check it in your settings! 🔑";
       } else if (errorStr.includes('Failed to fetch')) {
-        errorMessage = "I'm having trouble reaching the network. This might be a CORS issue or a network failure. 🌐";
+        errorMessage = "I'm having trouble reaching the server. Please check your connection. 🌐";
       }
       
       setMessages(prev => [...prev, { role: 'assistant', content: errorMessage }]);
