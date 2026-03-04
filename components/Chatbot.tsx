@@ -3,7 +3,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { MessageCircle, X, Send, Bot, User, Loader2, Sparkles } from 'lucide-react';
 import { Module } from '../types';
-import { GoogleGenAI } from "@google/genai";
 
 interface Message {
   role: 'user' | 'assistant';
@@ -70,25 +69,46 @@ export const Chatbot: React.FC<ChatbotProps> = ({ modules, onNavigate }) => {
         6. Keep responses concise but helpful.
       `;
 
-      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+      // API Key placeholder - uses environment variable exposed via vite.config.ts
+      const API_KEY = process.env.GEMINI_API_KEY;
+      const MODEL = "gemini-3-flash-preview"; // Using a permitted stable model
       
+      if (!API_KEY) {
+        throw new Error("GEMINI_API_KEY is not defined in environment variables.");
+      }
+
       const chatHistory = messages.map(m => ({
         role: m.role === 'assistant' ? 'model' : 'user',
         parts: [{ text: m.content }]
       }));
 
-      const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
-        contents: [
-          ...chatHistory,
-          { role: 'user', parts: [{ text: userMessage }] }
-        ],
-        config: {
-          systemInstruction: systemInstruction,
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${API_KEY}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            contents: [
+              ...chatHistory,
+              { role: 'user', parts: [{ text: userMessage }] }
+            ],
+            systemInstruction: {
+              parts: [{ text: systemInstruction }]
+            }
+          }),
         }
-      });
+      );
 
-      const botResponse = response.text || "I'm sorry, I couldn't process that. Could you try again? 😅";
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error?.message || `API request failed with status ${response.status}`);
+      }
+
+      const data = await response.json();
+      const botResponse = data.candidates?.[0]?.content?.parts?.[0]?.text || "I'm sorry, I couldn't process that. Could you try again? 😅";
+      
       setMessages(prev => [...prev, { role: 'assistant', content: botResponse }]);
 
     } catch (error: any) {
